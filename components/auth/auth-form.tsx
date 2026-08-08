@@ -24,6 +24,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const returnUrl = searchParams.get("returnUrl") || "/workspaces";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const isLogin = mode === "login";
@@ -35,7 +37,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         if (isLogin) {
           await signInWithPassword(email, password);
         } else {
-          await signUpWithPassword(email, password);
+          await signUpWithPassword(email, password, firstName, lastName);
         }
         toast.success(isLogin ? "Giriş yapıldı" : "Kayıt tamamlandı");
         router.push(returnUrl);
@@ -68,6 +70,30 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="flex flex-col gap-4">
+          {!isLogin && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="first-name">Ad</Label>
+                <Input
+                  id="first-name"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Ayşe"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="last-name">Soyad</Label>
+                <Input
+                  id="last-name"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Kaya"
+                />
+              </div>
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">E-posta</Label>
             <Input

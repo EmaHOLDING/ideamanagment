@@ -6,15 +6,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { addComment, getComments } from "@/app/actions/commentActions";
 import { MentionTextarea } from "./mention-textarea";
+import { getInitials } from "@/lib/user-display";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 
 type CommentWithAuthor = Awaited<ReturnType<typeof getComments>>["items"][number];
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
-
-function initialsFromEmail(email: string | null) {
-  if (!email) return "?";
-  return email.slice(0, 2).toUpperCase();
-}
 
 export function CommentsPanel({
   ideaId,
@@ -107,12 +103,12 @@ export function CommentsPanel({
         {items.map((c) => (
           <div key={c.id} className="flex gap-2">
             <Avatar size="sm" className="mt-0.5">
-              <AvatarFallback>{initialsFromEmail(c.authorEmail)}</AvatarFallback>
+              <AvatarFallback>{getInitials(c.authorFullName)}</AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-lg rounded-tl-sm bg-muted/50 p-2.5">
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-xs font-medium">
-                  {c.authorEmail ?? "Bilinmeyen kullanıcı"}
+                  {c.authorFullName ?? "Bilinmeyen kullanıcı"}
                 </span>
                 <span className="shrink-0 text-[0.7rem] text-muted-foreground">
                   {new Date(c.created_at).toLocaleString("tr-TR")}

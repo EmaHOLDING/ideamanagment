@@ -1,13 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, logActivity } from "./_shared";
-
-function actorDisplayName(user: { email?: string | null; user_metadata?: Record<string, unknown> }) {
-  const fullName = user.user_metadata?.full_name;
-  if (typeof fullName === "string" && fullName.trim()) return fullName;
-  return user.email ?? "Bir kullanıcı";
-}
+import { requireUser, logActivity, getDisplayName } from "./_shared";
 
 const workspaceIdSchema = z.string().uuid();
 
@@ -53,7 +47,7 @@ export async function createTag(workspaceId: string, name: string, color: string
     workspaceId: input.workspaceId,
     actorId: user.id,
     type: "tag_created",
-    message: `${actorDisplayName(user)}, '${input.name}' etiketini oluşturdu.`,
+    message: `${getDisplayName(user)}, '${input.name}' etiketini oluşturdu.`,
   });
 
   return data;
@@ -81,7 +75,7 @@ export async function deleteTag(tagId: string) {
     workspaceId: tag.workspace_id,
     actorId: user.id,
     type: "tag_deleted",
-    message: `${actorDisplayName(user)}, '${tag.name}' etiketini sildi.`,
+    message: `${getDisplayName(user)}, '${tag.name}' etiketini sildi.`,
   });
 
   return { success: true as const };
@@ -126,7 +120,7 @@ export async function setIdeaTags(ideaId: string, tagIds: string[]) {
       actorId: user.id,
       ideaId: input.ideaId,
       type: "idea_tags_updated",
-      message: `${actorDisplayName(user)}, '${latestVersion?.title ?? ""}' fikrinin etiketlerini güncelledi.`,
+      message: `${getDisplayName(user)}, '${latestVersion?.title ?? ""}' fikrinin etiketlerini güncelledi.`,
     });
   }
 

@@ -34,13 +34,9 @@ import {
   regenerateInviteCode,
   deleteWorkspaceAction,
 } from "@/app/actions/workspaceActions";
+import { getInitials } from "@/lib/user-display";
 
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
-
-function initials(email: string | null) {
-  if (!email) return "?";
-  return email.slice(0, 2).toUpperCase();
-}
 
 export function MembersDialog({
   workspaceId,
@@ -149,9 +145,14 @@ export function MembersDialog({
               <div key={m.id} className="flex items-center justify-between gap-2 rounded-md p-1.5">
                 <div className="flex min-w-0 items-center gap-2">
                   <Avatar size="sm">
-                    <AvatarFallback>{initials(m.email)}</AvatarFallback>
+                    <AvatarFallback>{getInitials(m.fullName)}</AvatarFallback>
                   </Avatar>
-                  <span className="truncate text-sm">{m.email ?? "Bilinmeyen kullanıcı"}</span>
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm">{m.fullName}</span>
+                    {m.email && (
+                      <span className="truncate text-xs text-muted-foreground">{m.email}</span>
+                    )}
+                  </div>
                   {m.role === "OWNER" && (
                     <Badge variant="outline" className="gap-1">
                       <CrownIcon className="size-3" /> Owner

@@ -3,9 +3,11 @@ import { LightbulbIcon } from "lucide-react";
 import { UserMenu } from "@/components/layout/user-menu";
 
 export function Header({
+  displayName,
   email,
   children,
 }: {
+  displayName: string;
   email: string;
   children?: React.ReactNode;
 }) {
@@ -17,7 +19,7 @@ export function Header({
       </Link>
       <div className="flex items-center gap-2">
         {children}
-        <UserMenu email={email} />
+        <UserMenu displayName={displayName} email={email} />
       </div>
     </header>
   );

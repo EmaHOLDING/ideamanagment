@@ -173,7 +173,7 @@ export function Board({
                   ? "Tüm atananlar"
                   : assigneeFilter === UNASSIGNED
                     ? "Atanmamış"
-                    : members.find((m) => m.user_id === assigneeFilter)?.email
+                    : members.find((m) => m.user_id === assigneeFilter)?.fullName
               }
             </SelectValue>
           </SelectTrigger>
@@ -182,7 +182,7 @@ export function Board({
             <SelectItem value={UNASSIGNED}>Atanmamış</SelectItem>
             {members.map((m) => (
               <SelectItem key={m.user_id} value={m.user_id}>
-                {m.email ?? m.user_id}
+                {m.fullName}
               </SelectItem>
             ))}
           </SelectContent>

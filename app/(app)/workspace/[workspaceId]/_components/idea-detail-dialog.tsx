@@ -164,7 +164,7 @@ export function IdeaDetailDialog({
                     <SelectValue>
                       {() => {
                         const assignee = members.find((m) => m.user_id === assigneeId);
-                        return assignee?.email ?? "Atanmadı";
+                        return assignee?.fullName ?? "Atanmadı";
                       }}
                     </SelectValue>
                   </SelectTrigger>
@@ -172,7 +172,7 @@ export function IdeaDetailDialog({
                     <SelectItem value={UNASSIGNED}>Atanmadı</SelectItem>
                     {members.map((m) => (
                       <SelectItem key={m.user_id} value={m.user_id}>
-                        {m.email ?? m.user_id}
+                        {m.fullName}
                       </SelectItem>
                     ))}
                   </SelectContent>

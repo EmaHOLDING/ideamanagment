@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { randomBytes } from "crypto";
-import { requireUser, resolveAuthorEmails } from "./_shared";
+import { requireUser, resolveAuthorProfiles } from "./_shared";
 
 const createWorkspaceSchema = z.object({
   title: z.string().trim().min(1).max(255),
@@ -100,9 +100,13 @@ export async function getWorkspaceMembers(workspaceId: string) {
 
   if (error) throw error;
 
-  const emailById = await resolveAuthorEmails(data.map((m) => m.user_id));
+  const profileById = await resolveAuthorProfiles(data.map((m) => m.user_id));
 
-  return data.map((m) => ({ ...m, email: emailById.get(m.user_id) ?? null }));
+  return data.map((m) => ({
+    ...m,
+    email: profileById.get(m.user_id)?.email ?? null,
+    fullName: profileById.get(m.user_id)?.fullName ?? "Bilinmeyen kullanıcı",
+  }));
 }
 
 const removeMemberSchema = z.object({

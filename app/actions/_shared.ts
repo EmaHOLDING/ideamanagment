@@ -1,6 +1,9 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getDisplayName } from "@/lib/user-display";
+
+export { getDisplayName };
 
 export async function requireUser() {
   const supabase = await createClient();
@@ -31,20 +34,26 @@ export function decodeCursor(cursor: string | undefined | null): Cursor | null {
   }
 }
 
-/** created_by/user_id UUID'lerini email'e çözer (profiles tablosu yok, service-role ile auth.users'tan). */
-export async function resolveAuthorEmails(userIds: string[]) {
+/** created_by/user_id UUID'lerini email + görünen isme çözer (profiles
+ * tablosu yok, service-role ile auth.users'tan). */
+export async function resolveAuthorProfiles(userIds: string[]) {
   const uniqueIds = [...new Set(userIds)];
   const admin = createAdminClient();
-  const emailById = new Map<string, string>();
+  const profileById = new Map<string, { email: string | null; fullName: string }>();
 
   await Promise.all(
     uniqueIds.map(async (uid) => {
       const { data } = await admin.auth.admin.getUserById(uid);
-      if (data?.user?.email) emailById.set(uid, data.user.email);
+      if (data?.user) {
+        profileById.set(uid, {
+          email: data.user.email ?? null,
+          fullName: getDisplayName(data.user),
+        });
+      }
     })
   );
 
-  return emailById;
+  return profileById;
 }
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;

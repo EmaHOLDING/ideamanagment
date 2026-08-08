@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, encodeCursor, decodeCursor, resolveAuthorEmails } from "./_shared";
+import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles } from "./_shared";
 
 const getActivityLogSchema = z.object({
   workspaceId: z.string().uuid(),
@@ -34,10 +34,11 @@ export async function getActivityLog(workspaceId: string, cursor?: string) {
 
   if (error) throw error;
 
-  const actorEmailById = await resolveAuthorEmails(data.map((row) => row.actor_id));
+  const profileById = await resolveAuthorProfiles(data.map((row) => row.actor_id));
   const items = data.map((row) => ({
     ...row,
-    actorEmail: actorEmailById.get(row.actor_id) ?? null,
+    actorEmail: profileById.get(row.actor_id)?.email ?? null,
+    actorFullName: profileById.get(row.actor_id)?.fullName ?? null,
   }));
 
   const last = data[data.length - 1];

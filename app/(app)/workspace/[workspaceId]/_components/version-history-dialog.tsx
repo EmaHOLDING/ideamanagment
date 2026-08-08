@@ -107,7 +107,7 @@ export function VersionHistoryDialog({
                       </div>
                       <div className="text-xs text-muted-foreground">
                         <p className="truncate font-medium text-foreground/80">
-                          {v.authorEmail ?? "Bilinmeyen kullanıcı"}
+                          {v.authorFullName ?? "Bilinmeyen kullanıcı"}
                         </p>
                         <p>{new Date(v.created_at).toLocaleString("tr-TR")}</p>
                       </div>

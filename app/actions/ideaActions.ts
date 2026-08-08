@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, resolveAuthorEmails, logActivity } from "./_shared";
+import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const impactEffortSchema = z.enum(["LOW", "MEDIUM", "HIGH"]).optional();
@@ -16,12 +16,6 @@ const versionDataSchema = z.object({
 });
 
 export type IdeaVersionData = z.infer<typeof versionDataSchema>;
-
-function actorDisplayName(user: { email?: string | null; user_metadata?: Record<string, unknown> }) {
-  const fullName = user.user_metadata?.full_name;
-  if (typeof fullName === "string" && fullName.trim()) return fullName;
-  return user.email ?? "Bir kullanıcı";
-}
 
 const createIdeaSchema = z.object({
   workspaceId: z.string().uuid(),
@@ -55,7 +49,7 @@ export async function createIdea(
     actorId: user.id,
     ideaId: data.id,
     type: "idea_created",
-    message: `${actorDisplayName(user)}, '${input.versionData.title}' fikrini oluşturdu.`,
+    message: `${getDisplayName(user)}, '${input.versionData.title}' fikrini oluşturdu.`,
   });
 
   return data;
@@ -87,7 +81,7 @@ export async function updateIdea(ideaId: string, versionData: IdeaVersionData) {
     actorId: user.id,
     ideaId: data.id,
     type: "idea_updated",
-    message: `${actorDisplayName(user)}, '${input.versionData.title}' fikrini güncelledi.`,
+    message: `${getDisplayName(user)}, '${input.versionData.title}' fikrini güncelledi.`,
   });
 
   return data;
@@ -152,7 +146,7 @@ export async function moveIdea(
       user_id: idea.created_by,
       actor_id: user.id,
       idea_id: input.ideaId,
-      message: `${actorDisplayName(user)}, '${ideaTitle}' kartını '${targetColumn.title}' durumuna taşıdı.`,
+      message: `${getDisplayName(user)}, '${ideaTitle}' kartını '${targetColumn.title}' durumuna taşıdı.`,
     });
     if (notificationError) throw notificationError;
   }
@@ -162,7 +156,7 @@ export async function moveIdea(
     actorId: user.id,
     ideaId: input.ideaId,
     type: "idea_moved",
-    message: `${actorDisplayName(user)}, '${ideaTitle}' kartını '${targetColumn.title}' durumuna taşıdı.`,
+    message: `${getDisplayName(user)}, '${ideaTitle}' kartını '${targetColumn.title}' durumuna taşıdı.`,
   });
 
   return updatedIdea;
@@ -182,11 +176,12 @@ export async function getIdeaVersionHistory(ideaId: string) {
 
   if (error) throw error;
 
-  const authorEmailById = await resolveAuthorEmails(data.map((v) => v.created_by));
+  const profileById = await resolveAuthorProfiles(data.map((v) => v.created_by));
 
   return data.map((v) => ({
     ...v,
-    authorEmail: authorEmailById.get(v.created_by) ?? null,
+    authorEmail: profileById.get(v.created_by)?.email ?? null,
+    authorFullName: profileById.get(v.created_by)?.fullName ?? null,
   }));
 }
 
@@ -238,7 +233,7 @@ export async function assignIdea(ideaId: string, assigneeUserId: string | null) 
       user_id: input.assigneeUserId,
       actor_id: user.id,
       idea_id: input.ideaId,
-      message: `${actorDisplayName(user)}, '${ideaTitle}' fikrini size atadı.`,
+      message: `${getDisplayName(user)}, '${ideaTitle}' fikrini size atadı.`,
     });
     if (notificationError) throw notificationError;
   }
@@ -249,8 +244,8 @@ export async function assignIdea(ideaId: string, assigneeUserId: string | null) 
     ideaId: input.ideaId,
     type: "idea_assigned",
     message: input.assigneeUserId
-      ? `${actorDisplayName(user)}, '${ideaTitle}' fikrini birine atadı.`
-      : `${actorDisplayName(user)}, '${ideaTitle}' fikrinin atamasını kaldırdı.`,
+      ? `${getDisplayName(user)}, '${ideaTitle}' fikrini birine atadı.`
+      : `${getDisplayName(user)}, '${ideaTitle}' fikrinin atamasını kaldırdı.`,
   });
 
   return updatedIdea;
@@ -311,7 +306,7 @@ export async function toggleIdeaVote(ideaId: string) {
         actorId: user.id,
         ideaId: id,
         type: "idea_voted",
-        message: `${actorDisplayName(user)}, '${latestVersion?.title ?? ""}' fikrine oy verdi.`,
+        message: `${getDisplayName(user)}, '${latestVersion?.title ?? ""}' fikrine oy verdi.`,
       });
     }
   }

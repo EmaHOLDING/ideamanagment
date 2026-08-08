@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/header";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { getNotifications } from "@/app/actions/notificationActions";
+import { getDisplayName } from "@/lib/user-display";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -18,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header email={user.email ?? ""}>
+      <Header displayName={getDisplayName(user)} email={user.email ?? ""}>
         <NotificationBell initialItems={items} initialNextCursor={nextCursor} />
       </Header>
       <main className="flex-1">{children}</main>

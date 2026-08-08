@@ -1,13 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, logActivity } from "./_shared";
-
-function actorDisplayName(user: { email?: string | null; user_metadata?: Record<string, unknown> }) {
-  const fullName = user.user_metadata?.full_name;
-  if (typeof fullName === "string" && fullName.trim()) return fullName;
-  return user.email ?? "Bir kullanıcı";
-}
+import { requireUser, logActivity, getDisplayName } from "./_shared";
 
 const statusTypeSchema = z.enum(["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED", "DONE"]);
 
@@ -44,7 +38,7 @@ export async function createColumn(
     workspaceId: input.workspaceId,
     actorId: user.id,
     type: "column_created",
-    message: `${actorDisplayName(user)}, '${input.title}' kolonunu oluşturdu.`,
+    message: `${getDisplayName(user)}, '${input.title}' kolonunu oluşturdu.`,
   });
 
   return data;
@@ -120,7 +114,7 @@ export async function deleteColumn(columnId: string) {
     workspaceId: column.workspace_id,
     actorId: user.id,
     type: "column_deleted",
-    message: `${actorDisplayName(user)}, '${column.title}' kolonunu sildi.`,
+    message: `${getDisplayName(user)}, '${column.title}' kolonunu sildi.`,
   });
 
   return { success: true as const };

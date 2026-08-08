@@ -44,7 +44,13 @@ export function MentionTextarea({
   );
 
   const filteredMembers = mention
-    ? members.filter((m) => (m.email ?? "").toLowerCase().includes(mention.query)).slice(0, 6)
+    ? members
+        .filter(
+          (m) =>
+            m.fullName.toLowerCase().includes(mention.query) ||
+            (m.email ?? "").toLowerCase().includes(mention.query)
+        )
+        .slice(0, 6)
     : [];
 
   function updateMentionState(text: string, cursor: number) {
@@ -83,7 +89,7 @@ export function MentionTextarea({
     const cursor = textareaRef.current.selectionStart;
     const before = value.slice(0, mention.start);
     const after = value.slice(cursor);
-    const label = member.email ?? member.user_id;
+    const label = member.fullName;
     const next = `${before}@${label} ${after}`;
     onChange(next);
     setMention(null);
@@ -152,7 +158,7 @@ export function MentionTextarea({
                   i === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                 )}
               >
-                {m.email ?? m.user_id}
+                {m.fullName}
               </button>
             ))}
           </div>,

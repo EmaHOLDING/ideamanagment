@@ -1,14 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, encodeCursor, decodeCursor, resolveAuthorEmails, logActivity } from "./_shared";
+import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-function actorDisplayName(user: { email?: string | null; user_metadata?: Record<string, unknown> }) {
-  const fullName = user.user_metadata?.full_name;
-  if (typeof fullName === "string" && fullName.trim()) return fullName;
-  return user.email ?? "Bir kullanıcı";
-}
 
 const addCommentSchema = z.object({
   ideaId: z.string().uuid(),
@@ -70,7 +64,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
         user_id: recipientId,
         actor_id: user.id,
         idea_id: input.ideaId,
-        message: `${actorDisplayName(user)}, '${ideaTitle}' fikrine yorum yaptı.`,
+        message: `${getDisplayName(user)}, '${ideaTitle}' fikrine yorum yaptı.`,
       }))
     );
     if (notificationError) throw notificationError;
@@ -84,7 +78,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
         user_id: recipientId,
         actor_id: user.id,
         idea_id: input.ideaId,
-        message: `${actorDisplayName(user)}, '${ideaTitle}' fikrindeki bir yorumda sizi etiketledi.`,
+        message: `${getDisplayName(user)}, '${ideaTitle}' fikrindeki bir yorumda sizi etiketledi.`,
       }))
     );
     if (mentionNotificationError) throw mentionNotificationError;
@@ -95,7 +89,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
     actorId: user.id,
     ideaId: input.ideaId,
     type: "comment_added",
-    message: `${actorDisplayName(user)}, '${ideaTitle}' fikrine yorum yaptı.`,
+    message: `${getDisplayName(user)}, '${ideaTitle}' fikrine yorum yaptı.`,
   });
 
   return comment;
@@ -132,8 +126,12 @@ export async function getComments(ideaId: string, cursor?: string) {
 
   if (error) throw error;
 
-  const authorEmailById = await resolveAuthorEmails(data.map((c) => c.user_id));
-  const items = data.map((c) => ({ ...c, authorEmail: authorEmailById.get(c.user_id) ?? null }));
+  const profileById = await resolveAuthorProfiles(data.map((c) => c.user_id));
+  const items = data.map((c) => ({
+    ...c,
+    authorEmail: profileById.get(c.user_id)?.email ?? null,
+    authorFullName: profileById.get(c.user_id)?.fullName ?? null,
+  }));
 
   const last = data[data.length - 1];
   const nextCursor =
