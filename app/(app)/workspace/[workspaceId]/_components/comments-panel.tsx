@@ -4,10 +4,12 @@ import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { addComment, getComments } from "@/app/actions/commentActions";
+import { MentionTextarea } from "./mention-textarea";
+import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 
 type CommentWithAuthor = Awaited<ReturnType<typeof getComments>>["items"][number];
+type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
 
 function initialsFromEmail(email: string | null) {
   if (!email) return "?";
@@ -16,15 +18,18 @@ function initialsFromEmail(email: string | null) {
 
 export function CommentsPanel({
   ideaId,
+  members,
   showHeading = true,
 }: {
   ideaId: string;
+  members: Member[];
   showHeading?: boolean;
 }) {
   const [items, setItems] = useState<CommentWithAuthor[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [content, setContent] = useState("");
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
   const [isSubmitting, startSubmitTransition] = useTransition();
   const [isLoadingMore, startLoadMoreTransition] = useTransition();
 
@@ -52,8 +57,9 @@ export function CommentsPanel({
 
     startSubmitTransition(async () => {
       try {
-        await addComment(ideaId, trimmed);
+        await addComment(ideaId, trimmed, mentionedUserIds);
         setContent("");
+        setMentionedUserIds([]);
         const res = await getComments(ideaId);
         setItems(res.items);
         setNextCursor(res.nextCursor);
@@ -80,10 +86,13 @@ export function CommentsPanel({
     <div className="flex flex-col gap-3">
       {showHeading && <h3 className="text-sm font-semibold">Yorumlar</h3>}
       <form onSubmit={onSubmit} className="flex flex-col gap-2">
-        <Textarea
-          placeholder="Bir yorum yazın..."
+        <MentionTextarea
+          placeholder="Bir yorum yazın... (@ ile üye etiketleyin)"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={setContent}
+          members={members}
+          mentionedUserIds={mentionedUserIds}
+          onMentionedUserIdsChange={setMentionedUserIds}
         />
         <Button type="submit" size="sm" className="self-end" disabled={isSubmitting || !content.trim()}>
           Yorum Ekle

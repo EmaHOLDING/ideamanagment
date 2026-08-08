@@ -1,26 +1,59 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { SearchIcon, XIcon } from "lucide-react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { moveIdea } from "@/app/actions/ideaActions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Column } from "./column";
 import { CreateColumnDialog } from "./create-column-dialog";
 import { CancellationReasonDialog } from "./cancellation-reason-dialog";
+import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { Database } from "@/lib/types/database.types";
 
 type ColumnRow = Database["public"]["Tables"]["kanban_columns"]["Row"];
 type IdeaVersion = Database["public"]["Tables"]["idea_versions"]["Row"];
+type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
+type Tag = Database["public"]["Tables"]["tags"]["Row"];
+
+const ALL_TAGS = "all";
+const ALL_ASSIGNEES = "all";
+const UNASSIGNED = "unassigned";
 
 export function Board({
   workspaceId,
   initialColumns,
   versionsByColumn,
+  assigneeByIdea,
+  tagsByIdea,
+  voteCountByIdea,
+  hasVotedByIdea,
+  members,
+  tags,
+  isOwner,
+  autoOpenIdeaId,
 }: {
   workspaceId: string;
   initialColumns: ColumnRow[];
   versionsByColumn: Record<string, IdeaVersion[]>;
+  assigneeByIdea: Record<string, string | null>;
+  tagsByIdea: Record<string, Tag[]>;
+  voteCountByIdea: Record<string, number>;
+  hasVotedByIdea: Record<string, boolean>;
+  members: Member[];
+  tags: Tag[];
+  isOwner: boolean;
+  autoOpenIdeaId: string | null;
 }) {
   const router = useRouter();
   const [isMovePending, startMoveTransition] = useTransition();
@@ -29,6 +62,42 @@ export function Board({
     targetColumnId: string;
     ideaTitle: string;
   } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [tagFilter, setTagFilter] = useState(ALL_TAGS);
+  const [assigneeFilter, setAssigneeFilter] = useState(ALL_ASSIGNEES);
+
+  const hasActiveFilters =
+    searchQuery.trim() !== "" || tagFilter !== ALL_TAGS || assigneeFilter !== ALL_ASSIGNEES;
+
+  const filteredVersionsByColumn = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const result: Record<string, IdeaVersion[]> = {};
+    for (const [columnId, versions] of Object.entries(versionsByColumn)) {
+      result[columnId] = versions.filter((v) => {
+        if (
+          query &&
+          !v.title.toLowerCase().includes(query) &&
+          !(v.content ?? "").toLowerCase().includes(query)
+        ) {
+          return false;
+        }
+        if (tagFilter !== ALL_TAGS) {
+          const ideaTagIds = (tagsByIdea[v.idea_id] ?? []).map((t) => t.id);
+          if (!ideaTagIds.includes(tagFilter)) return false;
+        }
+        if (assigneeFilter !== ALL_ASSIGNEES) {
+          const assigneeId = assigneeByIdea[v.idea_id] ?? null;
+          if (assigneeFilter === UNASSIGNED) {
+            if (assigneeId !== null) return false;
+          } else if (assigneeId !== assigneeFilter) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+    return result;
+  }, [versionsByColumn, tagsByIdea, assigneeByIdea, searchQuery, tagFilter, assigneeFilter]);
 
   function moveCard(ideaId: string, targetColumnId: string, cancellationReason?: string) {
     startMoveTransition(async () => {
@@ -71,6 +140,68 @@ export function Board({
 
   return (
     <>
+      <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5">
+        <div className="relative w-64 max-w-full">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Fikir ara..."
+            className="h-8 pl-8"
+          />
+        </div>
+        <Select value={tagFilter} onValueChange={(v) => v && setTagFilter(v)}>
+          <SelectTrigger size="sm">
+            <SelectValue>
+              {() => (tagFilter === ALL_TAGS ? "Tüm etiketler" : tags.find((t) => t.id === tagFilter)?.name)}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_TAGS}>Tüm etiketler</SelectItem>
+            {tags.map((tag) => (
+              <SelectItem key={tag.id} value={tag.id}>
+                {tag.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={assigneeFilter} onValueChange={(v) => v && setAssigneeFilter(v)}>
+          <SelectTrigger size="sm">
+            <SelectValue>
+              {() =>
+                assigneeFilter === ALL_ASSIGNEES
+                  ? "Tüm atananlar"
+                  : assigneeFilter === UNASSIGNED
+                    ? "Atanmamış"
+                    : members.find((m) => m.user_id === assigneeFilter)?.email
+              }
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_ASSIGNEES}>Tüm atananlar</SelectItem>
+            <SelectItem value={UNASSIGNED}>Atanmamış</SelectItem>
+            {members.map((m) => (
+              <SelectItem key={m.user_id} value={m.user_id}>
+                {m.email ?? m.user_id}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchQuery("");
+              setTagFilter(ALL_TAGS);
+              setAssigneeFilter(ALL_ASSIGNEES);
+            }}
+          >
+            <XIcon /> Temizle
+          </Button>
+        )}
+      </div>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex flex-1 items-start gap-4 overflow-x-auto p-4">
           {initialColumns.map((col) => (
@@ -78,10 +209,20 @@ export function Board({
               key={col.id}
               workspaceId={workspaceId}
               column={col}
-              versions={versionsByColumn[col.id] ?? []}
+              versions={filteredVersionsByColumn[col.id] ?? []}
+              assigneeByIdea={assigneeByIdea}
+              tagsByIdea={tagsByIdea}
+              voteCountByIdea={voteCountByIdea}
+              hasVotedByIdea={hasVotedByIdea}
+              members={members}
+              tags={tags}
+              isOwner={isOwner}
+              autoOpenIdeaId={autoOpenIdeaId}
             />
           ))}
-          <CreateColumnDialog workspaceId={workspaceId} nextOrder={initialColumns.length} />
+          {isOwner && (
+            <CreateColumnDialog workspaceId={workspaceId} nextOrder={initialColumns.length} />
+          )}
         </div>
       </DragDropContext>
 

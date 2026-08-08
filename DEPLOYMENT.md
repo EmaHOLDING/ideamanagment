@@ -96,6 +96,8 @@ Yukarıdakilerden hiçbiri tuttuğunuz hatayla eşleşmiyorsa, **tam hata mesaj�
 
 ## 3. Google OAuth Client Oluşturma
 
+> 🌐 **Özel domain'iniz yok mu? Sorun değil.** Bu rehberdeki `<production-domain>` her yerde **kendi domain'inizi değil**, Vercel'in size ücretsiz verdiği `https://<proje-adi>.vercel.app` adresini de ifade edebilir. Bu adresi henüz bilmiyorsanız, en kolayı: önce **Adım 5.1**'e atlayıp projeyi Vercel'e import edin (henüz env değişkenlerini girmeden de import/ilk deploy yapılabilir, uygulama env değişkenleri eksik olduğu için hata verecektir ama bu normal), Vercel size gerçek adresi (`https://ema-idea-management.vercel.app` gibi) gösterecektir. O adresi not alıp buraya geri dönün, aşağıdaki `<production-domain>` yerlerine o adresi yazın, sonra Adım 5.2'de env değişkenlerini girip yeniden deploy edin.
+
 ### 3.1 Google Cloud Console'da Client ID
 
 1. [Google Cloud Console](https://console.cloud.google.com) → bir proje seçin/oluşturun.
@@ -175,9 +177,9 @@ git push -u origin main
 
 **Deploy** butonuna basın. Vercel, `main` branch'ine her push'ta otomatik production deploy, diğer branch'lere/PR'lara otomatik preview deploy yapar.
 
-### 5.4 Domain (opsiyonel)
+### 5.4 Domain (tamamen opsiyonel)
 
-Başlangıçta Vercel'in verdiği `<proje-adi>.vercel.app` adresi kullanılabilir. Kendi domaininizi bağlamak isterseniz: **Project Settings → Domains** → domain ekleyin, DNS sağlayıcınızda gösterilen kaydı (CNAME/A) tanımlayın.
+Özel bir domain'iniz **olmak zorunda değil** — Vercel'in verdiği `https://<proje-adi>.vercel.app` adresini kalıcı olarak, süresiz kullanabilirsiniz; ücretsizdir ve production ortamı olarak tamamen geçerlidir. İleride kendi domaininizi almak isterseniz: **Project Settings → Domains** → domain ekleyin, DNS sağlayıcınızda gösterilen kaydı (CNAME/A) tanımlayın.
 
 > Domain değiştiğinde/eklendiğinde **Adım 3.3 ve 3.1'deki redirect URL'leri güncellemeyi unutmayın** — `<production-domain>` her yerde gerçek domaininizle değişmeli.
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, encodeCursor, decodeCursor, resolveAuthorEmails } from "./_shared";
+import { requireUser, encodeCursor, decodeCursor, resolveAuthorEmails, logActivity } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function actorDisplayName(user: { email?: string | null; user_metadata?: Record<string, unknown> }) {
@@ -13,15 +13,21 @@ function actorDisplayName(user: { email?: string | null; user_metadata?: Record<
 const addCommentSchema = z.object({
   ideaId: z.string().uuid(),
   content: z.string().trim().min(1),
+  mentionedUserIds: z.array(z.string().uuid()).optional(),
 });
 
-export async function addComment(ideaId: string, content: string) {
-  const input = addCommentSchema.parse({ ideaId, content });
+export async function addComment(ideaId: string, content: string, mentionedUserIds?: string[]) {
+  const input = addCommentSchema.parse({ ideaId, content, mentionedUserIds });
   const { supabase, user } = await requireUser();
 
   const { data: comment, error: commentError } = await supabase
     .from("comments")
-    .insert({ idea_id: input.ideaId, user_id: user.id, content: input.content })
+    .insert({
+      idea_id: input.ideaId,
+      user_id: user.id,
+      content: input.content,
+      mentioned_user_ids: input.mentionedUserIds?.length ? input.mentionedUserIds : null,
+    })
     .select()
     .single();
 
@@ -29,7 +35,7 @@ export async function addComment(ideaId: string, content: string) {
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
-    .select("created_by, idea_versions(title, version_number)")
+    .select("workspace_id, created_by, idea_versions(title, version_number)")
     .eq("id", input.ideaId)
     .single();
 
@@ -52,12 +58,12 @@ export async function addComment(ideaId: string, content: string) {
     recipientIds.add(idea.created_by);
   }
 
-  if (recipientIds.size > 0) {
-    const latestVersion = idea.idea_versions
-      .slice()
-      .sort((a, b) => b.version_number - a.version_number)[0];
-    const ideaTitle = latestVersion?.title ?? "";
+  const latestVersion = idea.idea_versions
+    .slice()
+    .sort((a, b) => b.version_number - a.version_number)[0];
+  const ideaTitle = latestVersion?.title ?? "";
 
+  if (recipientIds.size > 0) {
     const admin = createAdminClient();
     const { error: notificationError } = await admin.from("notifications").insert(
       Array.from(recipientIds).map((recipientId) => ({
@@ -69,6 +75,28 @@ export async function addComment(ideaId: string, content: string) {
     );
     if (notificationError) throw notificationError;
   }
+
+  const mentionedIds = (input.mentionedUserIds ?? []).filter((id) => id !== user.id);
+  if (mentionedIds.length > 0) {
+    const admin = createAdminClient();
+    const { error: mentionNotificationError } = await admin.from("notifications").insert(
+      mentionedIds.map((recipientId) => ({
+        user_id: recipientId,
+        actor_id: user.id,
+        idea_id: input.ideaId,
+        message: `${actorDisplayName(user)}, '${ideaTitle}' fikrindeki bir yorumda sizi etiketledi.`,
+      }))
+    );
+    if (mentionNotificationError) throw mentionNotificationError;
+  }
+
+  await logActivity(supabase, {
+    workspaceId: idea.workspace_id,
+    actorId: user.id,
+    ideaId: input.ideaId,
+    type: "comment_added",
+    message: `${actorDisplayName(user)}, '${ideaTitle}' fikrine yorum yaptı.`,
+  });
 
   return comment;
 }

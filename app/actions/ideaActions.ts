@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, resolveAuthorEmails } from "./_shared";
+import { requireUser, resolveAuthorEmails, logActivity } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const impactEffortSchema = z.enum(["LOW", "MEDIUM", "HIGH"]).optional();
@@ -35,7 +35,7 @@ export async function createIdea(
   versionData: IdeaVersionData
 ) {
   const input = createIdeaSchema.parse({ workspaceId, columnId, versionData });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase.rpc("create_idea", {
     _workspace_id: input.workspaceId,
@@ -50,6 +50,14 @@ export async function createIdea(
 
   if (error) throw error;
 
+  await logActivity(supabase, {
+    workspaceId: input.workspaceId,
+    actorId: user.id,
+    ideaId: data.id,
+    type: "idea_created",
+    message: `${actorDisplayName(user)}, '${input.versionData.title}' fikrini oluşturdu.`,
+  });
+
   return data;
 }
 
@@ -60,7 +68,7 @@ const updateIdeaSchema = z.object({
 
 export async function updateIdea(ideaId: string, versionData: IdeaVersionData) {
   const input = updateIdeaSchema.parse({ ideaId, versionData });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase.rpc("update_idea", {
     _idea_id: input.ideaId,
@@ -73,6 +81,14 @@ export async function updateIdea(ideaId: string, versionData: IdeaVersionData) {
   });
 
   if (error) throw error;
+
+  await logActivity(supabase, {
+    workspaceId: data.workspace_id,
+    actorId: user.id,
+    ideaId: data.id,
+    type: "idea_updated",
+    message: `${actorDisplayName(user)}, '${input.versionData.title}' fikrini güncelledi.`,
+  });
 
   return data;
 }
@@ -105,7 +121,7 @@ export async function moveIdea(
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
-    .select("id, created_by, idea_versions(title, version_number)")
+    .select("id, workspace_id, created_by, idea_versions(title, version_number)")
     .eq("id", input.ideaId)
     .single();
 
@@ -140,6 +156,14 @@ export async function moveIdea(
     });
     if (notificationError) throw notificationError;
   }
+
+  await logActivity(supabase, {
+    workspaceId: idea.workspace_id,
+    actorId: user.id,
+    ideaId: input.ideaId,
+    type: "idea_moved",
+    message: `${actorDisplayName(user)}, '${ideaTitle}' kartını '${targetColumn.title}' durumuna taşıdı.`,
+  });
 
   return updatedIdea;
 }
@@ -177,6 +201,61 @@ export async function deleteIdea(ideaId: string) {
   return { success: true as const };
 }
 
+const assignIdeaSchema = z.object({
+  ideaId: z.string().uuid(),
+  assigneeUserId: z.string().uuid().nullable(),
+});
+
+export async function assignIdea(ideaId: string, assigneeUserId: string | null) {
+  const input = assignIdeaSchema.parse({ ideaId, assigneeUserId });
+  const { supabase, user } = await requireUser();
+
+  const { data: idea, error: ideaError } = await supabase
+    .from("ideas")
+    .select("id, workspace_id, idea_versions(title, version_number)")
+    .eq("id", input.ideaId)
+    .single();
+
+  if (ideaError) throw ideaError;
+
+  const { data: updatedIdea, error: updateError } = await supabase
+    .from("ideas")
+    .update({ assignee_id: input.assigneeUserId })
+    .eq("id", input.ideaId)
+    .select()
+    .single();
+
+  if (updateError) throw updateError;
+
+  const latestVersion = idea.idea_versions
+    .slice()
+    .sort((a, b) => b.version_number - a.version_number)[0];
+  const ideaTitle = latestVersion?.title ?? "";
+
+  if (input.assigneeUserId && input.assigneeUserId !== user.id) {
+    const admin = createAdminClient();
+    const { error: notificationError } = await admin.from("notifications").insert({
+      user_id: input.assigneeUserId,
+      actor_id: user.id,
+      idea_id: input.ideaId,
+      message: `${actorDisplayName(user)}, '${ideaTitle}' fikrini size atadı.`,
+    });
+    if (notificationError) throw notificationError;
+  }
+
+  await logActivity(supabase, {
+    workspaceId: idea.workspace_id,
+    actorId: user.id,
+    ideaId: input.ideaId,
+    type: "idea_assigned",
+    message: input.assigneeUserId
+      ? `${actorDisplayName(user)}, '${ideaTitle}' fikrini birine atadı.`
+      : `${actorDisplayName(user)}, '${ideaTitle}' fikrinin atamasını kaldırdı.`,
+  });
+
+  return updatedIdea;
+}
+
 const workspaceIdForIdeasSchema = z.string().uuid();
 
 export async function getIdeasForWorkspace(workspaceId: string) {
@@ -185,10 +264,64 @@ export async function getIdeasForWorkspace(workspaceId: string) {
 
   const { data, error } = await supabase
     .from("ideas")
-    .select("*, idea_versions(*)")
+    .select("*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id)")
     .eq("workspace_id", id);
 
   if (error) throw error;
 
   return data;
+}
+
+export async function toggleIdeaVote(ideaId: string) {
+  const id = ideaIdSchema.parse(ideaId);
+  const { supabase, user } = await requireUser();
+
+  const { data: existingVote, error: existingError } = await supabase
+    .from("idea_votes")
+    .select("id")
+    .eq("idea_id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existingVote) {
+    const { error: deleteError } = await supabase
+      .from("idea_votes")
+      .delete()
+      .eq("id", existingVote.id);
+    if (deleteError) throw deleteError;
+  } else {
+    const { error: insertError } = await supabase
+      .from("idea_votes")
+      .insert({ idea_id: id, user_id: user.id });
+    if (insertError) throw insertError;
+
+    const { data: idea } = await supabase
+      .from("ideas")
+      .select("workspace_id, idea_versions(title, version_number)")
+      .eq("id", id)
+      .single();
+    if (idea) {
+      const latestVersion = idea.idea_versions
+        .slice()
+        .sort((a, b) => b.version_number - a.version_number)[0];
+      await logActivity(supabase, {
+        workspaceId: idea.workspace_id,
+        actorId: user.id,
+        ideaId: id,
+        type: "idea_voted",
+        message: `${actorDisplayName(user)}, '${latestVersion?.title ?? ""}' fikrine oy verdi.`,
+      });
+    }
+  }
+
+  const { count, error: countError } = await supabase
+    .from("idea_votes")
+    .select("id", { count: "exact", head: true })
+    .eq("idea_id", id);
+
+  if (countError) throw countError;
+
+  return { voted: !existingVote, voteCount: count ?? 0 };
 }

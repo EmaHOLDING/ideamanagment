@@ -46,3 +46,27 @@ export async function resolveAuthorEmails(userIds: string[]) {
 
   return emailById;
 }
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/** Aktivite akışı satırı ekler. Çağıran kendi eylemini kendi adına logladığı
+ * için (actor_id = auth.uid()) admin client gerekmez, RLS izin verir. */
+export async function logActivity(
+  supabase: SupabaseServerClient,
+  params: {
+    workspaceId: string;
+    actorId: string;
+    ideaId?: string | null;
+    type: string;
+    message: string;
+  }
+) {
+  const { error } = await supabase.from("activity_log").insert({
+    workspace_id: params.workspaceId,
+    actor_id: params.actorId,
+    idea_id: params.ideaId ?? null,
+    type: params.type,
+    message: params.message,
+  });
+  if (error) throw error;
+}

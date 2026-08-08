@@ -1,7 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser } from "./_shared";
+import { requireUser, logActivity } from "./_shared";
+
+function actorDisplayName(user: { email?: string | null; user_metadata?: Record<string, unknown> }) {
+  const fullName = user.user_metadata?.full_name;
+  if (typeof fullName === "string" && fullName.trim()) return fullName;
+  return user.email ?? "Bir kullanıcı";
+}
 
 const statusTypeSchema = z.enum(["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED", "DONE"]);
 
@@ -19,7 +25,7 @@ export async function createColumn(
   order: number
 ) {
   const input = createColumnSchema.parse({ workspaceId, title, statusType, order });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase
     .from("kanban_columns")
@@ -33,6 +39,13 @@ export async function createColumn(
     .single();
 
   if (error) throw error;
+
+  await logActivity(supabase, {
+    workspaceId: input.workspaceId,
+    actorId: user.id,
+    type: "column_created",
+    message: `${actorDisplayName(user)}, '${input.title}' kolonunu oluşturdu.`,
+  });
 
   return data;
 }
@@ -66,7 +79,15 @@ const deleteColumnSchema = z.string().uuid();
 
 export async function deleteColumn(columnId: string) {
   const id = deleteColumnSchema.parse(columnId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+
+  const { data: column, error: columnError } = await supabase
+    .from("kanban_columns")
+    .select("workspace_id, title")
+    .eq("id", id)
+    .single();
+
+  if (columnError) throw columnError;
 
   const { count, error: countError } = await supabase
     .from("ideas")
@@ -94,6 +115,13 @@ export async function deleteColumn(columnId: string) {
     }
     throw deleteError;
   }
+
+  await logActivity(supabase, {
+    workspaceId: column.workspace_id,
+    actorId: user.id,
+    type: "column_deleted",
+    message: `${actorDisplayName(user)}, '${column.title}' kolonunu sildi.`,
+  });
 
   return { success: true as const };
 }

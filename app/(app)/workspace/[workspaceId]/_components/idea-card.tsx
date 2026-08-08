@@ -1,28 +1,109 @@
 "use client";
 
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { ArrowBigUpIcon } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TiptapContentView } from "@/components/editor/tiptap-content-view";
-import { IMPACT_EFFORT_LABELS } from "@/lib/status";
+import { toggleIdeaVote } from "@/app/actions/ideaActions";
+import { IMPACT_EFFORT_LABELS, tagColorClasses } from "@/lib/status";
 import { IdeaDetailDialog } from "./idea-detail-dialog";
+import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { Database } from "@/lib/types/database.types";
 
 type IdeaVersion = Database["public"]["Tables"]["idea_versions"]["Row"];
+type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
+type Tag = Database["public"]["Tables"]["tags"]["Row"];
 
-export function IdeaCard({ version }: { version: IdeaVersion }) {
+function initials(email: string | null) {
+  if (!email) return "?";
+  return email.slice(0, 2).toUpperCase();
+}
+
+export function IdeaCard({
+  workspaceId,
+  version,
+  assigneeId,
+  ideaTags,
+  voteCount,
+  hasVoted,
+  members,
+  availableTags,
+  defaultOpen,
+}: {
+  workspaceId: string;
+  version: IdeaVersion;
+  assigneeId: string | null;
+  ideaTags: Tag[];
+  voteCount: number;
+  hasVoted: boolean;
+  members: Member[];
+  availableTags: Tag[];
+  defaultOpen?: boolean;
+}) {
+  const router = useRouter();
+  const [isVotePending, startVoteTransition] = useTransition();
+  const assignee = members.find((m) => m.user_id === assigneeId);
+
+  function onVoteClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    startVoteTransition(async () => {
+      try {
+        await toggleIdeaVote(version.idea_id);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Oylama işlemi başarısız oldu");
+      }
+    });
+  }
+
   const cardTrigger = (
     <Card
       size="sm"
       className="cursor-pointer border-border transition-all hover:border-primary/40 hover:shadow-md"
     >
       <CardHeader>
-        <CardTitle className="line-clamp-1 text-sm">{version.title}</CardTitle>
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="line-clamp-1 flex-1 text-sm">{version.title}</CardTitle>
+          <Button
+            type="button"
+            variant={hasVoted ? "default" : "outline"}
+            size="xs"
+            disabled={isVotePending}
+            onClick={onVoteClick}
+            className="shrink-0 gap-1 px-1.5"
+          >
+            <ArrowBigUpIcon className="size-3.5" />
+            {voteCount}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <TiptapContentView content={version.content} clamp className="text-muted-foreground" />
-        <div className="flex flex-wrap gap-1">
-          <Badge variant="outline">Etki: {IMPACT_EFFORT_LABELS[version.impact_score ?? "MEDIUM"]}</Badge>
-          <Badge variant="outline">Efor: {IMPACT_EFFORT_LABELS[version.effort_score ?? "MEDIUM"]}</Badge>
+        {ideaTags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {ideaTags.map((tag) => (
+              <Badge key={tag.id} variant="outline" className={tagColorClasses(tag.color).badgeClass}>
+                {tag.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-1">
+            <Badge variant="outline">Etki: {IMPACT_EFFORT_LABELS[version.impact_score ?? "MEDIUM"]}</Badge>
+            <Badge variant="outline">Efor: {IMPACT_EFFORT_LABELS[version.effort_score ?? "MEDIUM"]}</Badge>
+          </div>
+          {assignee && (
+            <Avatar size="sm" className="shrink-0" title={assignee.email ?? undefined}>
+              <AvatarFallback>{initials(assignee.email)}</AvatarFallback>
+            </Avatar>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -30,6 +111,7 @@ export function IdeaCard({ version }: { version: IdeaVersion }) {
 
   return (
     <IdeaDetailDialog
+      workspaceId={workspaceId}
       ideaId={version.idea_id}
       data={{
         title: version.title,
@@ -39,6 +121,11 @@ export function IdeaCard({ version }: { version: IdeaVersion }) {
         impactScore: version.impact_score ?? "MEDIUM",
         effortScore: version.effort_score ?? "MEDIUM",
       }}
+      assigneeId={assigneeId}
+      ideaTags={ideaTags}
+      members={members}
+      availableTags={availableTags}
+      defaultOpen={defaultOpen}
       trigger={cardTrigger}
     />
   );

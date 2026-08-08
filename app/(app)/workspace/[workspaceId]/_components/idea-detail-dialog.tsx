@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useTransition, type ReactElement } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { PencilIcon, Trash2Icon, HistoryIcon, TargetIcon, MessageSquareIcon } from "lucide-react";
+import {
+  PencilIcon,
+  Trash2Icon,
+  HistoryIcon,
+  TargetIcon,
+  MessageSquareIcon,
+  UserIcon,
+  LinkIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +21,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,26 +40,50 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TiptapContentView } from "@/components/editor/tiptap-content-view";
-import { deleteIdea, type IdeaVersionData } from "@/app/actions/ideaActions";
+import { assignIdea, deleteIdea, type IdeaVersionData } from "@/app/actions/ideaActions";
+import { setIdeaTags } from "@/app/actions/tagActions";
 import { IMPACT_EFFORT_LABELS } from "@/lib/status";
 import { IdeaDialog } from "./idea-dialog";
 import { VersionHistoryDialog } from "./version-history-dialog";
 import { CommentsPanel } from "./comments-panel";
+import { TagPicker } from "./tag-picker";
+import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
+import type { Database } from "@/lib/types/database.types";
+
+type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
+type Tag = Database["public"]["Tables"]["tags"]["Row"];
+
+const UNASSIGNED = "unassigned";
 
 export function IdeaDetailDialog({
+  workspaceId,
   ideaId,
   data,
+  assigneeId,
+  ideaTags,
+  members,
+  availableTags,
+  defaultOpen,
   trigger,
 }: {
+  workspaceId: string;
   ideaId: string;
   data: IdeaVersionData;
+  assigneeId: string | null;
+  ideaTags: Tag[];
+  members: Member[];
+  availableTags: Tag[];
+  defaultOpen?: boolean;
   trigger: ReactElement;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const [open, setOpen] = useState(defaultOpen ?? false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
+  const [isAssignPending, startAssignTransition] = useTransition();
+  const [, startTagTransition] = useTransition();
 
   function onConfirmDelete() {
     startDeleteTransition(async () => {
@@ -52,7 +91,7 @@ export function IdeaDetailDialog({
         await deleteIdea(ideaId);
         toast.success("Fikir silindi");
         setDeleteOpen(false);
-        setOpen(false);
+        onOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Fikir silinemedi");
@@ -60,9 +99,48 @@ export function IdeaDetailDialog({
     });
   }
 
+  function onAssigneeChange(value: string | null) {
+    const nextAssigneeId = !value || value === UNASSIGNED ? null : value;
+    startAssignTransition(async () => {
+      try {
+        await assignIdea(ideaId, nextAssigneeId);
+        toast.success("Atanan kişi güncellendi");
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Atama güncellenemedi");
+      }
+    });
+  }
+
+  function onTagsChange(tagIds: string[]) {
+    startTagTransition(async () => {
+      try {
+        await setIdeaTags(ideaId, tagIds);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Etiketler güncellenemedi");
+      }
+    });
+  }
+
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    router.replace(next ? `${pathname}?idea=${ideaId}` : pathname, { scroll: false });
+  }
+
+  async function onCopyLink() {
+    const url = `${window.location.origin}${pathname}?idea=${ideaId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link kopyalandı");
+    } catch {
+      toast.error("Link kopyalanamadı");
+    }
+  }
+
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogTrigger render={trigger} nativeButton={false} />
         <DialogContent
           showCloseButton
@@ -73,12 +151,44 @@ export function IdeaDetailDialog({
               <DialogTitle className="text-lg leading-snug break-words pr-1">
                 {data.title}
               </DialogTitle>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <Badge variant="outline">Etki: {IMPACT_EFFORT_LABELS[data.impactScore ?? "MEDIUM"]}</Badge>
                 <Badge variant="outline">Efor: {IMPACT_EFFORT_LABELS[data.effortScore ?? "MEDIUM"]}</Badge>
+                <Select
+                  value={assigneeId ?? UNASSIGNED}
+                  onValueChange={onAssigneeChange}
+                  disabled={isAssignPending}
+                >
+                  <SelectTrigger size="sm" className="h-6 w-auto gap-1 text-xs">
+                    <UserIcon className="size-3" />
+                    <SelectValue>
+                      {() => {
+                        const assignee = members.find((m) => m.user_id === assigneeId);
+                        return assignee?.email ?? "Atanmadı";
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UNASSIGNED}>Atanmadı</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        {m.email ?? m.user_id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <TagPicker
+                  workspaceId={workspaceId}
+                  availableTags={availableTags}
+                  selectedTagIds={ideaTags.map((t) => t.id)}
+                  onChange={onTagsChange}
+                />
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1.5 pr-9">
+              <Button type="button" variant="ghost" size="sm" onClick={onCopyLink}>
+                <LinkIcon /> Link Kopyala
+              </Button>
               <VersionHistoryDialog
                 ideaId={ideaId}
                 trigger={
@@ -108,7 +218,7 @@ export function IdeaDetailDialog({
               </div>
               <ScrollArea className="min-h-0 flex-1">
                 <div className="p-4">
-                  <CommentsPanel ideaId={ideaId} showHeading={false} />
+                  <CommentsPanel ideaId={ideaId} members={members} showHeading={false} />
                 </div>
               </ScrollArea>
             </div>

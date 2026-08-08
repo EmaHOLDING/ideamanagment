@@ -1,7 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser } from "./_shared";
+import { randomBytes } from "crypto";
+import { requireUser, resolveAuthorEmails } from "./_shared";
 
 const createWorkspaceSchema = z.object({
   title: z.string().trim().min(1).max(255),
@@ -13,10 +14,10 @@ export async function createWorkspace(title: string, templateId?: string) {
   const { supabase } = await requireUser();
 
   // workspaces tablosundaki SELECT RLS policy'si workspace_members
-  // üyeliğine bağlı olduğundan, workspace + ilk üyelik + (opsiyonel)
+  // üyeliğine bağlı olduğundan, workspace + ilk üyelik (OWNER) + (opsiyonel)
   // şablon kolonlarının kopyalanması SECURITY DEFINER bir RPC
   // içinde atomik olarak yapılır (bkz. supabase/migrations/
-  // ..._workspace_functions.sql).
+  // ..._workspace_functions.sql, ..._workspace_roles.sql).
   const { data, error } = await supabase.rpc("create_workspace", {
     _title: input.title,
     _template_id: input.templateId,
@@ -69,16 +70,151 @@ const workspaceIdSchema = z.string().uuid();
 
 export async function getWorkspaceForUser(workspaceId: string) {
   const id = workspaceIdSchema.parse(workspaceId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase
     .from("workspaces")
-    .select("*, kanban_columns(*)")
+    .select("*, kanban_columns(*), workspace_members!inner(role)")
     .eq("id", id)
+    .eq("workspace_members.user_id", user.id)
     .order("order", { referencedTable: "kanban_columns", ascending: true })
     .single();
 
   if (error) throw error;
 
+  const { workspace_members, ...workspace } = data;
+  const role = workspace_members[0]?.role ?? "MEMBER";
+
+  return { ...workspace, role, isOwner: role === "OWNER" };
+}
+
+export async function getWorkspaceMembers(workspaceId: string) {
+  const id = workspaceIdSchema.parse(workspaceId);
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("workspace_members")
+    .select("*")
+    .eq("workspace_id", id)
+    .order("joined_at", { ascending: true });
+
+  if (error) throw error;
+
+  const emailById = await resolveAuthorEmails(data.map((m) => m.user_id));
+
+  return data.map((m) => ({ ...m, email: emailById.get(m.user_id) ?? null }));
+}
+
+const removeMemberSchema = z.object({
+  workspaceId: z.string().uuid(),
+  userId: z.string().uuid(),
+});
+
+export async function removeMember(workspaceId: string, userId: string) {
+  const input = removeMemberSchema.parse({ workspaceId, userId });
+  const { supabase } = await requireUser();
+
+  const { data: target, error: targetError } = await supabase
+    .from("workspace_members")
+    .select("role")
+    .eq("workspace_id", input.workspaceId)
+    .eq("user_id", input.userId)
+    .single();
+
+  if (targetError) throw targetError;
+
+  if (target.role === "OWNER") {
+    throw new Error("Workspace sahibi çıkarılamaz. Önce sahipliği başka bir üyeye devretmeli.");
+  }
+
+  const { error } = await supabase
+    .from("workspace_members")
+    .delete()
+    .eq("workspace_id", input.workspaceId)
+    .eq("user_id", input.userId);
+
+  if (error) throw error;
+
+  return { success: true };
+}
+
+export async function transferOwnership(workspaceId: string, newOwnerUserId: string) {
+  const input = removeMemberSchema.parse({ workspaceId, userId: newOwnerUserId });
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase.rpc("transfer_workspace_ownership", {
+    _workspace_id: input.workspaceId,
+    _new_owner_user_id: input.userId,
+  });
+
+  if (error) {
+    if (error.message.includes("only the current owner")) {
+      throw new Error("Sahipliği yalnızca mevcut workspace sahibi devredebilir.");
+    }
+    if (error.message.includes("not a member")) {
+      throw new Error("Seçilen kullanıcı bu workspace'in üyesi değil.");
+    }
+    throw error;
+  }
+
+  return { success: true };
+}
+
+export async function leaveWorkspace(workspaceId: string) {
+  const id = workspaceIdSchema.parse(workspaceId);
+  const { supabase, user } = await requireUser();
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("workspace_members")
+    .select("role")
+    .eq("workspace_id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (membershipError) throw membershipError;
+
+  if (membership.role === "OWNER") {
+    throw new Error(
+      "Workspace sahibi olarak ayrılmadan önce sahipliği başka bir üyeye devretmelisiniz."
+    );
+  }
+
+  const { error } = await supabase
+    .from("workspace_members")
+    .delete()
+    .eq("workspace_id", id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+
+  return { success: true };
+}
+
+export async function regenerateInviteCode(workspaceId: string) {
+  const id = workspaceIdSchema.parse(workspaceId);
+  const { supabase } = await requireUser();
+
+  const newCode = randomBytes(6).toString("hex").slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("workspaces")
+    .update({ invite_code: newCode })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+
   return data;
+}
+
+export async function deleteWorkspaceAction(workspaceId: string) {
+  const id = workspaceIdSchema.parse(workspaceId);
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase.from("workspaces").delete().eq("id", id);
+
+  if (error) throw error;
+
+  return { success: true };
 }

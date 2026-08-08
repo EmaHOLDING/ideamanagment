@@ -22,19 +22,38 @@ import { STATUS_LABELS, STATUS_BADGE_VARIANT, STATUS_DOT_CLASS } from "@/lib/sta
 import { deleteColumn } from "@/app/actions/columnActions";
 import { IdeaCard } from "./idea-card";
 import { IdeaDialog } from "./idea-dialog";
+import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { Database } from "@/lib/types/database.types";
 
 type ColumnRow = Database["public"]["Tables"]["kanban_columns"]["Row"];
 type IdeaVersion = Database["public"]["Tables"]["idea_versions"]["Row"];
+type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
+type Tag = Database["public"]["Tables"]["tags"]["Row"];
 
 export function Column({
   workspaceId,
   column,
   versions,
+  assigneeByIdea,
+  tagsByIdea,
+  voteCountByIdea,
+  hasVotedByIdea,
+  members,
+  tags,
+  isOwner,
+  autoOpenIdeaId,
 }: {
   workspaceId: string;
   column: ColumnRow;
   versions: IdeaVersion[];
+  assigneeByIdea: Record<string, string | null>;
+  tagsByIdea: Record<string, Tag[]>;
+  voteCountByIdea: Record<string, number>;
+  hasVotedByIdea: Record<string, boolean>;
+  members: Member[];
+  tags: Tag[];
+  isOwner: boolean;
+  autoOpenIdeaId: string | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -72,33 +91,35 @@ export function Column({
           <Badge variant={STATUS_BADGE_VARIANT[column.status_type]}>
             {STATUS_LABELS[column.status_type]}
           </Badge>
-          <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogTrigger
-              render={
-                <Button variant="ghost" size="icon-xs">
-                  <Trash2Icon />
-                </Button>
-              }
-            />
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Kolonu Sil</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {ideaCount > 0
-                    ? `Bu kolonda ${ideaCount} adet fikir var. Kolonu silmeden önce fikirleri başka bir kolona taşıyın veya silin.`
-                    : `"${column.title}" kolonunu silmek istediğinize emin misiniz?`}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Vazgeç</AlertDialogCancel>
-                {ideaCount === 0 && (
-                  <AlertDialogAction disabled={isPending} onClick={onConfirmDelete}>
-                    Sil
-                  </AlertDialogAction>
-                )}
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {isOwner && (
+            <AlertDialog open={open} onOpenChange={setOpen}>
+              <AlertDialogTrigger
+                render={
+                  <Button variant="ghost" size="icon-xs">
+                    <Trash2Icon />
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Kolonu Sil</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {ideaCount > 0
+                      ? `Bu kolonda ${ideaCount} adet fikir var. Kolonu silmeden önce fikirleri başka bir kolona taşıyın veya silin.`
+                      : `"${column.title}" kolonunu silmek istediğinize emin misiniz?`}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+                  {ideaCount === 0 && (
+                    <AlertDialogAction disabled={isPending} onClick={onConfirmDelete}>
+                      Sil
+                    </AlertDialogAction>
+                  )}
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
       <Droppable droppableId={column.id} type="CARD">
@@ -119,7 +140,17 @@ export function Column({
                     {...dragProvided.draggableProps}
                     {...dragProvided.dragHandleProps}
                   >
-                    <IdeaCard version={v} />
+                    <IdeaCard
+                      workspaceId={workspaceId}
+                      version={v}
+                      assigneeId={assigneeByIdea[v.idea_id] ?? null}
+                      ideaTags={tagsByIdea[v.idea_id] ?? []}
+                      voteCount={voteCountByIdea[v.idea_id] ?? 0}
+                      hasVoted={hasVotedByIdea[v.idea_id] ?? false}
+                      members={members}
+                      availableTags={tags}
+                      defaultOpen={autoOpenIdeaId === v.idea_id}
+                    />
                   </div>
                 )}
               </Draggable>

@@ -34,6 +34,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          idea_id: string | null
+          message: string
+          type: string
+          workspace_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          idea_id?: string | null
+          message: string
+          type: string
+          workspace_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          idea_id?: string | null
+          message?: string
+          type?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_templates: {
         Row: {
           columns_config: Json
@@ -67,6 +112,7 @@ export type Database = {
           created_at: string
           id: string
           idea_id: string
+          mentioned_user_ids: string[] | null
           user_id: string
         }
         Insert: {
@@ -74,6 +120,7 @@ export type Database = {
           created_at?: string
           id?: string
           idea_id: string
+          mentioned_user_ids?: string[] | null
           user_id: string
         }
         Update: {
@@ -81,6 +128,7 @@ export type Database = {
           created_at?: string
           id?: string
           idea_id?: string
+          mentioned_user_ids?: string[] | null
           user_id?: string
         }
         Relationships: [
@@ -89,6 +137,36 @@ export type Database = {
             columns: ["idea_id"]
             isOneToOne: false
             referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idea_tags: {
+        Row: {
+          idea_id: string
+          tag_id: string
+        }
+        Insert: {
+          idea_id: string
+          tag_id: string
+        }
+        Update: {
+          idea_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_tags_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
             referencedColumns: ["id"]
           },
         ]
@@ -155,8 +233,38 @@ export type Database = {
           },
         ]
       }
+      idea_votes: {
+        Row: {
+          created_at: string
+          id: string
+          idea_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idea_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idea_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_votes_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ideas: {
         Row: {
+          assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
           created_at: string
@@ -167,6 +275,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          assignee_id?: string | null
           cancellation_reason?: string | null
           column_id: string
           created_at?: string
@@ -177,6 +286,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          assignee_id?: string | null
           cancellation_reason?: string | null
           column_id?: string
           created_at?: string
@@ -276,22 +386,57 @@ export type Database = {
           },
         ]
       }
+      tags: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          workspace_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          workspace_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           id: string
           joined_at: string
+          role: Database["public"]["Enums"]["workspace_role"]
           user_id: string
           workspace_id: string
         }
         Insert: {
           id?: string
           joined_at?: string
+          role?: Database["public"]["Enums"]["workspace_role"]
           user_id: string
           workspace_id: string
         }
         Update: {
           id?: string
           joined_at?: string
+          role?: Database["public"]["Enums"]["workspace_role"]
           user_id?: string
           workspace_id?: string
         }
@@ -343,6 +488,7 @@ export type Database = {
           _workspace_id: string
         }
         Returns: {
+          assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
           created_at: string
@@ -375,6 +521,7 @@ export type Database = {
         }
       }
       is_workspace_member: { Args: { _workspace_id: string }; Returns: boolean }
+      is_workspace_owner: { Args: { _workspace_id: string }; Returns: boolean }
       join_workspace_by_invite_code: {
         Args: { _invite_code: string }
         Returns: {
@@ -390,6 +537,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      transfer_workspace_ownership: {
+        Args: { _new_owner_user_id: string; _workspace_id: string }
+        Returns: undefined
+      }
       update_idea: {
         Args: {
           _content: string
@@ -401,6 +552,7 @@ export type Database = {
           _title: string
         }
         Returns: {
+          assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
           created_at: string
@@ -421,6 +573,7 @@ export type Database = {
     Enums: {
       impact_effort_level: "LOW" | "MEDIUM" | "HIGH"
       status_type: "DRAFT" | "IN_REVIEW" | "APPROVED" | "CANCELLED" | "DONE"
+      workspace_role: "OWNER" | "MEMBER"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -553,6 +706,7 @@ export const Constants = {
     Enums: {
       impact_effort_level: ["LOW", "MEDIUM", "HIGH"],
       status_type: ["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED", "DONE"],
+      workspace_role: ["OWNER", "MEMBER"],
     },
   },
 } as const
