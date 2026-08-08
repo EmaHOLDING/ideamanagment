@@ -2,6 +2,20 @@ import type { Database } from "@/lib/types/database.types";
 
 export type StatusType = Database["public"]["Enums"]["status_type"];
 export type ImpactEffortLevel = Database["public"]["Enums"]["impact_effort_level"];
+export type WorkspaceRole = Database["public"]["Enums"]["workspace_role"];
+
+export const WORKSPACE_ROLE_LABELS: Record<WorkspaceRole, string> = {
+  OWNER: "Kurucu",
+  ADMIN: "Yönetici",
+  MEMBER: "Üye",
+  VIEWER: "Gözlemci",
+};
+
+export const ASSIGNABLE_WORKSPACE_ROLES: Extract<WorkspaceRole, "MEMBER" | "ADMIN" | "VIEWER">[] = [
+  "MEMBER",
+  "ADMIN",
+  "VIEWER",
+];
 
 export const STATUS_LABELS: Record<StatusType, string> = {
   DRAFT: "Taslak",

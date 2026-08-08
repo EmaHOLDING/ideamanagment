@@ -38,9 +38,13 @@ export function Board({
   tagsByIdea,
   voteCountByIdea,
   hasVotedByIdea,
+  createdByIdea,
+  currentUserId,
   members,
   tags,
-  isOwner,
+  canManageContent,
+  isViewer,
+  canContribute,
   autoOpenIdeaId,
 }: {
   workspaceId: string;
@@ -50,9 +54,13 @@ export function Board({
   tagsByIdea: Record<string, Tag[]>;
   voteCountByIdea: Record<string, number>;
   hasVotedByIdea: Record<string, boolean>;
+  createdByIdea: Record<string, string>;
+  currentUserId: string;
   members: Member[];
   tags: Tag[];
-  isOwner: boolean;
+  canManageContent: boolean;
+  isViewer: boolean;
+  canContribute: boolean;
   autoOpenIdeaId: string | null;
 }) {
   const router = useRouter();
@@ -112,6 +120,7 @@ export function Board({
   }
 
   function onDragEnd(result: DropResult) {
+    if (isViewer) return;
     if (!result.destination) return;
 
     const sourceColumnId = result.source.droppableId;
@@ -214,13 +223,17 @@ export function Board({
               tagsByIdea={tagsByIdea}
               voteCountByIdea={voteCountByIdea}
               hasVotedByIdea={hasVotedByIdea}
+              createdByIdea={createdByIdea}
+              currentUserId={currentUserId}
               members={members}
               tags={tags}
-              isOwner={isOwner}
+              canManageContent={canManageContent}
+              isViewer={isViewer}
+              canContribute={canContribute}
               autoOpenIdeaId={autoOpenIdeaId}
             />
           ))}
-          {isOwner && (
+          {canManageContent && (
             <CreateColumnDialog workspaceId={workspaceId} nextOrder={initialColumns.length} />
           )}
         </div>

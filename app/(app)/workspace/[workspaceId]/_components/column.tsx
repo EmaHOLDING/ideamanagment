@@ -38,9 +38,13 @@ export function Column({
   tagsByIdea,
   voteCountByIdea,
   hasVotedByIdea,
+  createdByIdea,
+  currentUserId,
   members,
   tags,
-  isOwner,
+  canManageContent,
+  isViewer,
+  canContribute,
   autoOpenIdeaId,
 }: {
   workspaceId: string;
@@ -50,9 +54,13 @@ export function Column({
   tagsByIdea: Record<string, Tag[]>;
   voteCountByIdea: Record<string, number>;
   hasVotedByIdea: Record<string, boolean>;
+  createdByIdea: Record<string, string>;
+  currentUserId: string;
   members: Member[];
   tags: Tag[];
-  isOwner: boolean;
+  canManageContent: boolean;
+  isViewer: boolean;
+  canContribute: boolean;
   autoOpenIdeaId: string | null;
 }) {
   const router = useRouter();
@@ -91,7 +99,7 @@ export function Column({
           <Badge variant={STATUS_BADGE_VARIANT[column.status_type]}>
             {STATUS_LABELS[column.status_type]}
           </Badge>
-          {isOwner && (
+          {canManageContent && (
             <AlertDialog open={open} onOpenChange={setOpen}>
               <AlertDialogTrigger
                 render={
@@ -122,7 +130,7 @@ export function Column({
           )}
         </div>
       </div>
-      <Droppable droppableId={column.id} type="CARD">
+      <Droppable droppableId={column.id} type="CARD" isDropDisabled={isViewer}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
@@ -133,7 +141,12 @@ export function Column({
             }
           >
             {versions.map((v, index) => (
-              <Draggable key={v.idea_id} draggableId={v.idea_id} index={index}>
+              <Draggable
+                key={v.idea_id}
+                draggableId={v.idea_id}
+                index={index}
+                isDragDisabled={isViewer}
+              >
                 {(dragProvided) => (
                   <div
                     ref={dragProvided.innerRef}
@@ -147,6 +160,10 @@ export function Column({
                       ideaTags={tagsByIdea[v.idea_id] ?? []}
                       voteCount={voteCountByIdea[v.idea_id] ?? 0}
                       hasVoted={hasVotedByIdea[v.idea_id] ?? false}
+                      createdBy={createdByIdea[v.idea_id]}
+                      currentUserId={currentUserId}
+                      canManageContent={canManageContent}
+                      canContribute={canContribute}
                       members={members}
                       availableTags={tags}
                       defaultOpen={autoOpenIdeaId === v.idea_id}
@@ -165,18 +182,20 @@ export function Column({
           </div>
         )}
       </Droppable>
-      <div className="flex flex-col gap-2">
-        <IdeaDialog
-          mode="create"
-          workspaceId={workspaceId}
-          columnId={column.id}
-          trigger={
-            <Button variant="ghost" size="sm" className="justify-start text-muted-foreground">
-              <PlusIcon /> Fikir Ekle
-            </Button>
-          }
-        />
-      </div>
+      {!isViewer && (
+        <div className="flex flex-col gap-2">
+          <IdeaDialog
+            mode="create"
+            workspaceId={workspaceId}
+            columnId={column.id}
+            trigger={
+              <Button variant="ghost" size="sm" className="justify-start text-muted-foreground">
+                <PlusIcon /> Fikir Ekle
+              </Button>
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }

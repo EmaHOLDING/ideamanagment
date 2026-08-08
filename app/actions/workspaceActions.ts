@@ -142,6 +142,63 @@ export async function removeMember(workspaceId: string, userId: string) {
   return { success: true };
 }
 
+const assignableRoleSchema = z.enum(["MEMBER", "ADMIN", "VIEWER"]);
+
+const updateMemberRoleSchema = z.object({
+  workspaceId: z.string().uuid(),
+  userId: z.string().uuid(),
+  role: assignableRoleSchema,
+});
+
+export async function updateMemberRole(
+  workspaceId: string,
+  userId: string,
+  role: "MEMBER" | "ADMIN" | "VIEWER"
+) {
+  const input = updateMemberRoleSchema.parse({ workspaceId, userId, role });
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("workspace_members")
+    .update({ role: input.role })
+    .eq("workspace_id", input.workspaceId)
+    .eq("user_id", input.userId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error("Bu işlemi yapma yetkiniz yok.");
+  }
+
+  return data;
+}
+
+const setDefaultInviteRoleSchema = z.object({
+  workspaceId: z.string().uuid(),
+  role: assignableRoleSchema,
+});
+
+export async function setDefaultInviteRole(
+  workspaceId: string,
+  role: "MEMBER" | "ADMIN" | "VIEWER"
+) {
+  const input = setDefaultInviteRoleSchema.parse({ workspaceId, role });
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("workspaces")
+    .update({ default_invite_role: input.role })
+    .eq("id", input.workspaceId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error("Bu işlemi yapma yetkiniz yok.");
+  }
+
+  return data;
+}
+
 export async function transferOwnership(workspaceId: string, newOwnerUserId: string) {
   const input = removeMemberSchema.parse({ workspaceId, userId: newOwnerUserId });
   const { supabase } = await requireUser();

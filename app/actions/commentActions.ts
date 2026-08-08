@@ -95,6 +95,45 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
   return comment;
 }
 
+const updateCommentSchema = z.object({
+  commentId: z.string().uuid(),
+  content: z.string().trim().min(1),
+});
+
+export async function updateComment(commentId: string, content: string) {
+  const input = updateCommentSchema.parse({ commentId, content });
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("comments")
+    .update({ content: input.content, updated_at: new Date().toISOString() })
+    .eq("id", input.commentId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error("Yalnızca kendi yorumunuzu düzenleyebilirsiniz.");
+  }
+
+  return data;
+}
+
+const deleteCommentSchema = z.string().uuid();
+
+export async function deleteComment(commentId: string) {
+  const id = deleteCommentSchema.parse(commentId);
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase.from("comments").delete().eq("id", id).select();
+
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("Bu yorumu silme yetkiniz yok.");
+  }
+
+  return { success: true as const };
+}
+
 const getCommentsSchema = z.object({
   ideaId: z.string().uuid(),
   cursor: z.string().optional(),

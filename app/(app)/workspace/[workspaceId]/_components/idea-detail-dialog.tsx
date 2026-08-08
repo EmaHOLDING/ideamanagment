@@ -61,6 +61,10 @@ export function IdeaDetailDialog({
   data,
   assigneeId,
   ideaTags,
+  createdBy,
+  currentUserId,
+  canManageContent,
+  canContribute,
   members,
   availableTags,
   defaultOpen,
@@ -71,6 +75,10 @@ export function IdeaDetailDialog({
   data: IdeaVersionData;
   assigneeId: string | null;
   ideaTags: Tag[];
+  createdBy: string;
+  currentUserId: string;
+  canManageContent: boolean;
+  canContribute: boolean;
   members: Member[];
   availableTags: Tag[];
   defaultOpen?: boolean;
@@ -78,6 +86,7 @@ export function IdeaDetailDialog({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const canEditIdea = createdBy === currentUserId || canManageContent;
   const [open, setOpen] = useState(defaultOpen ?? false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -157,7 +166,7 @@ export function IdeaDetailDialog({
                 <Select
                   value={assigneeId ?? UNASSIGNED}
                   onValueChange={onAssigneeChange}
-                  disabled={isAssignPending}
+                  disabled={isAssignPending || !canContribute}
                 >
                   <SelectTrigger size="sm" className="h-6 w-auto gap-1 text-xs">
                     <UserIcon className="size-3" />
@@ -177,12 +186,20 @@ export function IdeaDetailDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <TagPicker
-                  workspaceId={workspaceId}
-                  availableTags={availableTags}
-                  selectedTagIds={ideaTags.map((t) => t.id)}
-                  onChange={onTagsChange}
-                />
+                {canContribute ? (
+                  <TagPicker
+                    workspaceId={workspaceId}
+                    availableTags={availableTags}
+                    selectedTagIds={ideaTags.map((t) => t.id)}
+                    onChange={onTagsChange}
+                  />
+                ) : (
+                  ideaTags.map((tag) => (
+                    <Badge key={tag.id} variant="outline">
+                      {tag.name}
+                    </Badge>
+                  ))
+                )}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1.5 pr-9">
@@ -197,17 +214,21 @@ export function IdeaDetailDialog({
                   </Button>
                 }
               />
-              <Button type="button" variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <PencilIcon /> Düzenle
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2Icon /> Sil
-              </Button>
+              {canEditIdea && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                  <PencilIcon /> Düzenle
+                </Button>
+              )}
+              {canEditIdea && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2Icon /> Sil
+                </Button>
+              )}
             </div>
           </DialogHeader>
 
@@ -218,7 +239,14 @@ export function IdeaDetailDialog({
               </div>
               <ScrollArea className="min-h-0 flex-1">
                 <div className="p-4">
-                  <CommentsPanel ideaId={ideaId} members={members} showHeading={false} />
+                  <CommentsPanel
+                    ideaId={ideaId}
+                    members={members}
+                    currentUserId={currentUserId}
+                    canManageContent={canManageContent}
+                    canContribute={canContribute}
+                    showHeading={false}
+                  />
                 </div>
               </ScrollArea>
             </div>

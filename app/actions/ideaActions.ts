@@ -74,7 +74,12 @@ export async function updateIdea(ideaId: string, versionData: IdeaVersionData) {
     _effort_score: input.versionData.effortScore ?? "MEDIUM",
   });
 
-  if (error) throw error;
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Yalnızca fikri oluşturan kişi veya workspace yöneticisi düzenleyebilir.");
+    }
+    throw error;
+  }
 
   await logActivity(supabase, {
     workspaceId: data.workspace_id,
@@ -126,18 +131,18 @@ export async function moveIdea(
     .sort((a, b) => b.version_number - a.version_number)[0];
   const ideaTitle = latestVersion?.title ?? "";
 
-  const { data: updatedIdea, error: updateError } = await supabase
-    .from("ideas")
-    .update({
-      column_id: input.targetColumnId,
-      cancellation_reason: targetColumn.status_type === "CANCELLED" ? input.cancellationReason : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", input.ideaId)
-    .select()
-    .single();
+  const { data: updatedIdea, error: updateError } = await supabase.rpc("move_idea", {
+    _idea_id: input.ideaId,
+    _target_column_id: input.targetColumnId,
+    _cancellation_reason: targetColumn.status_type === "CANCELLED" ? input.cancellationReason : undefined,
+  });
 
-  if (updateError) throw updateError;
+  if (updateError) {
+    if (updateError.message.includes("permission_denied")) {
+      throw new Error("Bu fikri taşıma yetkiniz yok.");
+    }
+    throw updateError;
+  }
 
   // Bölüm 6.D: sadece fikri oluşturan kullanıcı (taşıyan actor hariç) bildirim alır.
   if (idea.created_by && idea.created_by !== user.id) {
@@ -189,9 +194,12 @@ export async function deleteIdea(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
   const { supabase } = await requireUser();
 
-  const { error } = await supabase.from("ideas").delete().eq("id", id);
+  const { data, error } = await supabase.from("ideas").delete().eq("id", id).select();
 
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("Bu fikri silme yetkiniz yok.");
+  }
 
   return { success: true as const };
 }
@@ -213,14 +221,17 @@ export async function assignIdea(ideaId: string, assigneeUserId: string | null) 
 
   if (ideaError) throw ideaError;
 
-  const { data: updatedIdea, error: updateError } = await supabase
-    .from("ideas")
-    .update({ assignee_id: input.assigneeUserId })
-    .eq("id", input.ideaId)
-    .select()
-    .single();
+  const { data: updatedIdea, error: updateError } = await supabase.rpc("assign_idea", {
+    _idea_id: input.ideaId,
+    _assignee_user_id: input.assigneeUserId ?? undefined,
+  });
 
-  if (updateError) throw updateError;
+  if (updateError) {
+    if (updateError.message.includes("permission_denied")) {
+      throw new Error("Bu fikri atama yetkiniz yok.");
+    }
+    throw updateError;
+  }
 
   const latestVersion = idea.idea_versions
     .slice()

@@ -27,6 +27,10 @@ export function IdeaCard({
   ideaTags,
   voteCount,
   hasVoted,
+  createdBy,
+  currentUserId,
+  canManageContent,
+  canContribute,
   members,
   availableTags,
   defaultOpen,
@@ -37,6 +41,10 @@ export function IdeaCard({
   ideaTags: Tag[];
   voteCount: number;
   hasVoted: boolean;
+  createdBy: string;
+  currentUserId: string;
+  canManageContent: boolean;
+  canContribute: boolean;
   members: Member[];
   availableTags: Tag[];
   defaultOpen?: boolean;
@@ -66,17 +74,24 @@ export function IdeaCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="line-clamp-1 flex-1 text-sm">{version.title}</CardTitle>
-          <Button
-            type="button"
-            variant={hasVoted ? "default" : "outline"}
-            size="xs"
-            disabled={isVotePending}
-            onClick={onVoteClick}
-            className="shrink-0 gap-1 px-1.5"
-          >
-            <ArrowBigUpIcon className="size-3.5" />
-            {voteCount}
-          </Button>
+          {canContribute ? (
+            <Button
+              type="button"
+              variant={hasVoted ? "default" : "outline"}
+              size="xs"
+              disabled={isVotePending}
+              onClick={onVoteClick}
+              className="shrink-0 gap-1 px-1.5"
+            >
+              <ArrowBigUpIcon className="size-3.5" />
+              {voteCount}
+            </Button>
+          ) : (
+            <Badge variant="outline" className="shrink-0 gap-1">
+              <ArrowBigUpIcon className="size-3.5" />
+              {voteCount}
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
@@ -119,6 +134,10 @@ export function IdeaCard({
       }}
       assigneeId={assigneeId}
       ideaTags={ideaTags}
+      createdBy={createdBy}
+      currentUserId={currentUserId}
+      canManageContent={canManageContent}
+      canContribute={canContribute}
       members={members}
       availableTags={availableTags}
       defaultOpen={defaultOpen}

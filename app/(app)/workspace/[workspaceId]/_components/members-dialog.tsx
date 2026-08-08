@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { UsersIcon, CrownIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
+import { UsersIcon, CrownIcon, RefreshCwIcon, Trash2Icon, SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,27 +40,38 @@ import {
   transferOwnership,
   regenerateInviteCode,
   deleteWorkspaceAction,
+  updateMemberRole,
+  setDefaultInviteRole,
 } from "@/app/actions/workspaceActions";
 import { getInitials } from "@/lib/user-display";
+import { WORKSPACE_ROLE_LABELS, ASSIGNABLE_WORKSPACE_ROLES } from "@/lib/status";
+import type { Database } from "@/lib/types/database.types";
 
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
+type AssignableRole = "MEMBER" | "ADMIN" | "VIEWER";
+type WorkspaceRole = Database["public"]["Enums"]["workspace_role"];
 
 export function MembersDialog({
   workspaceId,
   isOwner,
+  canManageContent,
   currentUserId,
   inviteCode,
+  defaultInviteRole,
 }: {
   workspaceId: string;
   isOwner: boolean;
+  canManageContent: boolean;
   currentUserId: string;
   inviteCode: string;
+  defaultInviteRole: WorkspaceRole;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [code, setCode] = useState(inviteCode);
+  const [defaultRole, setDefaultRole] = useState<WorkspaceRole>(defaultInviteRole);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -84,6 +102,18 @@ export function MembersDialog({
     });
   }
 
+  function onRoleChange(userId: string, role: AssignableRole) {
+    startTransition(async () => {
+      try {
+        await updateMemberRole(workspaceId, userId, role);
+        toast.success("Rol güncellendi");
+        refreshMembers();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Rol güncellenemedi");
+      }
+    });
+  }
+
   function onTransfer(userId: string) {
     startTransition(async () => {
       try {
@@ -105,6 +135,18 @@ export function MembersDialog({
         toast.success("Davet kodu yenilendi");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Davet kodu yenilenemedi");
+      }
+    });
+  }
+
+  function onDefaultRoleChange(role: AssignableRole) {
+    startTransition(async () => {
+      try {
+        await setDefaultInviteRole(workspaceId, role);
+        setDefaultRole(role);
+        toast.success("Varsayılan rol güncellendi");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Varsayılan rol güncellenemedi");
       }
     });
   }
@@ -155,30 +197,54 @@ export function MembersDialog({
                   </div>
                   {m.role === "OWNER" && (
                     <Badge variant="outline" className="gap-1">
-                      <CrownIcon className="size-3" /> Owner
+                      <CrownIcon className="size-3" /> {WORKSPACE_ROLE_LABELS.OWNER}
                     </Badge>
                   )}
                 </div>
-                {isOwner && m.user_id !== currentUserId && (
+                {m.role !== "OWNER" && (
                   <div className="flex shrink-0 items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      disabled={isPending}
-                      onClick={() => onTransfer(m.user_id)}
-                    >
-                      Sahipliği Devret
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      disabled={isPending}
-                      onClick={() => onRemove(m.user_id)}
-                    >
-                      <Trash2Icon />
-                    </Button>
+                    {canManageContent ? (
+                      <Select
+                        value={m.role}
+                        onValueChange={(v) => v && onRoleChange(m.user_id, v as AssignableRole)}
+                        disabled={isPending}
+                      >
+                        <SelectTrigger size="sm" className="h-7 text-xs">
+                          <SelectValue>{() => WORKSPACE_ROLE_LABELS[m.role]}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ASSIGNABLE_WORKSPACE_ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {WORKSPACE_ROLE_LABELS[role]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant="outline">{WORKSPACE_ROLE_LABELS[m.role]}</Badge>
+                    )}
+                    {isOwner && m.user_id !== currentUserId && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        disabled={isPending}
+                        onClick={() => onTransfer(m.user_id)}
+                      >
+                        Sahipliği Devret
+                      </Button>
+                    )}
+                    {canManageContent && m.user_id !== currentUserId && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        disabled={isPending}
+                        onClick={() => onRemove(m.user_id)}
+                      >
+                        <Trash2Icon />
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -187,6 +253,33 @@ export function MembersDialog({
 
         {isOwner && (
           <>
+            <Separator />
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <SettingsIcon className="size-3.5" /> Workspace Ayarları
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Davetle katılanların varsayılan rolü
+                </span>
+                <Select
+                  value={defaultRole}
+                  onValueChange={(v) => v && onDefaultRoleChange(v as AssignableRole)}
+                  disabled={isPending}
+                >
+                  <SelectTrigger size="sm" className="h-7 text-xs">
+                    <SelectValue>{() => WORKSPACE_ROLE_LABELS[defaultRole]}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ASSIGNABLE_WORKSPACE_ROLES.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {WORKSPACE_ROLE_LABELS[role]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <Separator />
             <div className="flex flex-col gap-2">
               <Button

@@ -113,6 +113,7 @@ export type Database = {
           id: string
           idea_id: string
           mentioned_user_ids: string[] | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -121,6 +122,7 @@ export type Database = {
           id?: string
           idea_id: string
           mentioned_user_ids?: string[] | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -129,6 +131,7 @@ export type Database = {
           id?: string
           idea_id?: string
           mentioned_user_ids?: string[] | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -453,18 +456,21 @@ export type Database = {
       workspaces: {
         Row: {
           created_at: string
+          default_invite_role: Database["public"]["Enums"]["workspace_role"]
           id: string
           invite_code: string
           title: string
         }
         Insert: {
           created_at?: string
+          default_invite_role?: Database["public"]["Enums"]["workspace_role"]
           id?: string
           invite_code?: string
           title: string
         }
         Update: {
           created_at?: string
+          default_invite_role?: Database["public"]["Enums"]["workspace_role"]
           id?: string
           invite_code?: string
           title?: string
@@ -476,6 +482,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_idea: {
+        Args: { _assignee_user_id?: string; _idea_id: string }
+        Returns: {
+          assignee_id: string | null
+          cancellation_reason: string | null
+          column_id: string
+          created_at: string
+          created_by: string
+          current_version: number
+          id: string
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_idea: {
         Args: {
           _column_id: string
@@ -509,6 +535,7 @@ export type Database = {
         Args: { _template_id?: string; _title: string }
         Returns: {
           created_at: string
+          default_invite_role: Database["public"]["Enums"]["workspace_role"]
           id: string
           invite_code: string
           title: string
@@ -520,12 +547,21 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      is_workspace_contributor: {
+        Args: { _workspace_id: string }
+        Returns: boolean
+      }
       is_workspace_member: { Args: { _workspace_id: string }; Returns: boolean }
       is_workspace_owner: { Args: { _workspace_id: string }; Returns: boolean }
+      is_workspace_owner_or_admin: {
+        Args: { _workspace_id: string }
+        Returns: boolean
+      }
       join_workspace_by_invite_code: {
         Args: { _invite_code: string }
         Returns: {
           created_at: string
+          default_invite_role: Database["public"]["Enums"]["workspace_role"]
           id: string
           invite_code: string
           title: string
@@ -537,19 +573,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      transfer_workspace_ownership: {
-        Args: { _new_owner_user_id: string; _workspace_id: string }
-        Returns: undefined
-      }
-      update_idea: {
+      move_idea: {
         Args: {
-          _content: string
-          _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
+          _cancellation_reason?: string
           _idea_id: string
-          _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-          _problem_statement?: string
-          _target_audience?: string
-          _title: string
+          _target_column_id: string
         }
         Returns: {
           assignee_id: string | null
@@ -569,11 +597,72 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      transfer_workspace_ownership: {
+        Args: { _new_owner_user_id: string; _workspace_id: string }
+        Returns: undefined
+      }
+      update_idea:
+        | {
+            Args: {
+              _content: Json
+              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _idea_id: string
+              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _problem_statement?: string
+              _target_audience?: string
+              _title: string
+            }
+            Returns: {
+              assignee_id: string | null
+              cancellation_reason: string | null
+              column_id: string
+              created_at: string
+              created_by: string
+              current_version: number
+              id: string
+              updated_at: string
+              workspace_id: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "ideas"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _content: string
+              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _idea_id: string
+              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _problem_statement?: string
+              _target_audience?: string
+              _title: string
+            }
+            Returns: {
+              assignee_id: string | null
+              cancellation_reason: string | null
+              column_id: string
+              created_at: string
+              created_by: string
+              current_version: number
+              id: string
+              updated_at: string
+              workspace_id: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "ideas"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
     }
     Enums: {
       impact_effort_level: "LOW" | "MEDIUM" | "HIGH"
       status_type: "DRAFT" | "IN_REVIEW" | "APPROVED" | "CANCELLED" | "DONE"
-      workspace_role: "OWNER" | "MEMBER"
+      workspace_role: "OWNER" | "MEMBER" | "ADMIN" | "VIEWER"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -706,7 +795,7 @@ export const Constants = {
     Enums: {
       impact_effort_level: ["LOW", "MEDIUM", "HIGH"],
       status_type: ["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED", "DONE"],
-      workspace_role: ["OWNER", "MEMBER"],
+      workspace_role: ["OWNER", "MEMBER", "ADMIN", "VIEWER"],
     },
   },
 } as const

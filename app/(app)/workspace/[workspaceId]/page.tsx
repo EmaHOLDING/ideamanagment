@@ -40,11 +40,17 @@ export default async function WorkspaceBoardPage({
     getWorkspaceTags(workspaceId),
   ]);
 
+  const isAdmin = workspace.role === "ADMIN";
+  const isViewer = workspace.role === "VIEWER";
+  const canManageContent = workspace.isOwner || isAdmin;
+  const canContribute = !isViewer;
+
   const versionsByColumn: Record<string, IdeaVersion[]> = {};
   const assigneeByIdea: Record<string, string | null> = {};
   const tagsByIdea: Record<string, Database["public"]["Tables"]["tags"]["Row"][]> = {};
   const voteCountByIdea: Record<string, number> = {};
   const hasVotedByIdea: Record<string, boolean> = {};
+  const createdByIdea: Record<string, string> = {};
   for (const idea of ideas) {
     const currentVersion = idea.idea_versions.find(
       (v) => v.version_number === idea.current_version
@@ -55,6 +61,7 @@ export default async function WorkspaceBoardPage({
     tagsByIdea[idea.id] = idea.idea_tags.map((it) => it.tag).filter((t) => t !== null);
     voteCountByIdea[idea.id] = idea.idea_votes.length;
     hasVotedByIdea[idea.id] = idea.idea_votes.some((v) => v.user_id === user!.id);
+    createdByIdea[idea.id] = idea.created_by;
   }
 
   return (
@@ -78,10 +85,12 @@ export default async function WorkspaceBoardPage({
           <MembersDialog
             workspaceId={workspaceId}
             isOwner={workspace.isOwner}
+            canManageContent={canManageContent}
             currentUserId={user!.id}
             inviteCode={workspace.invite_code}
+            defaultInviteRole={workspace.default_invite_role}
           />
-          {workspace.isOwner && <SaveAsTemplateDialog workspaceId={workspaceId} />}
+          {canManageContent && <SaveAsTemplateDialog workspaceId={workspaceId} />}
         </div>
       </div>
       <Board
@@ -92,9 +101,13 @@ export default async function WorkspaceBoardPage({
         tagsByIdea={tagsByIdea}
         voteCountByIdea={voteCountByIdea}
         hasVotedByIdea={hasVotedByIdea}
+        createdByIdea={createdByIdea}
+        currentUserId={user!.id}
         members={members}
         tags={tags}
-        isOwner={workspace.isOwner}
+        canManageContent={canManageContent}
+        isViewer={isViewer}
+        canContribute={canContribute}
         autoOpenIdeaId={autoOpenIdeaId ?? null}
       />
     </div>
