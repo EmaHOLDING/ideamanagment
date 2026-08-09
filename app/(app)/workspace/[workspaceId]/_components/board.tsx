@@ -114,6 +114,8 @@ export function Board({
     `board-${workspaceId}`,
     [
       { table: "ideas", filter: `workspace_id=eq.${workspaceId}` },
+      { table: "kanban_columns", filter: `workspace_id=eq.${workspaceId}` },
+      { table: "tags", filter: `workspace_id=eq.${workspaceId}` },
       ...(allIdeaIds.length > 0
         ? [{ table: "idea_votes", filter: `idea_id=in.(${allIdeaIds.join(",")})` }]
         : []),
