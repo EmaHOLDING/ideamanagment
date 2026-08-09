@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition, type ReactElement } from "react";
+import { useRef, useState, useTransition, type DragEvent, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { UploadIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,9 @@ import {
 } from "@/components/ui/select";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
 import { createIdea, updateIdea, type IdeaVersionData } from "@/app/actions/ideaActions";
+import { uploadAttachment } from "@/app/actions/attachmentActions";
 import { IMPACT_EFFORT_LABELS, type ImpactEffortLevel } from "@/lib/status";
+import { MAX_ATTACHMENT_SIZE, formatFileSize } from "@/lib/attachment-client";
 
 const IMPACT_EFFORT_OPTIONS: ImpactEffortLevel[] = ["LOW", "MEDIUM", "HIGH"];
 
@@ -65,6 +68,9 @@ export function IdeaDialog(props: IdeaDialogProps) {
     initial?.effortScore ?? "MEDIUM"
   );
   const [isPending, startTransition] = useTransition();
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function resetForm() {
     const fresh = props.mode === "edit" ? props.initial : undefined;
@@ -74,6 +80,30 @@ export function IdeaDialog(props: IdeaDialogProps) {
     setTargetAudience(fresh?.targetAudience ?? "");
     setImpactScore(fresh?.impactScore ?? "MEDIUM");
     setEffortScore(fresh?.effortScore ?? "MEDIUM");
+    setStagedFiles([]);
+  }
+
+  function addStagedFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const accepted: File[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_ATTACHMENT_SIZE) {
+        toast.error(`"${file.name}" 10MB sınırını aşıyor.`);
+        continue;
+      }
+      accepted.push(file);
+    }
+    setStagedFiles((prev) => [...prev, ...accepted]);
+  }
+
+  function removeStagedFile(index: number) {
+    setStagedFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function onDropFiles(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragOver(false);
+    addStagedFiles(e.dataTransfer.files);
   }
 
   function onOpenChange(next: boolean) {
@@ -100,8 +130,24 @@ export function IdeaDialog(props: IdeaDialogProps) {
     startTransition(async () => {
       try {
         if (props.mode === "create") {
-          await createIdea(props.workspaceId, props.columnId, versionData);
+          const created = await createIdea(props.workspaceId, props.columnId, versionData);
           toast.success("Fikir oluşturuldu");
+
+          if (stagedFiles.length > 0) {
+            let failedCount = 0;
+            for (const file of stagedFiles) {
+              try {
+                const formData = new FormData();
+                formData.append("file", file);
+                await uploadAttachment(created.id, formData);
+              } catch {
+                failedCount++;
+              }
+            }
+            if (failedCount > 0) {
+              toast.error(`${failedCount} dosya yüklenemedi.`);
+            }
+          }
         } else {
           await updateIdea(props.ideaId, versionData);
           toast.success("Fikir güncellendi (yeni versiyon oluşturuldu)");
@@ -192,6 +238,67 @@ export function IdeaDialog(props: IdeaDialogProps) {
                 </Select>
               </div>
             </div>
+
+            {props.mode === "create" && (
+              <div className="flex flex-col gap-2">
+                <Label>Ekler ve Dosyalar</Label>
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragOver(true);
+                  }}
+                  onDragLeave={() => setIsDragOver(false)}
+                  onDrop={onDropFiles}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={
+                    "flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground transition-colors" +
+                    (isDragOver ? " border-primary bg-primary/5" : " border-border hover:border-primary/40")
+                  }
+                >
+                  <UploadIcon className="size-4" />
+                  Dosyaları buraya sürükleyin veya seçmek için tıklayın
+                  <span className="text-[0.65rem]">Maks 10MB · Görsel, PDF, DOCX, TXT, MD, ZIP</span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      addStagedFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+                {stagedFiles.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    {stagedFiles.map((file, index) => (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className="flex items-center gap-2 rounded-md border bg-card p-2"
+                      >
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <span className="truncate text-sm font-medium" title={file.name}>
+                            {file.name}
+                          </span>
+                          <span className="text-[0.7rem] text-muted-foreground">
+                            {formatFileSize(file.size)}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => removeStagedFile(index)}
+                          aria-label="Kaldır"
+                        >
+                          <XIcon />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending}>

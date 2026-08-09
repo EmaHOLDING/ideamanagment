@@ -52,6 +52,7 @@ import { IdeaDialog } from "./idea-dialog";
 import { VersionHistoryDialog } from "./version-history-dialog";
 import { CommentsPanel } from "./comments-panel";
 import { TagPicker } from "./tag-picker";
+import { IdeaAttachmentsSection } from "./idea-attachments-section";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { Database } from "@/lib/types/database.types";
 
@@ -304,6 +305,13 @@ export function IdeaDetailDialog({
                     <TiptapContentView content={data.content} />
                   </div>
                 </section>
+
+                <IdeaAttachmentsSection
+                  ideaId={ideaId}
+                  currentUserId={currentUserId}
+                  canContribute={canContribute}
+                  canManageContent={canManageContent}
+                />
               </div>
             </ScrollArea>
           </div>

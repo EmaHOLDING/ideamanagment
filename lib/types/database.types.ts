@@ -79,6 +79,60 @@ export type Database = {
           },
         ]
       }
+      attachments: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          idea_id: string
+          mime_type: string
+          uploaded_by: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          idea_id: string
+          mime_type: string
+          uploaded_by: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          idea_id?: string
+          mime_type?: string
+          uploaded_by?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_templates: {
         Row: {
           columns_config: Json
@@ -563,6 +617,27 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      hard_delete_attachment: {
+        Args: { _attachment_id: string }
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          idea_id: string
+          mime_type: string
+          uploaded_by: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "attachments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       is_workspace_contributor: {
         Args: { _workspace_id: string }
         Returns: boolean
@@ -615,6 +690,27 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      soft_delete_attachment: {
+        Args: { _attachment_id: string }
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          idea_id: string
+          mime_type: string
+          uploaded_by: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "attachments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       soft_delete_comment: {
         Args: { _comment_id: string }
         Returns: {
@@ -660,6 +756,27 @@ export type Database = {
       transfer_workspace_ownership: {
         Args: { _new_owner_user_id: string; _workspace_id: string }
         Returns: undefined
+      }
+      undo_delete_attachment: {
+        Args: { _attachment_id: string }
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          idea_id: string
+          mime_type: string
+          uploaded_by: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "attachments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       undo_delete_comment: {
         Args: { _comment_id: string }
