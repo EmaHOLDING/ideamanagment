@@ -190,15 +190,33 @@ export async function getIdeaVersionHistory(ideaId: string) {
   }));
 }
 
-export async function deleteIdea(ideaId: string) {
+export async function softDeleteIdea(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase.from("ideas").delete().eq("id", id).select();
+  const { error } = await supabase.rpc("soft_delete_idea", { _idea_id: id });
 
-  if (error) throw error;
-  if (!data || data.length === 0) {
-    throw new Error("Bu fikri silme yetkiniz yok.");
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu fikri silme yetkiniz yok.");
+    }
+    throw error;
+  }
+
+  return { success: true as const };
+}
+
+export async function undoDeleteIdea(ideaId: string) {
+  const id = ideaIdSchema.parse(ideaId);
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase.rpc("undo_delete_idea", { _idea_id: id });
+
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu fikri geri yükleme yetkiniz yok.");
+    }
+    throw error;
   }
 
   return { success: true as const };
@@ -271,7 +289,8 @@ export async function getIdeasForWorkspace(workspaceId: string) {
   const { data, error } = await supabase
     .from("ideas")
     .select("*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id)")
-    .eq("workspace_id", id);
+    .eq("workspace_id", id)
+    .is("deleted_at", null);
 
   if (error) throw error;
 

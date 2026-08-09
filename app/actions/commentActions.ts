@@ -120,15 +120,33 @@ export async function updateComment(commentId: string, content: string) {
 
 const deleteCommentSchema = z.string().uuid();
 
-export async function deleteComment(commentId: string) {
+export async function softDeleteComment(commentId: string) {
   const id = deleteCommentSchema.parse(commentId);
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase.from("comments").delete().eq("id", id).select();
+  const { error } = await supabase.rpc("soft_delete_comment", { _comment_id: id });
 
-  if (error) throw error;
-  if (!data || data.length === 0) {
-    throw new Error("Bu yorumu silme yetkiniz yok.");
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu yorumu silme yetkiniz yok.");
+    }
+    throw error;
+  }
+
+  return { success: true as const };
+}
+
+export async function undoDeleteComment(commentId: string) {
+  const id = deleteCommentSchema.parse(commentId);
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase.rpc("undo_delete_comment", { _comment_id: id });
+
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu yorumu geri yükleme yetkiniz yok.");
+    }
+    throw error;
   }
 
   return { success: true as const };
@@ -151,6 +169,7 @@ export async function getComments(ideaId: string, cursor?: string) {
     .from("comments")
     .select("*")
     .eq("idea_id", input.ideaId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(PAGE_SIZE);

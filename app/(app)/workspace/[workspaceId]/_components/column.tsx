@@ -46,6 +46,8 @@ export function Column({
   isViewer,
   canContribute,
   autoOpenIdeaId,
+  hideIdea,
+  showIdea,
 }: {
   workspaceId: string;
   column: ColumnRow;
@@ -62,6 +64,8 @@ export function Column({
   isViewer: boolean;
   canContribute: boolean;
   autoOpenIdeaId: string | null;
+  hideIdea: (ideaId: string) => void;
+  showIdea: (ideaId: string) => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -167,6 +171,8 @@ export function Column({
                       members={members}
                       availableTags={tags}
                       defaultOpen={autoOpenIdeaId === v.idea_id}
+                      hideIdea={hideIdea}
+                      showIdea={showIdea}
                     />
                   </div>
                 )}

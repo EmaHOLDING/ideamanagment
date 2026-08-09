@@ -110,6 +110,8 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           idea_id: string
           mentioned_user_ids: string[] | null
@@ -119,6 +121,8 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           idea_id: string
           mentioned_user_ids?: string[] | null
@@ -128,6 +132,8 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           idea_id?: string
           mentioned_user_ids?: string[] | null
@@ -273,6 +279,8 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           updated_at: string
           workspace_id: string
@@ -284,6 +292,8 @@ export type Database = {
           created_at?: string
           created_by: string
           current_version?: number
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           updated_at?: string
           workspace_id: string
@@ -295,6 +305,8 @@ export type Database = {
           created_at?: string
           created_by?: string
           current_version?: number
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           updated_at?: string
           workspace_id?: string
@@ -491,6 +503,8 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           updated_at: string
           workspace_id: string
@@ -520,6 +534,8 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           updated_at: string
           workspace_id: string
@@ -586,6 +602,50 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      soft_delete_comment: {
+        Args: { _comment_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          idea_id: string
+          mentioned_user_ids: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "comments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      soft_delete_idea: {
+        Args: { _idea_id: string }
+        Returns: {
+          assignee_id: string | null
+          cancellation_reason: string | null
+          column_id: string
+          created_at: string
+          created_by: string
+          current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           updated_at: string
           workspace_id: string
@@ -600,6 +660,48 @@ export type Database = {
       transfer_workspace_ownership: {
         Args: { _new_owner_user_id: string; _workspace_id: string }
         Returns: undefined
+      }
+      undo_delete_comment: {
+        Args: { _comment_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          idea_id: string
+          mentioned_user_ids: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "comments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      undo_delete_idea: {
+        Args: { _idea_id: string }
+        Returns: {
+          assignee_id: string | null
+          cancellation_reason: string | null
+          column_id: string
+          created_at: string
+          created_by: string
+          current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       update_idea:
         | {
@@ -619,6 +721,8 @@ export type Database = {
               created_at: string
               created_by: string
               current_version: number
+              deleted_at: string | null
+              deleted_by: string | null
               id: string
               updated_at: string
               workspace_id: string
@@ -647,6 +751,8 @@ export type Database = {
               created_at: string
               created_by: string
               current_version: number
+              deleted_at: string | null
+              deleted_by: string | null
               id: string
               updated_at: string
               workspace_id: string

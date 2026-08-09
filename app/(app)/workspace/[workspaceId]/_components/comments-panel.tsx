@@ -16,7 +16,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { addComment, deleteComment, getComments, updateComment } from "@/app/actions/commentActions";
+import {
+  addComment,
+  getComments,
+  softDeleteComment,
+  undoDeleteComment,
+  updateComment,
+} from "@/app/actions/commentActions";
 import { MentionTextarea } from "./mention-textarea";
 import { getInitials } from "@/lib/user-display";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
@@ -50,7 +56,6 @@ export function CommentsPanel({
   const [editContent, setEditContent] = useState("");
   const [isEditSaving, startEditTransition] = useTransition();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [isDeleting, startDeleteTransition] = useTransition();
 
   useEffect(() => {
     let cancelled = false;
@@ -129,14 +134,38 @@ export function CommentsPanel({
   function onConfirmDelete() {
     if (!deleteTargetId) return;
     const targetId = deleteTargetId;
-    startDeleteTransition(async () => {
-      try {
-        await deleteComment(targetId);
+    setDeleteTargetId(null);
+
+    const index = items.findIndex((c) => c.id === targetId);
+    if (index === -1) return;
+    const removed = items[index];
+    setItems((prev) => prev.filter((c) => c.id !== targetId));
+
+    function reinsert() {
+      setItems((prev) => {
+        const next = prev.slice();
+        next.splice(index, 0, removed);
+        return next;
+      });
+    }
+
+    function onUndo() {
+      reinsert();
+      undoDeleteComment(targetId).catch((err) => {
         setItems((prev) => prev.filter((c) => c.id !== targetId));
-        setDeleteTargetId(null);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Yorum silinemedi");
-      }
+        toast.error(err instanceof Error ? err.message : "Yorum geri yüklenemedi");
+      });
+    }
+
+    toast("Yorum silindi.", {
+      position: "bottom-center",
+      duration: 30000,
+      action: { label: "Geri Al", onClick: onUndo },
+    });
+
+    softDeleteComment(targetId).catch((err) => {
+      reinsert();
+      toast.error(err instanceof Error ? err.message : "Yorum silinemedi");
     });
   }
 
@@ -258,12 +287,13 @@ export function CommentsPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>Yorumu Sil</AlertDialogTitle>
             <AlertDialogDescription>
-              Bu yorumu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+              Bu yorumu silmek istediğinize emin misiniz? Silme sonrası kısa bir süre geri
+              alabilirsiniz.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Vazgeç</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" disabled={isDeleting} onClick={onConfirmDelete}>
+            <AlertDialogAction variant="destructive" onClick={onConfirmDelete}>
               Sil
             </AlertDialogAction>
           </AlertDialogFooter>

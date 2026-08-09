@@ -40,7 +40,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TiptapContentView } from "@/components/editor/tiptap-content-view";
-import { assignIdea, deleteIdea, type IdeaVersionData } from "@/app/actions/ideaActions";
+import {
+  assignIdea,
+  softDeleteIdea,
+  undoDeleteIdea,
+  type IdeaVersionData,
+} from "@/app/actions/ideaActions";
 import { setIdeaTags } from "@/app/actions/tagActions";
 import { IMPACT_EFFORT_LABELS } from "@/lib/status";
 import { IdeaDialog } from "./idea-dialog";
@@ -69,6 +74,8 @@ export function IdeaDetailDialog({
   availableTags,
   defaultOpen,
   trigger,
+  hideIdea,
+  showIdea,
 }: {
   workspaceId: string;
   ideaId: string;
@@ -83,6 +90,8 @@ export function IdeaDetailDialog({
   availableTags: Tag[];
   defaultOpen?: boolean;
   trigger: ReactElement;
+  hideIdea: (ideaId: string) => void;
+  showIdea: (ideaId: string) => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -90,21 +99,33 @@ export function IdeaDetailDialog({
   const [open, setOpen] = useState(defaultOpen ?? false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [isDeleting, startDeleteTransition] = useTransition();
   const [isAssignPending, startAssignTransition] = useTransition();
   const [, startTagTransition] = useTransition();
 
   function onConfirmDelete() {
-    startDeleteTransition(async () => {
-      try {
-        await deleteIdea(ideaId);
-        toast.success("Fikir silindi");
-        setDeleteOpen(false);
-        onOpenChange(false);
-        router.refresh();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Fikir silinemedi");
-      }
+    setDeleteOpen(false);
+    onOpenChange(false);
+    hideIdea(ideaId);
+
+    function onUndo() {
+      showIdea(ideaId);
+      undoDeleteIdea(ideaId)
+        .then(() => router.refresh())
+        .catch((err) => {
+          hideIdea(ideaId);
+          toast.error(err instanceof Error ? err.message : "Fikir geri yüklenemedi");
+        });
+    }
+
+    toast("Fikir silindi.", {
+      position: "bottom-center",
+      duration: 30000,
+      action: { label: "Geri Al", onClick: onUndo },
+    });
+
+    softDeleteIdea(ideaId).catch((err) => {
+      showIdea(ideaId);
+      toast.error(err instanceof Error ? err.message : "Fikir silinemedi");
     });
   }
 
@@ -302,17 +323,13 @@ export function IdeaDetailDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Fikri Sil</AlertDialogTitle>
             <AlertDialogDescription>
-              &quot;{data.title}&quot; fikrini ve tüm versiyon/yorum geçmişini silmek istediğinize
-              emin misiniz? Bu işlem geri alınamaz.
+              &quot;{data.title}&quot; fikrini silmek istediğinize emin misiniz? Silme sonrası
+              kısa bir süre geri alabilirsiniz.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Vazgeç</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={isDeleting}
-              onClick={onConfirmDelete}
-            >
+            <AlertDialogAction variant="destructive" onClick={onConfirmDelete}>
               Sil
             </AlertDialogAction>
           </AlertDialogFooter>

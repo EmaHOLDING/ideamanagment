@@ -73,6 +73,19 @@ export function Board({
   const [searchQuery, setSearchQuery] = useState("");
   const [tagFilter, setTagFilter] = useState(ALL_TAGS);
   const [assigneeFilter, setAssigneeFilter] = useState(ALL_ASSIGNEES);
+  const [hiddenIdeaIds, setHiddenIdeaIds] = useState<Set<string>>(new Set());
+
+  function hideIdea(ideaId: string) {
+    setHiddenIdeaIds((prev) => new Set(prev).add(ideaId));
+  }
+
+  function showIdea(ideaId: string) {
+    setHiddenIdeaIds((prev) => {
+      const next = new Set(prev);
+      next.delete(ideaId);
+      return next;
+    });
+  }
 
   const hasActiveFilters =
     searchQuery.trim() !== "" || tagFilter !== ALL_TAGS || assigneeFilter !== ALL_ASSIGNEES;
@@ -82,6 +95,7 @@ export function Board({
     const result: Record<string, IdeaVersion[]> = {};
     for (const [columnId, versions] of Object.entries(versionsByColumn)) {
       result[columnId] = versions.filter((v) => {
+        if (hiddenIdeaIds.has(v.idea_id)) return false;
         if (
           query &&
           !v.title.toLowerCase().includes(query) &&
@@ -105,7 +119,7 @@ export function Board({
       });
     }
     return result;
-  }, [versionsByColumn, tagsByIdea, assigneeByIdea, searchQuery, tagFilter, assigneeFilter]);
+  }, [versionsByColumn, tagsByIdea, assigneeByIdea, searchQuery, tagFilter, assigneeFilter, hiddenIdeaIds]);
 
   function moveCard(ideaId: string, targetColumnId: string, cancellationReason?: string) {
     startMoveTransition(async () => {
@@ -231,6 +245,8 @@ export function Board({
               isViewer={isViewer}
               canContribute={canContribute}
               autoOpenIdeaId={autoOpenIdeaId}
+              hideIdea={hideIdea}
+              showIdea={showIdea}
             />
           ))}
           {canManageContent && (

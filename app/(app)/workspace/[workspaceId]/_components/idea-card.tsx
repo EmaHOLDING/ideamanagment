@@ -34,6 +34,8 @@ export function IdeaCard({
   members,
   availableTags,
   defaultOpen,
+  hideIdea,
+  showIdea,
 }: {
   workspaceId: string;
   version: IdeaVersion;
@@ -48,6 +50,8 @@ export function IdeaCard({
   members: Member[];
   availableTags: Tag[];
   defaultOpen?: boolean;
+  hideIdea: (ideaId: string) => void;
+  showIdea: (ideaId: string) => void;
 }) {
   const router = useRouter();
   const [isVotePending, startVoteTransition] = useTransition();
@@ -141,6 +145,8 @@ export function IdeaCard({
       members={members}
       availableTags={availableTags}
       defaultOpen={defaultOpen}
+      hideIdea={hideIdea}
+      showIdea={showIdea}
       trigger={cardTrigger}
     />
   );
