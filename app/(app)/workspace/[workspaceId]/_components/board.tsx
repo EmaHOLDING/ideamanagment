@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { SearchIcon, XIcon } from "lucide-react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { moveIdea } from "@/app/actions/ideaActions";
+import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -74,6 +75,20 @@ export function Board({
   const [tagFilter, setTagFilter] = useState(ALL_TAGS);
   const [assigneeFilter, setAssigneeFilter] = useState(ALL_ASSIGNEES);
   const [hiddenIdeaIds, setHiddenIdeaIds] = useState<Set<string>>(new Set());
+  const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
+
+  // Sunucudan gelen versionsByColumn artık taşımayı yansıtınca override gereksizleşir;
+  // bunu setState ile effect içinde temizlemek yerine render sırasında türetiyoruz.
+  const activeColumnOverrides = useMemo(() => {
+    if (Object.keys(columnOverrides).length === 0) return columnOverrides;
+    const entries = Object.entries(columnOverrides).filter(([ideaId, overrideColumnId]) => {
+      const actualColumnId = Object.entries(versionsByColumn).find(([, versions]) =>
+        versions.some((v) => v.idea_id === ideaId)
+      )?.[0];
+      return actualColumnId !== overrideColumnId;
+    });
+    return Object.fromEntries(entries);
+  }, [columnOverrides, versionsByColumn]);
 
   function hideIdea(ideaId: string) {
     setHiddenIdeaIds((prev) => new Set(prev).add(ideaId));
@@ -90,10 +105,39 @@ export function Board({
   const hasActiveFilters =
     searchQuery.trim() !== "" || tagFilter !== ALL_TAGS || assigneeFilter !== ALL_ASSIGNEES;
 
+  const allIdeaIds = useMemo(
+    () => Array.from(new Set(Object.values(versionsByColumn).flat().map((v) => v.idea_id))),
+    [versionsByColumn]
+  );
+
+  useRealtimeSubscription(
+    `board-${workspaceId}`,
+    [
+      { table: "ideas", filter: `workspace_id=eq.${workspaceId}` },
+      ...(allIdeaIds.length > 0
+        ? [{ table: "idea_votes", filter: `idea_id=in.(${allIdeaIds.join(",")})` }]
+        : []),
+    ],
+    () => router.refresh(),
+    { debounceMs: 400 }
+  );
+
+  const effectiveVersionsByColumn = useMemo(() => {
+    if (Object.keys(activeColumnOverrides).length === 0) return versionsByColumn;
+    const result: Record<string, IdeaVersion[]> = {};
+    for (const [columnId, versions] of Object.entries(versionsByColumn)) {
+      for (const version of versions) {
+        const effectiveColumnId = activeColumnOverrides[version.idea_id] ?? columnId;
+        (result[effectiveColumnId] ??= []).push(version);
+      }
+    }
+    return result;
+  }, [versionsByColumn, activeColumnOverrides]);
+
   const filteredVersionsByColumn = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const result: Record<string, IdeaVersion[]> = {};
-    for (const [columnId, versions] of Object.entries(versionsByColumn)) {
+    for (const [columnId, versions] of Object.entries(effectiveVersionsByColumn)) {
       result[columnId] = versions.filter((v) => {
         if (hiddenIdeaIds.has(v.idea_id)) return false;
         if (
@@ -119,15 +163,21 @@ export function Board({
       });
     }
     return result;
-  }, [versionsByColumn, tagsByIdea, assigneeByIdea, searchQuery, tagFilter, assigneeFilter, hiddenIdeaIds]);
+  }, [effectiveVersionsByColumn, tagsByIdea, assigneeByIdea, searchQuery, tagFilter, assigneeFilter, hiddenIdeaIds]);
 
   function moveCard(ideaId: string, targetColumnId: string, cancellationReason?: string) {
+    setColumnOverrides((prev) => ({ ...prev, [ideaId]: targetColumnId }));
     startMoveTransition(async () => {
       try {
         await moveIdea(ideaId, targetColumnId, cancellationReason);
         toast.success("Fikir taşındı");
         router.refresh();
       } catch (err) {
+        setColumnOverrides((prev) => {
+          const next = { ...prev };
+          delete next[ideaId];
+          return next;
+        });
         toast.error(err instanceof Error ? err.message : "Fikir taşınamadı");
       }
     });

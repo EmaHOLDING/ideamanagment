@@ -20,7 +20,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen flex-col">
       <Header displayName={getDisplayName(user)} email={user.email ?? ""}>
-        <NotificationBell initialItems={items} initialNextCursor={nextCursor} />
+        <NotificationBell
+          currentUserId={user.id}
+          initialItems={items}
+          initialNextCursor={nextCursor}
+        />
       </Header>
       <main className="flex-1">{children}</main>
     </div>

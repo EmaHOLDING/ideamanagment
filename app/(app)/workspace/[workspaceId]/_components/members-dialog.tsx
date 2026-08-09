@@ -45,6 +45,7 @@ import {
 } from "@/app/actions/workspaceActions";
 import { getInitials } from "@/lib/user-display";
 import { WORKSPACE_ROLE_LABELS, ASSIGNABLE_WORKSPACE_ROLES } from "@/lib/status";
+import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
 import type { Database } from "@/lib/types/database.types";
 
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
@@ -89,6 +90,13 @@ export function MembersDialog({
   function refreshMembers() {
     getWorkspaceMembers(workspaceId).then(setMembers);
   }
+
+  useRealtimeSubscription(
+    `members-${workspaceId}`,
+    [{ table: "workspace_members", filter: `workspace_id=eq.${workspaceId}` }],
+    () => refreshMembers(),
+    { enabled: open }
+  );
 
   function onRemove(userId: string) {
     startTransition(async () => {

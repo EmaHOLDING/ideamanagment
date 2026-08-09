@@ -13,6 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { getActivityLog } from "@/app/actions/activityActions";
+import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
 
 type ActivityRow = Awaited<ReturnType<typeof getActivityLog>>["items"][number];
 
@@ -22,6 +23,17 @@ export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [isLoadingMore, startLoadMoreTransition] = useTransition();
+
+  useRealtimeSubscription(
+    `activity-${workspaceId}`,
+    [{ table: "activity_log", filter: `workspace_id=eq.${workspaceId}` }],
+    (payload) => {
+      if (payload.eventType !== "INSERT") return;
+      const row = payload.new as ActivityRow;
+      setItems((prev) => (prev.some((i) => i.id === row.id) ? prev : [row, ...prev]));
+    },
+    { enabled: open }
+  );
 
   useEffect(() => {
     if (!open) return;

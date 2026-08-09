@@ -15,19 +15,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getNotifications, markAsRead, markAllAsRead } from "@/app/actions/notificationActions";
+import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
 
 type Notification = Awaited<ReturnType<typeof getNotifications>>["items"][number];
 
 export function NotificationBell({
+  currentUserId,
   initialItems,
   initialNextCursor,
 }: {
+  currentUserId: string;
   initialItems: Notification[];
   initialNextCursor: string | null;
 }) {
   const [items, setItems] = useState(initialItems);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
   const [, startTransition] = useTransition();
+
+  useRealtimeSubscription(
+    `notifications-${currentUserId}`,
+    [{ table: "notifications", filter: `user_id=eq.${currentUserId}` }],
+    (payload) => {
+      if (payload.eventType !== "INSERT") return;
+      const row = payload.new as Notification;
+      setItems((prev) => (prev.some((n) => n.id === row.id) ? prev : [row, ...prev]));
+    }
+  );
 
   const unreadCount = items.filter((n) => !n.is_read).length;
 

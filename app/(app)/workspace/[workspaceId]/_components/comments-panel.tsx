@@ -25,6 +25,7 @@ import {
 } from "@/app/actions/commentActions";
 import { MentionTextarea } from "./mention-textarea";
 import { getInitials } from "@/lib/user-display";
+import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 
 type CommentWithAuthor = Awaited<ReturnType<typeof getComments>>["items"][number];
@@ -73,6 +74,19 @@ export function CommentsPanel({
       cancelled = true;
     };
   }, [ideaId]);
+
+  useRealtimeSubscription(
+    `comments-${ideaId}`,
+    [{ table: "comments", filter: `idea_id=eq.${ideaId}` }],
+    () => {
+      getComments(ideaId)
+        .then((res) => {
+          setItems(res.items);
+          setNextCursor(res.nextCursor);
+        })
+        .catch(() => {});
+    }
+  );
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
