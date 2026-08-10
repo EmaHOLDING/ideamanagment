@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { LockIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const isLogin = mode === "login";
@@ -59,8 +61,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   return (
-    <Card className="shadow-lg shadow-primary/5">
-      <CardHeader>
+    <Card className="shadow-lg shadow-primary/10">
+      <CardHeader className="items-center text-center">
+        <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <LockIcon className="size-4.5" />
+        </div>
         <CardTitle className="text-xl">{isLogin ? "Giriş Yap" : "Kayıt Ol"}</CardTitle>
         <CardDescription>
           {isLogin
@@ -107,21 +112,37 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="password">Şifre</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="pr-9"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+              >
+                {showPassword ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+              </button>
+            </div>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3">
+        <CardFooter className="mt-2 flex flex-col gap-3">
           <Button type="submit" className="w-full" disabled={isPending}>
             {isLogin ? "Giriş Yap" : "Kayıt Ol"}
           </Button>
+          <div className="flex w-full items-center gap-2.5 text-xs text-muted-foreground">
+            <div className="h-px flex-1 bg-border" />
+            veya
+            <div className="h-px flex-1 bg-border" />
+          </div>
           <Button
             type="button"
             variant="outline"

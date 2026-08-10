@@ -107,7 +107,11 @@ export function Column({
             <AlertDialog open={open} onOpenChange={setOpen}>
               <AlertDialogTrigger
                 render={
-                  <Button variant="ghost" size="icon-xs">
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="rounded-full hover:bg-destructive/15 hover:text-destructive"
+                  >
                     <Trash2Icon />
                   </Button>
                 }

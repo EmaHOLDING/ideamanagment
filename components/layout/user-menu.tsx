@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { SettingsIcon, LogOutIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -63,9 +64,11 @@ export function UserMenu({
             </DropdownMenuLabel>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setSettingsOpen(true)}>Ayarlar</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+            <SettingsIcon /> Ayarlar
+          </DropdownMenuItem>
           <DropdownMenuItem disabled={isPending} onClick={onSignOut}>
-            Çıkış Yap
+            <LogOutIcon /> Çıkış Yap
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

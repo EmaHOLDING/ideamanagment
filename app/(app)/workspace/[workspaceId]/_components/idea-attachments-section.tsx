@@ -11,6 +11,7 @@ import {
   Trash2Icon,
   DownloadIcon,
   PaperclipIcon,
+  EyeIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   getAttachmentsForIdea,
   uploadAttachment,
@@ -49,6 +51,10 @@ function FileTypeIcon({ mimeType }: { mimeType: string }) {
   return <FileIcon className="size-4" />;
 }
 
+function isPreviewable(mimeType: string) {
+  return mimeType.startsWith("image/") || mimeType === "application/pdf";
+}
+
 export function IdeaAttachmentsSection({
   ideaId,
   currentUserId,
@@ -65,6 +71,7 @@ export function IdeaAttachmentsSection({
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, startUploadTransition] = useTransition();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [previewItem, setPreviewItem] = useState<AttachmentItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hardDeleteTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -213,20 +220,42 @@ export function IdeaAttachmentsSection({
                 <FileTypeIcon mimeType={a.mime_type} />
               </div>
               <div className="flex min-w-0 flex-1 flex-col">
-                <a
-                  href={a.url ?? undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="truncate text-sm font-medium hover:underline"
-                  title={a.file_name}
-                >
-                  {a.file_name}
-                </a>
+                {isPreviewable(a.mime_type) && a.url ? (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewItem(a)}
+                    className="truncate text-left text-sm font-medium hover:underline"
+                    title={a.file_name}
+                  >
+                    {a.file_name}
+                  </button>
+                ) : (
+                  <a
+                    href={a.url ?? undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="truncate text-sm font-medium hover:underline"
+                    title={a.file_name}
+                  >
+                    {a.file_name}
+                  </a>
+                )}
                 <span className="text-[0.7rem] text-muted-foreground">
                   {formatFileSize(a.file_size)} · {a.uploaderFullName ?? "Bilinmeyen kullanıcı"} ·{" "}
                   {new Date(a.created_at).toLocaleDateString("tr-TR")}
                 </span>
               </div>
+              {a.url && isPreviewable(a.mime_type) && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setPreviewItem(a)}
+                  aria-label="Görüntüle"
+                >
+                  <EyeIcon />
+                </Button>
+              )}
               {a.url && (
                 <Button
                   type="button"
@@ -273,6 +302,31 @@ export function IdeaAttachmentsSection({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={previewItem !== null} onOpenChange={(open) => !open && setPreviewItem(null)}>
+        <DialogContent className="w-full overflow-hidden sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="truncate pr-8">{previewItem?.file_name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex max-h-[75vh] items-center justify-center overflow-auto rounded-lg bg-muted/30">
+            {previewItem?.url && previewItem.mime_type.startsWith("image/") && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewItem.url}
+                alt={previewItem.file_name}
+                className="max-h-[75vh] w-auto object-contain"
+              />
+            )}
+            {previewItem?.url && previewItem.mime_type === "application/pdf" && (
+              <iframe
+                src={previewItem.url}
+                title={previewItem.file_name}
+                className="h-[75vh] w-full rounded-md border-0"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

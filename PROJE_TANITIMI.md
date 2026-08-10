@@ -70,6 +70,7 @@ Her workspace üyesinin dört rolden biri var, yetkiler buna göre kademeleniyor
 - Şu durumlarda bildirim geliyor: fikrinize/daha önce yorum yaptığınız bir fikre yeni yorum gelmesi, bir kartın taşınması, size bir fikrin atanması, bir yorumda `@` ile etiketlenme.
 - Yeni bir bildirim geldiğinde zil **anında** (sayfa yenilenmeden) güncelleniyor.
 - Bildirimler tek tek veya "Tümünü okundu yap" ile toplu olarak okunmuş sayılabiliyor.
+- Uygulama içi bildirimlere ek olarak, belirli durumlarda **e-posta** de gönderiliyor — detayları Bölüm 12'de.
 
 ## 8. Aktivite Akışı
 
@@ -115,10 +116,34 @@ Aynı workspace'i aynı anda birden fazla kişi açtığında, birinin yaptığ�
 
 Henüz gerçek zamanlı **olmayan** tek şey: bir dosyayı kimin şu an incelediğini veya bir fikri kimin düzenlemekte olduğunu gösteren bir "eşzamanlı düzenleme" göstergesi (örn. "Ayşe şu an bunu düzenliyor" gibi bir ibare) — bu, ayrı bir teknik altyapı gerektirdiği için henüz eklenmedi.
 
+## 12. Akıllı E-Posta Bildirimleri
+
+Uygulama içi bildirim zili, ancak kullanıcı uygulamayı **açık tutuyorsa** işe yarıyor. Uygulamayı kapatıp giden bir kullanıcıya bir şey ulaşması gerekiyorsa, sistem devreye girip **e-posta** gönderiyor — ama bunu her bildirimde değil, çok kontrollü bir şekilde yapıyor.
+
+**Ne zaman e-posta gider?**
+
+- Sadece iki durumda: biri sizi bir **yorumda `@` ile etiketlediğinde**, veya size bir **fikir atandığında**.
+- Kart taşıma, genel (etiketsiz) yorum, oylama gibi diğer olaylar için **hiçbir zaman** e-posta gitmiyor — bunlar sadece zil bildirimi olarak kalıyor.
+
+**"Çevrimiçi misiniz?" nasıl anlaşılıyor?**
+
+Uygulama arka planda, sekmeniz açıkken düzenli aralıklarla sessizce "hâlâ buradayım" sinyali gönderiyor. Bu sinyalin üzerinden birkaç dakikadan fazla geçmişse, sistem sizi "çevrimdışı" kabul ediyor. Mantık basit: **siz uygulamadaysanız e-posta atılmıyor** (zaten zili görüyorsunuzdur), **uygulamada değilseniz** ve olay mention/atama ise e-posta gidiyor.
+
+**Karar sırası tam olarak şöyle işliyor:**
+
+1. Kullanıcı, Ayarlar'dan e-posta bildirimlerini kapatmışsa → **hiçbir zaman** gönderilmiyor (diğer her şeyden önce bu kontrol ediliyor).
+2. Kullanıcı o an uygulamada aktifse → gönderilmiyor, sadece zil bildirimi kalıyor.
+3. Olay mention veya atama ise ve kullanıcı çevrimdışıysa → e-posta gönderiliyor.
+4. Bunların hiçbiri değilse → gönderilmiyor.
+
+**Kullanıcı kontrolü:** Sağ üstteki kullanıcı menüsünden "Ayarlar" açılıp **"E-posta Bildirimlerini Aktif Et"** anahtarıyla bu özellik tamamen kapatılabiliyor (varsayılan olarak açık). Kapatıldığında, kullanıcı ne kadar süre çevrimdışı kalırsa kalsın hiçbir e-posta gönderilmiyor.
+
+**Gönderim altyapısı:** E-postalar [Resend](https://resend.com) servisi üzerinden, uygulamanın marka renklerine uygun sade bir HTML şablonla gidiyor; e-posta içindeki bağlantıya tıklanınca doğrudan ilgili fikrin detay penceresi açılıyor (Bölüm 5'teki "Link Kopyala" ile aynı adres yapısı). Aylık gönderim kotasının gereksiz yere tüketilmemesi için sistem, yukarıdaki üç kontrolü (tercih → çevrimiçilik → tetikleyici türü) geçmeyen hiçbir olayda e-posta göndermiyor.
+
 ---
 
 ## Özet: Şu An Neler Var, Neler Yok?
 
-**Var olanlar:** hesap/rol yönetimi, şablonlu workspace kurulumu, tam donanımlı Kanban panosu, versiyonlu fikir yazımı (Markdown içe aktarma dahil), oylama, etiketleme, atama, doğrudan link paylaşımı, mention'lı yorumlar, bildirimler, aktivite akışı, dosya ekleme, uçtan uca "sil → 30 saniye geri al → kalıcı sil" deseni ve geniş kapsamlı gerçek zamanlı senkronizasyon.
+**Var olanlar:** hesap/rol yönetimi, şablonlu workspace kurulumu, tam donanımlı Kanban panosu, versiyonlu fikir yazımı (Markdown içe aktarma dahil), oylama, etiketleme, atama, doğrudan link paylaşımı, mention'lı yorumlar, bildirimler (uygulama içi zil + akıllı e-posta), aktivite akışı, dosya ekleme, uçtan uca "sil → 30 saniye geri al → kalıcı sil" deseni ve geniş kapsamlı gerçek zamanlı senkronizasyon.
 
-**Henüz olmayanlar (ileride düşünülebilir):** eşzamanlı düzenleme/kimin-baktığı göstergesi (presence), mobil uygulama, e-posta bildirimleri, dosya önizleme (şu an sadece indirme var), gelişmiş raporlama/analitik panosu.
+**Henüz olmayanlar (ileride düşünülebilir):** eşzamanlı düzenleme/kimin-baktığı göstergesi (presence göstergesi kullanıcıya görünür değil, sadece e-posta kararı için arka planda kullanılıyor), mobil uygulama, dosya önizleme (şu an sadece indirme var), gelişmiş raporlama/analitik panosu.
