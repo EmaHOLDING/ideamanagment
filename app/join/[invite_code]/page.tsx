@@ -20,17 +20,23 @@ export default async function JoinPage({
   }
 
   let workspaceId: string | null = null;
+  let status: "PENDING" | "ACTIVE" | null = null;
   let errorMessage: string | null = null;
 
   try {
     const workspace = await joinWorkspaceByInviteCode(invite_code);
     workspaceId = workspace.id;
+    status = workspace.status;
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : "Katılım sırasında bir hata oluştu.";
   }
 
-  if (workspaceId) {
+  if (workspaceId && status === "ACTIVE") {
     redirect(`/workspace/${workspaceId}`);
+  }
+
+  if (workspaceId && status === "PENDING") {
+    redirect("/workspaces");
   }
 
   return (

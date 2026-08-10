@@ -507,6 +507,7 @@ export type Database = {
           id: string
           joined_at: string
           role: Database["public"]["Enums"]["workspace_role"]
+          status: Database["public"]["Enums"]["workspace_member_status"]
           user_id: string
           workspace_id: string
         }
@@ -514,6 +515,7 @@ export type Database = {
           id?: string
           joined_at?: string
           role?: Database["public"]["Enums"]["workspace_role"]
+          status?: Database["public"]["Enums"]["workspace_member_status"]
           user_id: string
           workspace_id: string
         }
@@ -521,6 +523,7 @@ export type Database = {
           id?: string
           joined_at?: string
           role?: Database["public"]["Enums"]["workspace_role"]
+          status?: Database["public"]["Enums"]["workspace_member_status"]
           user_id?: string
           workspace_id?: string
         }
@@ -563,6 +566,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_workspace_invite: {
+        Args: { _workspace_id: string }
+        Returns: {
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["workspace_role"]
+          status: Database["public"]["Enums"]["workspace_member_status"]
+          user_id: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspace_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       assign_idea: {
         Args: { _assignee_user_id?: string; _idea_id: string }
         Returns: {
@@ -632,6 +652,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_workspace_member_count: {
+        Args: { _workspace_id: string }
+        Returns: number
+      }
       hard_delete_attachment: {
         Args: { _attachment_id: string }
         Returns: {
@@ -658,6 +682,10 @@ export type Database = {
         Returns: boolean
       }
       is_workspace_member: { Args: { _workspace_id: string }; Returns: boolean }
+      is_workspace_member_any_status: {
+        Args: { _workspace_id: string }
+        Returns: boolean
+      }
       is_workspace_owner: { Args: { _workspace_id: string }; Returns: boolean }
       is_workspace_owner_or_admin: {
         Args: { _workspace_id: string }
@@ -900,6 +928,7 @@ export type Database = {
     Enums: {
       impact_effort_level: "LOW" | "MEDIUM" | "HIGH"
       status_type: "DRAFT" | "IN_REVIEW" | "APPROVED" | "CANCELLED" | "DONE"
+      workspace_member_status: "PENDING" | "ACTIVE"
       workspace_role: "OWNER" | "MEMBER" | "ADMIN" | "VIEWER"
     }
     CompositeTypes: {
@@ -1033,6 +1062,7 @@ export const Constants = {
     Enums: {
       impact_effort_level: ["LOW", "MEDIUM", "HIGH"],
       status_type: ["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED", "DONE"],
+      workspace_member_status: ["PENDING", "ACTIVE"],
       workspace_role: ["OWNER", "MEMBER", "ADMIN", "VIEWER"],
     },
   },

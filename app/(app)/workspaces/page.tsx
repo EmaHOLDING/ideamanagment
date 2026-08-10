@@ -1,11 +1,19 @@
 import { FolderKanbanIcon } from "lucide-react";
-import { getMyWorkspaces } from "@/app/actions/workspaceActions";
+import { getMyWorkspaces, getWorkspaceMemberCount } from "@/app/actions/workspaceActions";
 import { getTemplates } from "@/app/actions/templateActions";
 import { CreateWorkspaceDialog } from "./_components/create-workspace-dialog";
 import { WorkspaceCard } from "./_components/workspace-card";
+import { PendingWorkspaceCard } from "./_components/pending-workspace-card";
 
 export default async function WorkspacesPage() {
   const [workspaces, templates] = await Promise.all([getMyWorkspaces(), getTemplates()]);
+
+  const pending = workspaces.filter((ws) => ws.status === "PENDING");
+  const active = workspaces.filter((ws) => ws.status === "ACTIVE");
+
+  const pendingWithCounts = await Promise.all(
+    pending.map(async (ws) => ({ ...ws, memberCount: await getWorkspaceMemberCount(ws.id) }))
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
@@ -14,7 +22,26 @@ export default async function WorkspacesPage() {
         <CreateWorkspaceDialog templates={templates} />
       </div>
 
-      {workspaces.length === 0 ? (
+      {pendingWithCounts.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Bekleyen Davetler
+          </h2>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+            {pendingWithCounts.map((ws) => (
+              <PendingWorkspaceCard
+                key={ws.id}
+                id={ws.id}
+                title={ws.title}
+                role={ws.role}
+                memberCount={ws.memberCount}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {active.length === 0 && pendingWithCounts.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-20 text-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
             <FolderKanbanIcon className="size-6 text-primary" />
@@ -25,11 +52,13 @@ export default async function WorkspacesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
-          {workspaces.map((ws) => (
-            <WorkspaceCard key={ws.id} id={ws.id} title={ws.title} role={ws.role} />
-          ))}
-        </div>
+        active.length > 0 && (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+            {active.map((ws) => (
+              <WorkspaceCard key={ws.id} id={ws.id} title={ws.title} role={ws.role} />
+            ))}
+          </div>
+        )
       )}
     </div>
   );
