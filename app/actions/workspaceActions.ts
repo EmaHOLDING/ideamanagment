@@ -57,13 +57,15 @@ export async function getMyWorkspaces() {
   // satırları user_id ile explicit filtrelenir.
   const { data, error } = await supabase
     .from("workspace_members")
-    .select("joined_at, workspace:workspaces(*)")
+    .select("joined_at, role, workspace:workspaces(*)")
     .eq("user_id", user.id)
     .order("joined_at", { ascending: false });
 
   if (error) throw error;
 
-  return data.map((row) => row.workspace).filter((w): w is NonNullable<typeof w> => w !== null);
+  return data
+    .filter((row) => row.workspace !== null)
+    .map((row) => ({ ...row.workspace!, role: row.role }));
 }
 
 const workspaceIdSchema = z.string().uuid();
@@ -265,6 +267,29 @@ export async function regenerateInviteCode(workspaceId: string) {
     .single();
 
   if (error) throw error;
+
+  return data;
+}
+
+const updateWorkspaceTitleSchema = z.object({
+  workspaceId: z.string().uuid(),
+  title: z.string().trim().min(1).max(255),
+});
+
+export async function updateWorkspaceTitle(workspaceId: string, title: string) {
+  const input = updateWorkspaceTitleSchema.parse({ workspaceId, title });
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("workspaces")
+    .update({ title: input.title })
+    .eq("id", input.workspaceId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error("Bu işlemi yapma yetkiniz yok.");
+  }
 
   return data;
 }

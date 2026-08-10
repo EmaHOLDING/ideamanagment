@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { getWorkspaceForUser, getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import { getIdeasForWorkspace } from "@/app/actions/ideaActions";
 import { getWorkspaceTags } from "@/app/actions/tagActions";
 import { Button } from "@/components/ui/button";
 import { Board } from "./_components/board";
-import { SaveAsTemplateDialog } from "./_components/save-as-template-dialog";
-import { MembersDialog } from "./_components/members-dialog";
 import { ActivityPanel } from "./_components/activity-panel";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/types/database.types";
@@ -82,15 +80,18 @@ export default async function WorkspaceBoardPage({
         </div>
         <div className="flex items-center gap-2">
           <ActivityPanel workspaceId={workspaceId} />
-          <MembersDialog
-            workspaceId={workspaceId}
-            isOwner={workspace.isOwner}
-            canManageContent={canManageContent}
-            currentUserId={user!.id}
-            inviteCode={workspace.invite_code}
-            defaultInviteRole={workspace.default_invite_role}
-          />
-          {canManageContent && <SaveAsTemplateDialog workspaceId={workspaceId} />}
+          {canManageContent && (
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={
+                <Link href={`/workspace/${workspaceId}/settings`}>
+                  <SettingsIcon /> Ayarlar
+                </Link>
+              }
+            />
+          )}
         </div>
       </div>
       <Board

@@ -27,7 +27,7 @@ export default async function WorkspacesPage() {
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
           {workspaces.map((ws) => (
-            <WorkspaceCard key={ws.id} id={ws.id} title={ws.title} inviteCode={ws.invite_code} />
+            <WorkspaceCard key={ws.id} id={ws.id} title={ws.title} role={ws.role} />
           ))}
         </div>
       )}

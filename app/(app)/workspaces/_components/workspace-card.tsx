@@ -1,9 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { MoreVerticalIcon, SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { Database } from "@/lib/types/database.types";
 
 const ACCENT_CLASSES = [
   "bg-primary",
@@ -23,23 +30,17 @@ function accentClassFor(seed: string) {
 export function WorkspaceCard({
   id,
   title,
-  inviteCode,
+  role,
 }: {
   id: string;
   title: string;
-  inviteCode: string;
+  role: Database["public"]["Enums"]["workspace_role"];
 }) {
   const router = useRouter();
+  const canManageContent = role === "OWNER" || role === "ADMIN";
 
   function goToWorkspace() {
     router.push(`/workspace/${id}`);
-  }
-
-  function copyInviteLink(e: React.MouseEvent) {
-    e.stopPropagation();
-    const url = `${window.location.origin}/join/${inviteCode}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Davet linki kopyalandı");
   }
 
   return (
@@ -53,20 +54,40 @@ export function WorkspaceCard({
       className="cursor-pointer overflow-hidden py-0 transition-shadow hover:shadow-md"
     >
       <div className={`h-1.5 w-full ${accentClassFor(id)}`} />
-      <CardHeader className="pt-5">
+      <CardHeader className="pt-5 pb-5">
         <CardTitle className="flex items-center gap-2.5">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
             {title.charAt(0).toUpperCase()}
           </span>
           <span className="truncate">{title}</span>
         </CardTitle>
+        {canManageContent && (
+          <CardAction>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="Workspace seçenekleri"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVerticalIcon />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent
+                align="end"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuItem onClick={() => router.push(`/workspace/${id}/settings`)}>
+                  <SettingsIcon /> Workspace Ayarları
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </CardAction>
+        )}
       </CardHeader>
-      <CardContent className="flex items-center justify-between gap-2 pb-4">
-        <span className="truncate text-xs text-muted-foreground">Davet kodu: {inviteCode}</span>
-        <Button variant="outline" size="sm" onClick={copyInviteLink}>
-          Linki Kopyala
-        </Button>
-      </CardContent>
     </Card>
   );
 }
