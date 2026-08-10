@@ -3,6 +3,8 @@
 import { z } from "zod";
 import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyByEmailIfOffline } from "./_email";
+import { mentionEmailHtml } from "@/lib/email-templates";
 
 const addCommentSchema = z.object({
   ideaId: z.string().uuid(),
@@ -82,6 +84,22 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
       }))
     );
     if (mentionNotificationError) throw mentionNotificationError;
+
+    const actorName = getDisplayName(user);
+    await Promise.all(
+      mentionedIds.map((recipientId) =>
+        notifyByEmailIfOffline({
+          recipientUserId: recipientId,
+          subject: `${actorName} sizi bir yorumda etiketledi`,
+          html: mentionEmailHtml({
+            actorName,
+            ideaTitle,
+            workspaceId: idea.workspace_id,
+            ideaId: input.ideaId,
+          }),
+        })
+      )
+    );
   }
 
   await logActivity(supabase, {

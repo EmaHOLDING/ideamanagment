@@ -3,6 +3,8 @@
 import { z } from "zod";
 import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyByEmailIfOffline } from "./_email";
+import { assignmentEmailHtml } from "@/lib/email-templates";
 
 const impactEffortSchema = z.enum(["LOW", "MEDIUM", "HIGH"]).optional();
 
@@ -265,6 +267,18 @@ export async function assignIdea(ideaId: string, assigneeUserId: string | null) 
       message: `${getDisplayName(user)}, '${ideaTitle}' fikrini size atadı.`,
     });
     if (notificationError) throw notificationError;
+
+    const actorName = getDisplayName(user);
+    await notifyByEmailIfOffline({
+      recipientUserId: input.assigneeUserId,
+      subject: `${actorName} size bir fikir atadı`,
+      html: assignmentEmailHtml({
+        actorName,
+        ideaTitle,
+        workspaceId: idea.workspace_id,
+        ideaId: input.ideaId,
+      }),
+    });
   }
 
   await logActivity(supabase, {

@@ -487,6 +487,21 @@ export type Database = {
           },
         ]
       }
+      user_presence: {
+        Row: {
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       workspace_members: {
         Row: {
           id: string

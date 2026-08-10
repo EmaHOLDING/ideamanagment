@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/header";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
 import { getNotifications } from "@/app/actions/notificationActions";
+import { getEmailNotificationsPreference } from "@/app/actions/userSettingsActions";
 import { getDisplayName } from "@/lib/user-display";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -15,11 +17,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/login");
   }
 
-  const { items, nextCursor } = await getNotifications();
+  const [{ items, nextCursor }, emailNotificationsEnabled] = await Promise.all([
+    getNotifications(),
+    getEmailNotificationsPreference(),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header displayName={getDisplayName(user)} email={user.email ?? ""}>
+      <PresenceHeartbeat />
+      <Header
+        displayName={getDisplayName(user)}
+        email={user.email ?? ""}
+        initialEmailNotificationsEnabled={emailNotificationsEnabled}
+      >
         <NotificationBell
           currentUserId={user.id}
           initialItems={items}

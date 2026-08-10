@@ -5,10 +5,12 @@ import { UserMenu } from "@/components/layout/user-menu";
 export function Header({
   displayName,
   email,
+  initialEmailNotificationsEnabled,
   children,
 }: {
   displayName: string;
   email: string;
+  initialEmailNotificationsEnabled: boolean;
   children?: React.ReactNode;
 }) {
   return (
@@ -19,7 +21,11 @@ export function Header({
       </Link>
       <div className="flex items-center gap-2">
         {children}
-        <UserMenu displayName={displayName} email={email} />
+        <UserMenu
+          displayName={displayName}
+          email={email}
+          initialEmailNotificationsEnabled={initialEmailNotificationsEnabled}
+        />
       </div>
     </header>
   );
