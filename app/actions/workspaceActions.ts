@@ -109,6 +109,7 @@ export async function getWorkspaceMembers(workspaceId: string) {
     .from("workspace_members")
     .select("*")
     .eq("workspace_id", id)
+    .eq("status", "ACTIVE")
     .order("joined_at", { ascending: true });
 
   if (error) throw error;

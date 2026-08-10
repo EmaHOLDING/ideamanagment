@@ -86,14 +86,19 @@ export function IdeaCard({
               disabled={isVotePending}
               onClick={onVoteClick}
               className="shrink-0 gap-1 px-1.5"
+              title={`${voteCount} / ${members.length} kişi oy verdi`}
             >
               <ArrowBigUpIcon className="size-3.5" />
-              {voteCount}
+              {voteCount}/{members.length}
             </Button>
           ) : (
-            <Badge variant="outline" className="shrink-0 gap-1">
+            <Badge
+              variant="outline"
+              className="shrink-0 gap-1"
+              title={`${voteCount} / ${members.length} kişi oy verdi`}
+            >
               <ArrowBigUpIcon className="size-3.5" />
-              {voteCount}
+              {voteCount}/{members.length}
             </Badge>
           )}
         </div>
