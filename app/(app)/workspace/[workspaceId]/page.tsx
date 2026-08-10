@@ -64,21 +64,22 @@ export default async function WorkspaceBoardPage({
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
             nativeButton={false}
+            className="shrink-0"
             render={
               <Link href="/workspaces" aria-label="Workspace'lerime dön">
                 <ArrowLeftIcon />
               </Link>
             }
           />
-          <h1 className="text-lg font-semibold">{workspace.title}</h1>
+          <h1 className="truncate text-lg font-semibold">{workspace.title}</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <ActivityPanel workspaceId={workspaceId} />
           {canManageContent && (
             <Button

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { MoreVerticalIcon, SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,40 +54,36 @@ export function WorkspaceCard({
       className="cursor-pointer overflow-hidden py-0 transition-shadow hover:shadow-md"
     >
       <div className={`h-1.5 w-full ${accentClassFor(id)}`} />
-      <CardHeader className="pt-5 pb-5">
-        <CardTitle className="flex items-center gap-2.5">
+      <div className="flex items-center justify-between gap-2 px-(--card-spacing) py-5">
+        <div className="flex min-w-0 items-center gap-2.5 font-heading text-base font-medium">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
             {title.charAt(0).toUpperCase()}
           </span>
           <span className="truncate">{title}</span>
-        </CardTitle>
+        </div>
         {canManageContent && (
-          <CardAction>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label="Workspace seçenekleri"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVerticalIcon />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent
-                align="end"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <DropdownMenuItem onClick={() => router.push(`/workspace/${id}/settings`)}>
-                  <SettingsIcon /> Workspace Ayarları
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </CardAction>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="shrink-0"
+                  aria-label="Workspace seçenekleri"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVerticalIcon />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={() => router.push(`/workspace/${id}/settings`)}>
+                <SettingsIcon /> Workspace Ayarları
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
-      </CardHeader>
+      </div>
     </Card>
   );
 }

@@ -177,7 +177,7 @@ export function IdeaDetailDialog({
           showCloseButton
           className="grid h-[85vh] max-h-[85vh] w-full grid-rows-[auto_1fr] gap-0 overflow-hidden p-0 sm:max-w-4xl"
         >
-          <DialogHeader className="flex-row items-start justify-between gap-4 border-b bg-muted/30 px-5 py-4">
+          <DialogHeader className="flex-col items-start justify-between gap-3 border-b bg-muted/30 px-5 py-4 sm:flex-row">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <DialogTitle className="text-lg leading-snug break-words pr-1">
                 {data.title}
@@ -224,7 +224,7 @@ export function IdeaDetailDialog({
                 )}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1.5 pr-9">
+            <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0 sm:flex-nowrap sm:pr-9">
               <Button type="button" variant="ghost" size="sm" onClick={onCopyLink}>
                 <LinkIcon /> Link Kopyala
               </Button>
@@ -254,8 +254,8 @@ export function IdeaDetailDialog({
             </div>
           </DialogHeader>
 
-          <div className="grid min-h-0 grid-cols-[280px_1fr] overflow-hidden">
-            <div className="flex min-h-0 flex-col border-r bg-muted/20">
+          <div className="grid min-h-0 grid-cols-1 grid-rows-[40vh_1fr] overflow-hidden sm:grid-cols-[280px_1fr] sm:grid-rows-1">
+            <div className="flex min-h-0 flex-col border-b bg-muted/20 sm:border-r sm:border-b-0">
               <div className="flex items-center gap-1.5 border-b px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 <MessageSquareIcon className="size-3.5" /> Yorumlar
               </div>
