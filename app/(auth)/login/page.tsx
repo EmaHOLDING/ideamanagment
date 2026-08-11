@@ -4,7 +4,7 @@ import { AuthForm } from "@/components/auth/auth-form";
 export default function LoginPage() {
   return (
     <Suspense>
-      <AuthForm mode="login" />
+      <AuthForm />
     </Suspense>
   );
 }

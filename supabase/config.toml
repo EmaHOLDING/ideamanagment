@@ -156,11 +156,17 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+site_url = "http://localhost:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# Uygulama http://localhost:3000 üzerinden çalışıyor (127.0.0.1 değil) — OAuth
+# sonrası redirectTo olarak gönderilen http://localhost:3000/auth/callback bu
+# listeyle eşleşmediği için GoTrue eskiden yönlendirmeyi reddedip site_url'e
+# (path'siz) düşüyordu, bu da "Google'da giriş yapılıyor ama uygulamada login
+# ekranında kalınıyor" sorununa yol açıyordu. Joker (**) desenle hem
+# localhost hem 127.0.0.1 üzerinden erişimi kapsıyoruz.
+additional_redirect_urls = ["http://localhost:3000/**", "http://127.0.0.1:3000/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -332,6 +338,64 @@ url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
+email_optional = false
+
+# Fikir Kuluçkası: özel e-posta/şifre girişi kaldırıldı, tek giriş yöntemi
+# Google OAuth. .env.local'daki GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET buradan
+# referans alınır.
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = ""
+url = ""
+# Yerelde Google ile giriş için gerekli (bkz. yukarıdaki apple örneğindeki not).
+skip_nonce_check = true
+email_optional = false
+
+# Microsoft / Entra ID (Office 365). Tek kiracılı (single-tenant) bir Entra ID
+# uygulaması kullanılıyorsa AZURE_URL'e kiracıya özel issuer adresi
+# (https://login.microsoftonline.com/<TENANT_ID>/v2.0) verilebilir; boş
+# bırakılırsa Supabase'in varsayılan çok kiracılı (multi-tenant) uç noktası
+# kullanılır.
+[auth.external.azure]
+enabled = true
+client_id = "env(AZURE_CLIENT_ID)"
+secret = "env(AZURE_CLIENT_SECRET)"
+redirect_uri = ""
+url = "env(AZURE_URL)"
+skip_nonce_check = true
+email_optional = false
+
+[auth.external.linkedin_oidc]
+enabled = true
+client_id = "env(LINKEDIN_CLIENT_ID)"
+secret = "env(LINKEDIN_CLIENT_SECRET)"
+redirect_uri = ""
+url = ""
+skip_nonce_check = true
+email_optional = false
+
+[auth.external.github]
+enabled = true
+client_id = "env(GITHUB_CLIENT_ID)"
+secret = "env(GITHUB_CLIENT_SECRET)"
+redirect_uri = ""
+url = ""
+skip_nonce_check = true
+# GitHub hesaplarının e-postası gizli olabiliyor; bu durumda girişin
+# reddedilmemesi için e-posta zorunluluğu kaldırılıyor.
+email_optional = true
+
+# Self-hosted bir GitLab kullanılıyorsa GITLAB_URL'e o instance'ın adresi
+# verilebilir; boş bırakılırsa gitlab.com kullanılır.
+[auth.external.gitlab]
+enabled = true
+client_id = "env(GITLAB_CLIENT_ID)"
+secret = "env(GITLAB_CLIENT_SECRET)"
+redirect_uri = ""
+url = "env(GITLAB_URL)"
+skip_nonce_check = true
 email_optional = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.

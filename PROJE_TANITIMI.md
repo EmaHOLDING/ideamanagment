@@ -12,16 +12,17 @@ Fikir Kuluçkası, bir ekibin girişim/ürün fikirlerini birlikte üretip olgun
 
 ## 2. Hesap ve Giriş
 
-- **E-posta/şifre ile kayıt ve giriş.** Kayıt sırasında kullanıcı adı ve soyadı da alınıyor, böylece uygulamanın hiçbir yerinde çıplak e-posta adresleri değil, gerçek isimler görünüyor.
-- **Google ile giriş** altyapısı da hazır (Google hesap bilgileri tanımlandığında devreye girecek şekilde kodlanmış).
+- **Uygulamanın kendi e-posta/şifreli kayıt sistemi kaldırıldı.** Hesap oluşturma ve giriş artık sadece dış hesap sağlayıcılarıyla yapılıyor: **Google, Microsoft/Entra ID (Office 365), LinkedIn, GitHub, GitLab**. Giriş ekranında bu beş sağlayıcı için ayrı birer "... ile devam et" butonu var.
+- İsim/soyisim ayrıca sorulmuyor — seçilen sağlayıcıdaki ad bilgisi otomatik olarak alınıp uygulamanın hiçbir yerinde çıplak e-posta adresleri değil, gerçek isimler görünecek şekilde kullanılıyor.
 - Giriş yapmamış bir kullanıcı hiçbir sayfaya erişemiyor, otomatik olarak giriş ekranına yönlendiriliyor.
 
 ## 3. Workspace'ler (Çalışma Alanları)
 
 Her ekip/proje kendi **workspace**'inde çalışıyor:
 
-- Kullanıcı istediği kadar workspace oluşturabiliyor, her birine ayrı bir davet kodu üretiliyor.
-- Bir davet linkiyle katılan kişi otomatik olarak o workspace'e ekleniyor.
+- Kullanıcı istediği kadar workspace oluşturabiliyor, her birine ayrı bir davet kodu üretiliyor. Oluştururken isteğe bağlı olarak en fazla **250 karakterlik bir açıklama** da girilebiliyor — bu açıklama hem workspace listesindeki kartın altında hem de Workspace Ayarları'nın Genel bölümünde görünüyor ve sonradan düzenlenebiliyor.
+- Bir davet linkine/koduna tıklayan kişi artık **doğrudan panoya girmiyor**: workspace, kendi workspace listesinde "Bekleyen Davetler" bölümünde beliriyor; orada kaç kişinin zaten üye olduğunu ve kendisine hangi rolün atanacağını görüp **"Kabul Et"** veya **"Reddet"** diyor. Kabul edilmeden panonun içeriğine (kolonlar, fikirler) erişilemiyor; zaten aktif bir üye kendi davet linkine tekrar tıklarsa bu adım atlanıp doğrudan panoya gidiyor.
+- Davet linkini paylaşmanın yanı sıra, Workspace Ayarları'ndan doğrudan bir **e-posta adresine davet gönderilebiliyor** (Kurucu/Yönetici) — davet edilen kişiye, tıklandığında davet sayfasına götüren bağlantı içeren bir e-posta gidiyor.
 - Workspace'i oluşturan kişi **Kurucu (Owner)** oluyor; workspace'i tamamen silme veya sahipliği başka birine devretme yetkisi sadece ona ait.
 - **Davet kodu** istenildiğinde yenilenebiliyor (eski link geçersiz olur, önceki üyeler etkilenmez).
 - Boş bir pano ile başlamak yerine, hazır **şablonlardan** (örn. "Basit Kanban", "İptal Takipli Kanban") biri seçilerek workspace kurulabiliyor. Ayrıca mevcut bir panonun kolon yapısı yeni bir şablon olarak da kaydedilebiliyor.
@@ -40,9 +41,20 @@ Her workspace üyesinin dört rolden biri var, yetkiler buna göre kademeleniyor
 - Yeni bir kişi davet linkiyle katıldığında hangi rolle başlayacağı, Kurucu tarafından "Workspace Ayarları" bölümünden önceden belirlenebiliyor (varsayılan olarak Üye).
 - Bir yorumu **düzenleme** yetkisi özel bir kuralla korunuyor: Kurucu veya Yönetici bile olsa, başkasının yorumunun içeriğini değiştiremiyor — sadece yazarı düzenleyebiliyor. (Silme farklı: Kurucu/Yönetici gerekirse başkasının yorumunu da silebiliyor.)
 
+### Workspace Ayarları
+
+Kurucu ve Yönetici'nin erişebildiği, sol menüde kategorilere ayrılmış ayrı bir ayarlar sayfası var:
+
+- **Genel:** workspace adı ve açıklaması düzenlenir, oluşturulma tarihi görünür.
+- **Üyeler:** üye listesi, rol değiştirme, üye çıkarma, sahipliği devretme.
+- **Kolonlar:** mevcut kolonlar burada **sürüklenerek yeniden sıralanabiliyor** ve adları değiştirilebiliyor; ayrıca mevcut kolon yapısı yeni bir şablon olarak kaydedilebiliyor.
+- **Etiketler:** workspace'in ortak etiket havuzu tamamen buradan yönetiliyor — yeni etiket oluşturma, ad/renk düzenleme, silme. (Fikir detayındaki etiket seçici artık sadece var olan etiketleri fikre ilişkilendiriyor, oradan yeni etiket oluşturulamıyor.)
+- **Davet:** davet kodu/linki, e-posta ile davet gönderme, davetle katılanların varsayılan rolü.
+- **Tehlikeli Alan:** workspace'i kalıcı olarak silme (sadece Kurucu).
+
 ## 4. Kanban Panosu
 
-- Kolonlar sabit sırada durur (sürüklenip yeniden sıralanamaz — kafa karışıklığını önlemek için bilinçli bir tasarım tercihi); fikir **kartları** ise kolonlar arasında serbestçe sürüklenip bırakılabiliyor.
+- Panonun kendisinde kolonlar sabit sırada durur (kafa karışıklığını önlemek için bilinçli bir tasarım tercihi); kolon sırası değiştirilmek istendiğinde Workspace Ayarları'nın Kolonlar sekmesinden sürüklenerek yeniden sıralanabiliyor. Fikir **kartları** ise doğrudan panoda kolonlar arasında serbestçe sürüklenip bırakılabiliyor.
 - Bir kart "İptal Edildi" türündeki bir kolona taşınmak istendiğinde, sistem taşımadan önce bir **iptal sebebi** girilmesini zorunlu kılıyor.
 - Kart bir kolondan diğerine sürüklenip bırakıldığı an, sunucu cevabı beklenmeden **anında** yeni yerinde görünür hale geliyor (arka planda kayıt işlemi devam eder; bir hata olursa kart otomatik eski yerine döner).
 - **Arama ve filtreleme:** başlık/içerik metnine göre arama, etikete göre filtre, atanan kişiye göre filtre — hepsi anlık ve pano üstünde.
@@ -54,9 +66,9 @@ Her workspace üyesinin dört rolden biri var, yetkiler buna göre kademeleniyor
 - İçerik alanına elle yazmanın yanı sıra hazır bir **.md (Markdown) dosyası içe aktarılabiliyor** — dışarıda hazırlanmış bir metin doğrudan editöre yüklenebiliyor.
 - Bir fikir her düzenlendiğinde eski hali kaybolmuyor; sistem otomatik olarak bir **versiyon geçmişi** tutuyor. Geçmiş ekranında hangi versiyonda hangi alanların değiştiği işaretli şekilde, en yeniden en eskiye doğru listeleniyor.
 - Her fikre, workspace içindeki üyelerden biri **atanabiliyor** (sorumlu kişi).
-- Fikirlere workspace'in ortak **etiket** havuzundan (renkli, tekrar kullanılabilir etiketler) istenilen kadar etiket eklenebiliyor.
+- Fikirlere workspace'in ortak **etiket** havuzundan (renkli, tekrar kullanılabilir etiketler) istenilen kadar etiket eklenebiliyor — yeni etiket oluşturma Workspace Ayarları'nın Etiketler sekmesinden yapılıyor, fikir detayındaki seçici sadece var olan etiketleri ilişkilendiriyor.
 - Bir fikre **doğrudan link** ile ulaşılabiliyor — "Link Kopyala" ile alınan adres paylaşıldığında, açan kişi otomatik olarak o fikrin detay penceresini açık bulur.
-- **Oylama:** her üye bir fikre oy verip geri çekebiliyor (aynı kişi ikinci kez oy vermiyor, oyu bir daha tıklayınca geri alınıyor). Oylama panodaki kart sırasını otomatik değiştirmiyor — sadece bir öncelik göstergesi.
+- **Oylama:** her üye bir fikre oy verip geri çekebiliyor (aynı kişi ikinci kez oy vermiyor, oyu bir daha tıklayınca geri alınıyor). Kart üzerinde oy sayısı **"X/Y"** formatında gösteriliyor — kaç üyeden kaçının oy verdiği tek bakışta görülüyor. Oylama panodaki kart sırasını otomatik değiştirmiyor — sadece bir öncelik göstergesi.
 
 ## 6. Yorumlar
 
@@ -69,6 +81,7 @@ Her workspace üyesinin dört rolden biri var, yetkiler buna göre kademeleniyor
 - Ekranın üst köşesindeki zil ikonu, okunmamış bildirim sayısını gösteriyor.
 - Şu durumlarda bildirim geliyor: fikrinize/daha önce yorum yaptığınız bir fikre yeni yorum gelmesi, bir kartın taşınması, size bir fikrin atanması, bir yorumda `@` ile etiketlenme.
 - Yeni bir bildirim geldiğinde zil **anında** (sayfa yenilenmeden) güncelleniyor.
+- Bir bildirime **tıklandığında**, kullanıcı otomatik olarak ilgili fikrin bulunduğu workspace'e ve o fikrin detay penceresine yönlendiriliyor — sayfa yenilemeye gerek kalmadan, bildirimi görüp ayrıca panoda o fikri aramaya gerek olmuyor.
 - Bildirimler tek tek veya "Tümünü okundu yap" ile toplu olarak okunmuş sayılabiliyor.
 - Uygulama içi bildirimlere ek olarak, belirli durumlarda **e-posta** de gönderiliyor — detayları Bölüm 12'de.
 
@@ -110,7 +123,7 @@ Aynı workspace'i aynı anda birden fazla kişi açtığında, birinin yaptığ�
 - Yorumlar (bir fikrin detay penceresi açıkken)
 - Bildirim zili
 - Aktivite akışı (panel açıkken)
-- Workspace üyeleri (rol değişikliği, katılma, çıkarılma — üyeler penceresi açıkken)
+- Workspace üyeleri (rol değişikliği, katılma, çıkarılma — Workspace Ayarları'nın Üyeler sekmesi açıkken)
 - Kolonlar (ekleme/silme)
 - Etiketler (yeni etiket oluşturma)
 
@@ -140,10 +153,16 @@ Uygulama arka planda, sekmeniz açıkken düzenli aralıklarla sessizce "hâlâ 
 
 **Gönderim altyapısı:** E-postalar [Resend](https://resend.com) servisi üzerinden, uygulamanın marka renklerine uygun sade bir HTML şablonla gidiyor; e-posta içindeki bağlantıya tıklanınca doğrudan ilgili fikrin detay penceresi açılıyor (Bölüm 5'teki "Link Kopyala" ile aynı adres yapısı). Aylık gönderim kotasının gereksiz yere tüketilmemesi için sistem, yukarıdaki üç kontrolü (tercih → çevrimiçilik → tetikleyici türü) geçmeyen hiçbir olayda e-posta göndermiyor.
 
+## 13. Mobil ve Responsive Tasarım
+
+- Workspace listesi, kanban panosu ve fikir detay penceresi mobil ekran genişliklerinde de düzgün çalışacak şekilde düzenlendi (workspace kartlarındaki metin dikey eksende ortalanması dahil).
+- Fikir detay penceresinde, asıl içeriğe (problem tanımı, hedef kitle, içerik) daha fazla yer açmak için **yorumlar paneli açılır/kapanır** hale getirildi — masaüstünde varsayılan olarak açık geliyor, mobilde varsayılan olarak kapalı geliyor ve dilenirse tıklanıp açılabiliyor.
+- Mobilde, fikir detayının üst kısmındaki aksiyon butonları (Link Kopyala, Geçmiş, Düzenle, Sil) daralıp ikona dönüşüyor; en fazla iki satır kaplayacak şekilde düzenlendi.
+
 ---
 
 ## Özet: Şu An Neler Var, Neler Yok?
 
-**Var olanlar:** hesap/rol yönetimi, şablonlu workspace kurulumu, tam donanımlı Kanban panosu, versiyonlu fikir yazımı (Markdown içe aktarma dahil), oylama, etiketleme, atama, doğrudan link paylaşımı, mention'lı yorumlar, bildirimler (uygulama içi zil + akıllı e-posta), aktivite akışı, dosya ekleme, uçtan uca "sil → 30 saniye geri al → kalıcı sil" deseni ve geniş kapsamlı gerçek zamanlı senkronizasyon.
+**Var olanlar:** hesap/rol yönetimi, kategorilere ayrılmış Workspace Ayarları sayfası (Genel/Üyeler/Kolonlar/Etiketler/Davet/Tehlikeli Alan), açıklama alanı olan ve e-posta ile davet + kabul/reddet onayıyla katılınan workspace'ler, şablonlu workspace kurulumu, tam donanımlı Kanban panosu (ayarlardan sürükle-sırala kolonlar dahil), versiyonlu fikir yazımı (Markdown içe aktarma dahil), oylama ("X/Y" gösterimi), merkezi etiket yönetimi, atama, doğrudan link paylaşımı, mention'lı yorumlar, bildirimler (uygulama içi zil + tek tıkla ilgili fikre gitme + akıllı e-posta), aktivite akışı, dosya ekleme, uçtan uca "sil → 30 saniye geri al → kalıcı sil" deseni, geniş kapsamlı gerçek zamanlı senkronizasyon ve mobil uyumlu tasarım.
 
 **Henüz olmayanlar (ileride düşünülebilir):** eşzamanlı düzenleme/kimin-baktığı göstergesi (presence göstergesi kullanıcıya görünür değil, sadece e-posta kararı için arka planda kullanılıyor), mobil uygulama, dosya önizleme (şu an sadece indirme var), gelişmiş raporlama/analitik panosu.

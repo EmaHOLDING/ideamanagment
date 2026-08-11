@@ -3,7 +3,8 @@ type DisplayableUser = {
   user_metadata?: Record<string, unknown> | null;
 };
 
-/** Kullanıcının gösterilecek adı: önce kendi kayıt formumuzdaki
+/** Kullanıcının gösterilecek adı: önce (artık kaldırılmış e-posta/şifreli
+ * kayıt formundan kalma, eski kullanıcılarda hâlâ mevcut olabilecek)
  * first_name+last_name, sonra Google'ın doldurduğu full_name, sonra email. */
 export function getDisplayName(user: DisplayableUser | null | undefined): string {
   if (!user) return "Bir kullanıcı";

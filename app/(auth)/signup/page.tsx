@@ -1,10 +1,10 @@
-import { Suspense } from "react";
-import { AuthForm } from "@/components/auth/auth-form";
+import { redirect } from "next/navigation";
 
-export default function SignupPage() {
-  return (
-    <Suspense>
-      <AuthForm mode="signup" />
-    </Suspense>
-  );
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ returnUrl?: string }>;
+}) {
+  const { returnUrl } = await searchParams;
+  redirect(returnUrl ? `/login?returnUrl=${encodeURIComponent(returnUrl)}` : "/login");
 }
