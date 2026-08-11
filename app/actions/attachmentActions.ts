@@ -25,8 +25,17 @@ const SIGNED_URL_TTL_SECONDS = 3600;
 const ideaIdSchema = z.string().uuid();
 const attachmentIdSchema = z.string().uuid();
 
+/** Storage nesne anahtarı (path) için güvenli bir slug üretir — orijinal
+ * (Türkçe karakter/boşluk içerebilen) dosya adı `file_name` kolonunda
+ * olduğu gibi saklanıp kullanıcıya gösterilmeye devam eder, bu sadece
+ * Supabase Storage'ın kabul ettiği anahtar için kullanılır. Aksi halde
+ * boşluk/ı-ş-ğ-ü-ö-ç gibi karakterler "Invalid key" hatasına yol açıyordu. */
+const COMBINING_DIACRITICS = /[̀-ͯ]/g;
+
 function sanitizeFileName(name: string) {
-  return name.replace(/[/\\]/g, "_").slice(0, 200);
+  const normalized = name.normalize("NFKD").replace(COMBINING_DIACRITICS, "");
+  const safe = normalized.replace(/[^a-zA-Z0-9._-]+/g, "_");
+  return safe.slice(0, 200) || "dosya";
 }
 
 export async function uploadAttachment(ideaId: string, formData: FormData) {

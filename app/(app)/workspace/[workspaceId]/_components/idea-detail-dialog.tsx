@@ -11,9 +11,11 @@ import {
   MessageSquareIcon,
   UserIcon,
   LinkIcon,
+  ChevronDownIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -100,6 +102,9 @@ export function IdeaDetailDialog({
   const [open, setOpen] = useState(defaultOpen ?? false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(() =>
+    typeof window === "undefined" ? true : window.innerWidth >= 640
+  );
   const [isAssignPending, startAssignTransition] = useTransition();
   const [, startTagTransition] = useTransition();
 
@@ -224,21 +229,21 @@ export function IdeaDetailDialog({
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0 sm:flex-nowrap sm:pr-9">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 sm:pr-9">
               <Button type="button" variant="ghost" size="sm" onClick={onCopyLink}>
-                <LinkIcon /> Link Kopyala
+                <LinkIcon /> <span className="hidden sm:inline">Link Kopyala</span>
               </Button>
               <VersionHistoryDialog
                 ideaId={ideaId}
                 trigger={
                   <Button type="button" variant="ghost" size="sm">
-                    <HistoryIcon /> Geçmiş
+                    <HistoryIcon /> <span className="hidden sm:inline">Geçmiş</span>
                   </Button>
                 }
               />
               {canEditIdea && (
                 <Button type="button" variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                  <PencilIcon /> Düzenle
+                  <PencilIcon /> <span className="hidden sm:inline">Düzenle</span>
                 </Button>
               )}
               {canEditIdea && (
@@ -248,29 +253,48 @@ export function IdeaDetailDialog({
                   size="sm"
                   onClick={() => setDeleteOpen(true)}
                 >
-                  <Trash2Icon /> Sil
+                  <Trash2Icon /> <span className="hidden sm:inline">Sil</span>
                 </Button>
               )}
             </div>
           </DialogHeader>
 
-          <div className="grid min-h-0 grid-cols-1 grid-rows-[40vh_1fr] overflow-hidden sm:grid-cols-[280px_1fr] sm:grid-rows-1">
+          <div
+            className={cn(
+              "grid min-h-0 grid-cols-1 overflow-hidden sm:grid-rows-1",
+              commentsOpen
+                ? "grid-rows-[40vh_1fr] sm:grid-cols-[280px_1fr]"
+                : "grid-rows-[auto_1fr] sm:grid-cols-[auto_1fr]"
+            )}
+          >
             <div className="flex min-h-0 flex-col border-b bg-muted/20 sm:border-r sm:border-b-0">
-              <div className="flex items-center gap-1.5 border-b px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <button
+                type="button"
+                onClick={() => setCommentsOpen((v) => !v)}
+                className="flex items-center gap-1.5 border-b px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground"
+              >
                 <MessageSquareIcon className="size-3.5" /> Yorumlar
-              </div>
-              <ScrollArea className="min-h-0 flex-1">
-                <div className="p-4">
-                  <CommentsPanel
-                    ideaId={ideaId}
-                    members={members}
-                    currentUserId={currentUserId}
-                    canManageContent={canManageContent}
-                    canContribute={canContribute}
-                    showHeading={false}
-                  />
-                </div>
-              </ScrollArea>
+                <ChevronDownIcon
+                  className={cn(
+                    "ml-auto size-3.5 shrink-0 transition-transform",
+                    !commentsOpen && "-rotate-90"
+                  )}
+                />
+              </button>
+              {commentsOpen && (
+                <ScrollArea className="min-h-0 flex-1">
+                  <div className="p-4">
+                    <CommentsPanel
+                      ideaId={ideaId}
+                      members={members}
+                      currentUserId={currentUserId}
+                      canManageContent={canManageContent}
+                      canContribute={canContribute}
+                      showHeading={false}
+                    />
+                  </div>
+                </ScrollArea>
+              )}
             </div>
 
             <ScrollArea className="min-h-0">
