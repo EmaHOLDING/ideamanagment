@@ -426,6 +426,7 @@ export type Database = {
           is_read: boolean
           message: string
           user_id: string
+          workspace_id: string
         }
         Insert: {
           actor_id: string
@@ -435,6 +436,7 @@ export type Database = {
           is_read?: boolean
           message: string
           user_id: string
+          workspace_id: string
         }
         Update: {
           actor_id?: string
@@ -444,6 +446,7 @@ export type Database = {
           is_read?: boolean
           message?: string
           user_id?: string
+          workspace_id?: string
         }
         Relationships: [
           {
@@ -451,6 +454,13 @@ export type Database = {
             columns: ["idea_id"]
             isOneToOne: false
             referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -639,45 +649,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      create_workspace:
-        | {
-            Args: { _template_id?: string; _title: string }
-            Returns: {
-              created_at: string
-              default_invite_role: Database["public"]["Enums"]["workspace_role"]
-              description: string | null
-              id: string
-              invite_code: string
-              title: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "workspaces"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              _description?: string
-              _template_id?: string
-              _title: string
-            }
-            Returns: {
-              created_at: string
-              default_invite_role: Database["public"]["Enums"]["workspace_role"]
-              description: string | null
-              id: string
-              invite_code: string
-              title: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "workspaces"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      create_workspace: {
+        Args: { _description?: string; _template_id?: string; _title: string }
+        Returns: {
+          created_at: string
+          default_invite_role: Database["public"]["Enums"]["workspace_role"]
+          description: string | null
+          id: string
+          invite_code: string
+          title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspaces"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_workspace_member_count: {
         Args: { _workspace_id: string }
         Returns: number

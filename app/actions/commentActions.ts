@@ -66,6 +66,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
         user_id: recipientId,
         actor_id: user.id,
         idea_id: input.ideaId,
+        workspace_id: idea.workspace_id,
         message: `${getDisplayName(user)}, '${ideaTitle}' fikrine yorum yaptı.`,
       }))
     );
@@ -80,6 +81,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
         user_id: recipientId,
         actor_id: user.id,
         idea_id: input.ideaId,
+        workspace_id: idea.workspace_id,
         message: `${getDisplayName(user)}, '${ideaTitle}' fikrindeki bir yorumda sizi etiketledi.`,
       }))
     );

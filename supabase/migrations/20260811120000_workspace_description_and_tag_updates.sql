@@ -11,12 +11,15 @@ ALTER TABLE workspaces ADD COLUMN description varchar(250) NULL;
 
 -- =========================================================
 -- 2) create_workspace RPC'sine _description parametresi eklenir.
--- Trailing DEFAULT'lu yeni parametre eklemek CREATE OR REPLACE ile
--- güvenlidir (mevcut çağıranlar parametreyi hiç göndermeden aynı şekilde
--- çalışmaya devam eder) — bu, Faz 8'de update_idea'da yaşanan (mevcut bir
--- parametrenin TİPİNİ değiştirip yanlışlıkla ikinci bir overload
--- oluşturma) hatasından farklı bir durum.
+-- ÖNEMLİ: CREATE OR REPLACE FUNCTION, parametre LİSTESİ farklıysa
+-- (trailing DEFAULT'lu yeni bir parametre eklense bile) mevcut
+-- fonksiyonun yerini almaz — YENİ bir overload oluşturur. Bu, daha önce
+-- update_idea'da yaşanan PGRST203 hatasının birebir aynısı olduğu için,
+-- eski 2 parametreli imza burada açıkça DROP edilip tek imza olarak
+-- yeniden oluşturuluyor.
 -- =========================================================
+DROP FUNCTION IF EXISTS public.create_workspace(varchar, uuid);
+
 CREATE OR REPLACE FUNCTION public.create_workspace(
   _title varchar,
   _template_id uuid DEFAULT NULL,
@@ -63,6 +66,8 @@ BEGIN
   RETURN new_workspace;
 END;
 $$;
+
+GRANT EXECUTE ON FUNCTION public.create_workspace(varchar, uuid, varchar) TO authenticated;
 
 -- =========================================================
 -- 3) tags: UPDATE policy eksikti (sadece SELECT/INSERT/DELETE vardı) —

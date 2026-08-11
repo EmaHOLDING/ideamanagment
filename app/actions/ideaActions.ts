@@ -153,6 +153,7 @@ export async function moveIdea(
       user_id: idea.created_by,
       actor_id: user.id,
       idea_id: input.ideaId,
+      workspace_id: idea.workspace_id,
       message: `${getDisplayName(user)}, '${ideaTitle}' kartını '${targetColumn.title}' durumuna taşıdı.`,
     });
     if (notificationError) throw notificationError;
@@ -264,6 +265,7 @@ export async function assignIdea(ideaId: string, assigneeUserId: string | null) 
       user_id: input.assigneeUserId,
       actor_id: user.id,
       idea_id: input.ideaId,
+      workspace_id: idea.workspace_id,
       message: `${getDisplayName(user)}, '${ideaTitle}' fikrini size atadı.`,
     });
     if (notificationError) throw notificationError;

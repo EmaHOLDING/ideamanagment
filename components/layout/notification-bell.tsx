@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BellIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export function NotificationBell({
   initialItems: Notification[];
   initialNextCursor: string | null;
 }) {
+  const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
   const [, startTransition] = useTransition();
@@ -45,6 +47,8 @@ export function NotificationBell({
   const unreadCount = items.filter((n) => !n.is_read).length;
 
   function onItemClick(notification: Notification) {
+    router.push(`/workspace/${notification.workspace_id}?idea=${notification.idea_id}`);
+
     if (notification.is_read) return;
     setItems((prev) =>
       prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n))
