@@ -5,6 +5,7 @@ import { randomBytes } from "crypto";
 import { requireUser, resolveAuthorProfiles, getDisplayName } from "./_shared";
 import { getResendClient } from "@/lib/resend";
 import { workspaceInviteEmailHtml } from "@/lib/email-templates";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const createWorkspaceSchema = z.object({
   title: z.string().trim().min(1).max(255),
@@ -14,7 +15,8 @@ const createWorkspaceSchema = z.object({
 
 export async function createWorkspace(title: string, templateId?: string, description?: string) {
   const input = createWorkspaceSchema.parse({ title, templateId, description });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceRateLimit(supabase, `createWorkspace:${user.id}`, 10, 3600);
 
   // workspaces tablosundaki SELECT RLS policy'si workspace_members
   // üyeliğine bağlı olduğundan, workspace + ilk üyelik (OWNER) + (opsiyonel)
@@ -37,6 +39,10 @@ const inviteCodeSchema = z.string().trim().min(1).max(50);
 export async function joinWorkspaceByInviteCode(inviteCode: string) {
   const code = inviteCodeSchema.parse(inviteCode);
   const { supabase, user } = await requireUser();
+  // Davet kodu tahmin etmeye (brute-force) karşı savunma derinliği —
+  // kod başına ~40 bit entropi olsa da, bu kontrol otomatik deneme
+  // döngülerini kullanıcı bazında erken durduruyor.
+  await enforceRateLimit(supabase, `joinWorkspaceByInviteCode:${user.id}`, 20, 3600);
 
   const { data, error } = await supabase.rpc("join_workspace_by_invite_code", {
     _invite_code: code,
@@ -147,13 +153,14 @@ export async function removeMember(workspaceId: string, userId: string) {
     throw new Error("Workspace sahibi çıkarılamaz. Önce sahipliği başka bir üyeye devretmeli.");
   }
 
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("workspace_members")
-    .delete()
+    .delete({ count: "exact" })
     .eq("workspace_id", input.workspaceId)
     .eq("user_id", input.userId);
 
   if (error) throw error;
+  if (!count) throw new Error("Bu işlemi yapma yetkiniz yok.");
 
   return { success: true };
 }
@@ -385,6 +392,10 @@ const sendWorkspaceInviteEmailSchema = z.object({
 export async function sendWorkspaceInviteEmail(workspaceId: string, email: string) {
   const input = sendWorkspaceInviteEmailSchema.parse({ workspaceId, email });
   const { supabase, user } = await requireUser();
+  // Bu action herhangi bir e-posta adresine gönderim yapabildiği için
+  // (arbitrary recipient) en sıkı limit burada — spam/kötüye kullanım
+  // riski en yüksek action.
+  await enforceRateLimit(supabase, `sendWorkspaceInviteEmail:${user.id}`, 5, 3600);
 
   const { data: membership, error: membershipError } = await supabase
     .from("workspace_members")
@@ -432,9 +443,16 @@ export async function deleteWorkspaceAction(workspaceId: string) {
   const id = workspaceIdSchema.parse(workspaceId);
   const { supabase } = await requireUser();
 
-  const { error } = await supabase.from("workspaces").delete().eq("id", id);
+  // RLS (owner-only) engellerse Postgres/PostgREST hata değil 0 satır
+  // döner — count kontrolü olmadan bu, kalıcı silme gerçekleşmediği
+  // hâlde "başarılı" olarak raporlanırdı.
+  const { error, count } = await supabase
+    .from("workspaces")
+    .delete({ count: "exact" })
+    .eq("id", id);
 
   if (error) throw error;
+  if (!count) throw new Error("Bu işlemi yapma yetkiniz yok.");
 
   return { success: true };
 }

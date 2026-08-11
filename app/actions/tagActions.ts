@@ -98,9 +98,10 @@ export async function deleteTag(tagId: string) {
 
   if (tagError) throw tagError;
 
-  const { error } = await supabase.from("tags").delete().eq("id", id);
+  const { error, count } = await supabase.from("tags").delete({ count: "exact" }).eq("id", id);
 
   if (error) throw error;
+  if (!count) throw new Error("Bu işlemi yapma yetkiniz yok.");
 
   await logActivity(supabase, {
     workspaceId: tag.workspace_id,

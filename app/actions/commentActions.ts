@@ -5,6 +5,7 @@ import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles, logActi
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyByEmailIfOffline } from "./_email";
 import { mentionEmailHtml } from "@/lib/email-templates";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const addCommentSchema = z.object({
   ideaId: z.string().uuid(),
@@ -15,19 +16,7 @@ const addCommentSchema = z.object({
 export async function addComment(ideaId: string, content: string, mentionedUserIds?: string[]) {
   const input = addCommentSchema.parse({ ideaId, content, mentionedUserIds });
   const { supabase, user } = await requireUser();
-
-  const { data: comment, error: commentError } = await supabase
-    .from("comments")
-    .insert({
-      idea_id: input.ideaId,
-      user_id: user.id,
-      content: input.content,
-      mentioned_user_ids: input.mentionedUserIds?.length ? input.mentionedUserIds : null,
-    })
-    .select()
-    .single();
-
-  if (commentError) throw commentError;
+  await enforceRateLimit(supabase, `addComment:${user.id}`, 20, 60);
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
@@ -36,6 +25,40 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
     .single();
 
   if (ideaError) throw ideaError;
+
+  // Client'tan gelen mentionedUserIds workspace üyeliği doğrulanmadan
+  // kullanılırsa, kötü niyetli bir kullanıcı server action'ı UI'yi atlayıp
+  // doğrudan çağırarak rastgele/eski (workspace'ten çıkarılmış) bir
+  // kullanıcıya bildirim + e-posta tetikleyebilir. Bu yüzden yalnızca
+  // idea'nın workspace'inde hâlâ ACTIVE üye olanlar mention edilebilir —
+  // hem yorum satırına yazılan liste hem bildirim/e-posta alıcıları bu
+  // filtrelenmiş listeden geliyor.
+  const rawMentionedIds = (input.mentionedUserIds ?? []).filter((id) => id !== user.id);
+  let mentionedIds: string[] = [];
+  if (rawMentionedIds.length > 0) {
+    const { data: activeMembers, error: membersError } = await supabase
+      .from("workspace_members")
+      .select("user_id")
+      .eq("workspace_id", idea.workspace_id)
+      .eq("status", "ACTIVE")
+      .in("user_id", rawMentionedIds);
+
+    if (membersError) throw membersError;
+    mentionedIds = activeMembers.map((m) => m.user_id);
+  }
+
+  const { data: comment, error: commentError } = await supabase
+    .from("comments")
+    .insert({
+      idea_id: input.ideaId,
+      user_id: user.id,
+      content: input.content,
+      mentioned_user_ids: mentionedIds.length ? mentionedIds : null,
+    })
+    .select()
+    .single();
+
+  if (commentError) throw commentError;
 
   const { data: priorCommenters, error: commentersError } = await supabase
     .from("comments")
@@ -73,7 +96,6 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
     if (notificationError) throw notificationError;
   }
 
-  const mentionedIds = (input.mentionedUserIds ?? []).filter((id) => id !== user.id);
   if (mentionedIds.length > 0) {
     const admin = createAdminClient();
     const { error: mentionNotificationError } = await admin.from("notifications").insert(

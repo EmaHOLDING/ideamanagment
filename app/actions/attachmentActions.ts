@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { requireUser, resolveAuthorProfiles } from "./_shared";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const BUCKET = "workspace-media";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -41,6 +42,7 @@ function sanitizeFileName(name: string) {
 export async function uploadAttachment(ideaId: string, formData: FormData) {
   const id = ideaIdSchema.parse(ideaId);
   const { supabase, user } = await requireUser();
+  await enforceRateLimit(supabase, `uploadAttachment:${user.id}`, 30, 300);
 
   const file = formData.get("file");
   if (!(file instanceof File)) {

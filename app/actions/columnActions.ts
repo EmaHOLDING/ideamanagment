@@ -121,7 +121,10 @@ export async function deleteColumn(columnId: string) {
     };
   }
 
-  const { error: deleteError } = await supabase.from("kanban_columns").delete().eq("id", id);
+  const { error: deleteError, count: deletedCount } = await supabase
+    .from("kanban_columns")
+    .delete({ count: "exact" })
+    .eq("id", id);
 
   if (deleteError) {
     // 23503: foreign_key_violation — ON DELETE RESTRICT tarafından engellendi
@@ -132,6 +135,7 @@ export async function deleteColumn(columnId: string) {
     }
     throw deleteError;
   }
+  if (!deletedCount) throw new Error("Bu işlemi yapma yetkiniz yok.");
 
   await logActivity(supabase, {
     workspaceId: column.workspace_id,

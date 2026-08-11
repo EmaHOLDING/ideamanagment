@@ -465,6 +465,24 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           color: string
@@ -617,6 +635,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      check_rate_limit: {
+        Args: { _key: string; _max_count: number; _window_seconds: number }
+        Returns: boolean
       }
       create_idea: {
         Args: {
