@@ -98,6 +98,17 @@ export function IdeaDetailDialog({
   const pathname = usePathname();
   const canEditIdea = createdBy === currentUserId || canManageContent;
   const [open, setOpen] = useState(defaultOpen ?? false);
+  // Bildirim/direkt link tıklamaları client-side navigasyonla aynı sayfaya
+  // sadece ?idea= query'sini değiştirerek gelir — board/column/card ağacı
+  // yeniden mount olmadığı için useState'in ilk mount değeri güncellenmez.
+  // defaultOpen prop'u değiştiğinde (react-hooks/set-state-in-effect'i
+  // tetiklememek için useEffect yerine render sırasında "prop değişti mi"
+  // karşılaştırmasıyla) dialog'u burada açık zorluyoruz.
+  const [prevDefaultOpen, setPrevDefaultOpen] = useState(defaultOpen);
+  if (defaultOpen !== prevDefaultOpen) {
+    setPrevDefaultOpen(defaultOpen);
+    if (defaultOpen) setOpen(true);
+  }
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(() =>
