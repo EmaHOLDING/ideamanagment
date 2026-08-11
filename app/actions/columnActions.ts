@@ -44,6 +44,29 @@ export async function createColumn(
   return data;
 }
 
+const updateColumnSchema = z.object({
+  columnId: z.string().uuid(),
+  title: z.string().trim().min(1).max(100),
+});
+
+export async function updateColumn(columnId: string, title: string) {
+  const input = updateColumnSchema.parse({ columnId, title });
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("kanban_columns")
+    .update({ title: input.title })
+    .eq("id", input.columnId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error("Bu işlemi yapma yetkiniz yok.");
+  }
+
+  return data;
+}
+
 const reorderColumnsSchema = z.object({
   workspaceId: z.string().uuid(),
   orderedIds: z.array(z.string().uuid()).min(1),

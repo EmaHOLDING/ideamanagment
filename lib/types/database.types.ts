@@ -541,6 +541,7 @@ export type Database = {
         Row: {
           created_at: string
           default_invite_role: Database["public"]["Enums"]["workspace_role"]
+          description: string | null
           id: string
           invite_code: string
           title: string
@@ -548,6 +549,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_invite_role?: Database["public"]["Enums"]["workspace_role"]
+          description?: string | null
           id?: string
           invite_code?: string
           title: string
@@ -555,6 +557,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_invite_role?: Database["public"]["Enums"]["workspace_role"]
+          description?: string | null
           id?: string
           invite_code?: string
           title?: string
@@ -636,22 +639,45 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      create_workspace: {
-        Args: { _template_id?: string; _title: string }
-        Returns: {
-          created_at: string
-          default_invite_role: Database["public"]["Enums"]["workspace_role"]
-          id: string
-          invite_code: string
-          title: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "workspaces"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      create_workspace:
+        | {
+            Args: { _template_id?: string; _title: string }
+            Returns: {
+              created_at: string
+              default_invite_role: Database["public"]["Enums"]["workspace_role"]
+              description: string | null
+              id: string
+              invite_code: string
+              title: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "workspaces"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _description?: string
+              _template_id?: string
+              _title: string
+            }
+            Returns: {
+              created_at: string
+              default_invite_role: Database["public"]["Enums"]["workspace_role"]
+              description: string | null
+              id: string
+              invite_code: string
+              title: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "workspaces"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       get_workspace_member_count: {
         Args: { _workspace_id: string }
         Returns: number
@@ -696,6 +722,7 @@ export type Database = {
         Returns: {
           created_at: string
           default_invite_role: Database["public"]["Enums"]["workspace_role"]
+          description: string | null
           id: string
           invite_code: string
           title: string
@@ -863,67 +890,36 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      update_idea:
-        | {
-            Args: {
-              _content: Json
-              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _idea_id: string
-              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _problem_statement?: string
-              _target_audience?: string
-              _title: string
-            }
-            Returns: {
-              assignee_id: string | null
-              cancellation_reason: string | null
-              column_id: string
-              created_at: string
-              created_by: string
-              current_version: number
-              deleted_at: string | null
-              deleted_by: string | null
-              id: string
-              updated_at: string
-              workspace_id: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "ideas"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              _content: string
-              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _idea_id: string
-              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _problem_statement?: string
-              _target_audience?: string
-              _title: string
-            }
-            Returns: {
-              assignee_id: string | null
-              cancellation_reason: string | null
-              column_id: string
-              created_at: string
-              created_by: string
-              current_version: number
-              deleted_at: string | null
-              deleted_by: string | null
-              id: string
-              updated_at: string
-              workspace_id: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "ideas"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      update_idea: {
+        Args: {
+          _content: string
+          _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
+          _idea_id: string
+          _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
+          _problem_statement?: string
+          _target_audience?: string
+          _title: string
+        }
+        Returns: {
+          assignee_id: string | null
+          cancellation_reason: string | null
+          column_id: string
+          created_at: string
+          created_by: string
+          current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       impact_effort_level: "LOW" | "MEDIUM" | "HIGH"

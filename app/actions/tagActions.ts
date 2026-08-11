@@ -53,6 +53,37 @@ export async function createTag(workspaceId: string, name: string, color: string
   return data;
 }
 
+const updateTagSchema = z.object({
+  tagId: z.string().uuid(),
+  name: z.string().trim().min(1).max(50),
+  color: z.string().trim().min(1).max(20),
+});
+
+export async function updateTag(tagId: string, name: string, color: string) {
+  const input = updateTagSchema.parse({ tagId, name, color });
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("tags")
+    .update({ name: input.name, color: input.color })
+    .eq("id", input.tagId)
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      throw new Error("Bu isimde bir etiket zaten var.");
+    }
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Bu işlemi yapma yetkiniz yok.");
+  }
+
+  return data;
+}
+
 const tagIdSchema = z.string().uuid();
 
 export async function deleteTag(tagId: string) {

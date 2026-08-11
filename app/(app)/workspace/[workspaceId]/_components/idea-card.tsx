@@ -21,7 +21,6 @@ type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
 type Tag = Database["public"]["Tables"]["tags"]["Row"];
 
 export function IdeaCard({
-  workspaceId,
   version,
   assigneeId,
   ideaTags,
@@ -37,7 +36,6 @@ export function IdeaCard({
   hideIdea,
   showIdea,
 }: {
-  workspaceId: string;
   version: IdeaVersion;
   assigneeId: string | null;
   ideaTags: Tag[];
@@ -131,7 +129,6 @@ export function IdeaCard({
 
   return (
     <IdeaDetailDialog
-      workspaceId={workspaceId}
       ideaId={version.idea_id}
       data={{
         title: version.title,

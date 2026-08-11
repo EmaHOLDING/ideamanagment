@@ -30,10 +30,12 @@ function accentClassFor(seed: string) {
 export function WorkspaceCard({
   id,
   title,
+  description,
   role,
 }: {
   id: string;
   title: string;
+  description?: string | null;
   role: Database["public"]["Enums"]["workspace_role"];
 }) {
   const router = useRouter();
@@ -54,34 +56,39 @@ export function WorkspaceCard({
       className="cursor-pointer overflow-hidden py-0 transition-shadow hover:shadow-md"
     >
       <div className={`h-1.5 w-full ${accentClassFor(id)}`} />
-      <div className="flex items-center justify-between gap-2 px-(--card-spacing) py-5">
-        <div className="flex min-w-0 items-center gap-2.5 font-heading text-base font-medium">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
-            {title.charAt(0).toUpperCase()}
-          </span>
-          <span className="truncate">{title}</span>
+      <div className="flex flex-col gap-1.5 px-(--card-spacing) py-5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2.5 font-heading text-base font-medium">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+              {title.charAt(0).toUpperCase()}
+            </span>
+            <span className="truncate">{title}</span>
+          </div>
+          {canManageContent && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="shrink-0"
+                    aria-label="Workspace seçenekleri"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVerticalIcon />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem onClick={() => router.push(`/workspace/${id}/settings`)}>
+                  <SettingsIcon /> Workspace Ayarları
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
-        {canManageContent && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="shrink-0"
-                  aria-label="Workspace seçenekleri"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVerticalIcon />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={() => router.push(`/workspace/${id}/settings`)}>
-                <SettingsIcon /> Workspace Ayarları
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {description && (
+          <p className="line-clamp-2 pl-[42px] text-sm text-muted-foreground">{description}</p>
         )}
       </div>
     </Card>

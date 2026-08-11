@@ -64,7 +64,6 @@ type Tag = Database["public"]["Tables"]["tags"]["Row"];
 const UNASSIGNED = "unassigned";
 
 export function IdeaDetailDialog({
-  workspaceId,
   ideaId,
   data,
   assigneeId,
@@ -80,7 +79,6 @@ export function IdeaDetailDialog({
   hideIdea,
   showIdea,
 }: {
-  workspaceId: string;
   ideaId: string;
   data: IdeaVersionData;
   assigneeId: string | null;
@@ -215,7 +213,6 @@ export function IdeaDetailDialog({
                 </Select>
                 {canContribute ? (
                   <TagPicker
-                    workspaceId={workspaceId}
                     availableTags={availableTags}
                     selectedTagIds={ideaTags.map((t) => t.id)}
                     onChange={onTagsChange}

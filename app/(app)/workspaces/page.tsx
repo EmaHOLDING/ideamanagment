@@ -55,7 +55,13 @@ export default async function WorkspacesPage() {
         active.length > 0 && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
             {active.map((ws) => (
-              <WorkspaceCard key={ws.id} id={ws.id} title={ws.title} role={ws.role} />
+              <WorkspaceCard
+                key={ws.id}
+                id={ws.id}
+                title={ws.title}
+                description={ws.description}
+                role={ws.role}
+              />
             ))}
           </div>
         )

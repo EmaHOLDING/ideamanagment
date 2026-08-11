@@ -9,10 +9,11 @@ import { workspaceInviteEmailHtml } from "@/lib/email-templates";
 const createWorkspaceSchema = z.object({
   title: z.string().trim().min(1).max(255),
   templateId: z.string().uuid().optional(),
+  description: z.string().trim().max(250).optional(),
 });
 
-export async function createWorkspace(title: string, templateId?: string) {
-  const input = createWorkspaceSchema.parse({ title, templateId });
+export async function createWorkspace(title: string, templateId?: string, description?: string) {
+  const input = createWorkspaceSchema.parse({ title, templateId, description });
   const { supabase } = await requireUser();
 
   // workspaces tablosundaki SELECT RLS policy'si workspace_members
@@ -23,6 +24,7 @@ export async function createWorkspace(title: string, templateId?: string) {
   const { data, error } = await supabase.rpc("create_workspace", {
     _title: input.title,
     _template_id: input.templateId,
+    _description: input.description || undefined,
   });
 
   if (error) throw error;
@@ -295,6 +297,29 @@ export async function updateWorkspaceTitle(workspaceId: string, title: string) {
   const { data, error } = await supabase
     .from("workspaces")
     .update({ title: input.title })
+    .eq("id", input.workspaceId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error("Bu işlemi yapma yetkiniz yok.");
+  }
+
+  return data;
+}
+
+const updateWorkspaceDescriptionSchema = z.object({
+  workspaceId: z.string().uuid(),
+  description: z.string().trim().max(250),
+});
+
+export async function updateWorkspaceDescription(workspaceId: string, description: string) {
+  const input = updateWorkspaceDescriptionSchema.parse({ workspaceId, description });
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase
+    .from("workspaces")
+    .update({ description: input.description || null })
     .eq("id", input.workspaceId)
     .select()
     .single();

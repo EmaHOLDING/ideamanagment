@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -26,10 +27,13 @@ import { createWorkspace } from "@/app/actions/workspaceActions";
 
 type Template = { id: string; title: string };
 
+const DESCRIPTION_MAX_LENGTH = 250;
+
 export function CreateWorkspaceDialog({ templates }: { templates: Template[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [templateId, setTemplateId] = useState<string>("blank");
   const [isPending, startTransition] = useTransition();
 
@@ -39,11 +43,13 @@ export function CreateWorkspaceDialog({ templates }: { templates: Template[] }) 
       try {
         const workspace = await createWorkspace(
           title,
-          templateId === "blank" ? undefined : templateId
+          templateId === "blank" ? undefined : templateId,
+          description.trim() || undefined
         );
         toast.success("Workspace oluşturuldu");
         setOpen(false);
         setTitle("");
+        setDescription("");
         setTemplateId("blank");
         router.push(`/workspace/${workspace.id}`);
       } catch (err) {
@@ -72,6 +78,22 @@ export function CreateWorkspaceDialog({ templates }: { templates: Template[] }) 
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Örn: Q3 Girişim Fikirleri"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="workspace-description">Açıklama (opsiyonel)</Label>
+                <span className="text-xs text-muted-foreground">
+                  {description.length}/{DESCRIPTION_MAX_LENGTH}
+                </span>
+              </div>
+              <Textarea
+                id="workspace-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX_LENGTH))}
+                placeholder="Bu workspace ne için kullanılıyor?"
+                maxLength={DESCRIPTION_MAX_LENGTH}
+                className="min-h-16 resize-none"
               />
             </div>
             <div className="flex flex-col gap-2">

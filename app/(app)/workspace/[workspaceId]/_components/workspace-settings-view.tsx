@@ -8,25 +8,31 @@ import {
   SettingsIcon,
   UsersIcon,
   LayoutGridIcon,
+  TagIcon,
   LinkIcon,
   TriangleAlertIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GeneralSettingsSection } from "./general-settings-section";
 import { MembersSettingsSection } from "./members-settings-section";
+import { ColumnsSettingsSection } from "./columns-settings-section";
+import { TagsSettingsSection } from "./tags-settings-section";
 import { InviteSettingsSection } from "./invite-settings-section";
 import { DangerZoneSection } from "./danger-zone-section";
-import { SaveAsTemplateDialog } from "./save-as-template-dialog";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
+import type { getWorkspaceTags } from "@/app/actions/tagActions";
 import type { Database } from "@/lib/types/database.types";
 
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
+type Tag = Awaited<ReturnType<typeof getWorkspaceTags>>[number];
+type ColumnRow = Database["public"]["Tables"]["kanban_columns"]["Row"];
 type WorkspaceRole = Database["public"]["Enums"]["workspace_role"];
 
 const SETTINGS_SECTIONS = [
   { id: "general", label: "Genel", icon: SettingsIcon },
   { id: "members", label: "Üyeler", icon: UsersIcon },
   { id: "columns", label: "Kolonlar", icon: LayoutGridIcon },
+  { id: "tags", label: "Etiketler", icon: TagIcon },
   { id: "invite", label: "Davet", icon: LinkIcon },
   { id: "danger", label: "Tehlikeli Alan", icon: TriangleAlertIcon },
 ] as const;
@@ -36,19 +42,25 @@ type SectionId = (typeof SETTINGS_SECTIONS)[number]["id"];
 export function WorkspaceSettingsView({
   workspaceId,
   title,
+  description,
   createdAt,
   inviteCode,
   defaultInviteRole,
   isOwner,
   currentMembers,
+  currentColumns,
+  currentTags,
 }: {
   workspaceId: string;
   title: string;
+  description: string | null;
   createdAt: string;
   inviteCode: string;
   defaultInviteRole: WorkspaceRole;
   isOwner: boolean;
   currentMembers: Member[];
+  currentColumns: ColumnRow[];
+  currentTags: Tag[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -102,7 +114,13 @@ export function WorkspaceSettingsView({
 
         <div className="min-w-0">
           {section === "general" && (
-            <GeneralSettingsSection workspaceId={workspaceId} title={title} createdAt={createdAt} isOwner={isOwner} />
+            <GeneralSettingsSection
+              workspaceId={workspaceId}
+              title={title}
+              description={description}
+              createdAt={createdAt}
+              isOwner={isOwner}
+            />
           )}
           {section === "members" && (
             <MembersSettingsSection
@@ -112,16 +130,10 @@ export function WorkspaceSettingsView({
             />
           )}
           {section === "columns" && (
-            <div className="flex flex-col gap-3 rounded-xl border bg-card p-5">
-              <div>
-                <h2 className="text-sm font-semibold">Kolon Ayarları</h2>
-                <p className="text-sm text-muted-foreground">
-                  Bu workspace&apos;in mevcut kolon yapısını, ileride yeni workspace&apos;ler
-                  kurarken kullanılabilecek bir şablon olarak kaydedin.
-                </p>
-              </div>
-              <SaveAsTemplateDialog workspaceId={workspaceId} />
-            </div>
+            <ColumnsSettingsSection workspaceId={workspaceId} initialColumns={currentColumns} />
+          )}
+          {section === "tags" && (
+            <TagsSettingsSection workspaceId={workspaceId} initialTags={currentTags} />
           )}
           {section === "invite" && (
             <InviteSettingsSection

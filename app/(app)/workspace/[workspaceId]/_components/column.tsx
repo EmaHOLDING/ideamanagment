@@ -162,7 +162,6 @@ export function Column({
                     {...dragProvided.dragHandleProps}
                   >
                     <IdeaCard
-                      workspaceId={workspaceId}
                       version={v}
                       assigneeId={assigneeByIdea[v.idea_id] ?? null}
                       ideaTags={tagsByIdea[v.idea_id] ?? []}
