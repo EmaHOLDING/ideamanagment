@@ -222,20 +222,22 @@ export function CommentsPanel({
                 <AvatarFallback>{getInitials(c.authorFullName)}</AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-0.5">
-                  <span className="truncate text-sm font-semibold">
-                    {c.authorFullName ?? "Bilinmeyen kullanıcı"}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-0.5">
+                <div className="flex items-start justify-between gap-x-2 gap-y-0.5">
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="truncate text-sm font-semibold">
+                      {c.authorFullName ?? "Bilinmeyen kullanıcı"}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(c.created_at).toLocaleString("tr-TR")}
                       {c.updated_at && " (düzenlendi)"}
                     </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-0.5">
                     {!isEditingThis && canEdit && (
                       <button
                         type="button"
                         onClick={() => startEdit(c)}
-                        className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                        className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                         aria-label="Düzenle"
                       >
                         <PencilIcon className="size-3.5" />
