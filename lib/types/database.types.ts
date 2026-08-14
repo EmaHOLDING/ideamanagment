@@ -422,7 +422,7 @@ export type Database = {
           actor_id: string
           created_at: string
           id: string
-          idea_id: string
+          idea_id: string | null
           is_read: boolean
           message: string
           user_id: string
@@ -432,7 +432,7 @@ export type Database = {
           actor_id: string
           created_at?: string
           id?: string
-          idea_id: string
+          idea_id?: string | null
           is_read?: boolean
           message: string
           user_id: string
@@ -442,7 +442,7 @@ export type Database = {
           actor_id?: string
           created_at?: string
           id?: string
-          idea_id?: string
+          idea_id?: string | null
           is_read?: boolean
           message?: string
           user_id?: string

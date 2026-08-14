@@ -202,7 +202,7 @@ export function CommentsPanel({
         </form>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 sm:gap-3.5">
         {!loaded && <p className="text-sm text-muted-foreground">Yükleniyor...</p>}
         {loaded && items.length === 0 && (
           <p className="text-sm text-muted-foreground">Henüz yorum yok.</p>
@@ -214,17 +214,20 @@ export function CommentsPanel({
           const isEditingThis = editingId === c.id;
 
           return (
-            <div key={c.id} className="flex gap-2">
-              <Avatar size="sm" className="mt-0.5">
+            <div
+              key={c.id}
+              className="flex gap-2.5 rounded-xl border border-border/70 bg-card p-3 shadow-sm sm:gap-3"
+            >
+              <Avatar size="sm" className="mt-0.5 shrink-0">
                 <AvatarFallback>{getInitials(c.authorFullName)}</AvatarFallback>
               </Avatar>
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-lg rounded-tl-sm bg-muted/50 p-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-xs font-medium">
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-0.5">
+                  <span className="truncate text-sm font-semibold">
                     {c.authorFullName ?? "Bilinmeyen kullanıcı"}
                   </span>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <span className="text-[0.7rem] text-muted-foreground">
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(c.created_at).toLocaleString("tr-TR")}
                       {c.updated_at && " (düzenlendi)"}
                     </span>
@@ -232,20 +235,20 @@ export function CommentsPanel({
                       <button
                         type="button"
                         onClick={() => startEdit(c)}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="ml-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                         aria-label="Düzenle"
                       >
-                        <PencilIcon className="size-3" />
+                        <PencilIcon className="size-3.5" />
                       </button>
                     )}
                     {!isEditingThis && canDelete && (
                       <button
                         type="button"
                         onClick={() => setDeleteTargetId(c.id)}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         aria-label="Sil"
                       >
-                        <Trash2Icon className="size-3" />
+                        <Trash2Icon className="size-3.5" />
                       </button>
                     )}
                   </div>

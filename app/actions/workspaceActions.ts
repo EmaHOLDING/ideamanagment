@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { randomBytes } from "crypto";
-import { requireUser, resolveAuthorProfiles, getDisplayName } from "./_shared";
+import { requireUser, resolveAuthorProfiles, getDisplayName, logActivity } from "./_shared";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient } from "@/lib/resend";
 import { workspaceInviteEmailHtml } from "@/lib/email-templates";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -340,7 +341,7 @@ export async function updateWorkspaceDescription(workspaceId: string, descriptio
 
 export async function acceptWorkspaceInvite(workspaceId: string) {
   const id = workspaceIdSchema.parse(workspaceId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
 
   const { error } = await supabase.rpc("accept_workspace_invite", {
     _workspace_id: id,
@@ -352,6 +353,45 @@ export async function acceptWorkspaceInvite(workspaceId: string) {
     }
     throw error;
   }
+
+  // Katılan kişi hariç, workspace'teki mevcut aktif üyelere bildirim +
+  // aktivite akışı kaydı düşülür (sadece uygulama içi zil — e-posta yok).
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("title")
+    .eq("id", id)
+    .single();
+
+  const joinerName = getDisplayName(user);
+  const message = `${joinerName}, '${workspace?.title ?? ""}' workspace'ine katıldı.`;
+
+  const { data: existingMembers } = await supabase
+    .from("workspace_members")
+    .select("user_id")
+    .eq("workspace_id", id)
+    .eq("status", "ACTIVE")
+    .neq("user_id", user.id);
+
+  if (existingMembers && existingMembers.length > 0) {
+    const admin = createAdminClient();
+    const { error: notificationError } = await admin.from("notifications").insert(
+      existingMembers.map((m) => ({
+        user_id: m.user_id,
+        actor_id: user.id,
+        idea_id: null,
+        workspace_id: id,
+        message,
+      }))
+    );
+    if (notificationError) throw notificationError;
+  }
+
+  await logActivity(supabase, {
+    workspaceId: id,
+    actorId: user.id,
+    type: "member_joined",
+    message,
+  });
 
   return { success: true };
 }

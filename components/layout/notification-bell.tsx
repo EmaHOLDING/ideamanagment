@@ -47,7 +47,13 @@ export function NotificationBell({
   const unreadCount = items.filter((n) => !n.is_read).length;
 
   function onItemClick(notification: Notification) {
-    router.push(`/workspace/${notification.workspace_id}?idea=${notification.idea_id}`);
+    // Bazı bildirimler (örn. "workspace'e katıldı") belirli bir fikirle
+    // ilişkili değil — idea_id bu durumda null olabiliyor.
+    router.push(
+      notification.idea_id
+        ? `/workspace/${notification.workspace_id}?idea=${notification.idea_id}`
+        : `/workspace/${notification.workspace_id}`
+    );
 
     if (notification.is_read) return;
     setItems((prev) =>
@@ -103,10 +109,10 @@ export function NotificationBell({
           </Button>
         }
       />
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
         <DropdownMenuGroup>
-          <div className="flex items-center justify-between px-1.5 py-1">
-            <DropdownMenuLabel className="p-0">Bildirimler</DropdownMenuLabel>
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <DropdownMenuLabel className="p-0 text-sm">Bildirimler</DropdownMenuLabel>
             {unreadCount > 0 && (
               <Button variant="ghost" size="xs" onClick={onMarkAllAsRead}>
                 Tümünü okundu yap
@@ -114,26 +120,49 @@ export function NotificationBell({
             )}
           </div>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="my-0" />
         {items.length === 0 && (
-          <p className="px-2 py-3 text-center text-sm text-muted-foreground">Bildirim yok</p>
+          <p className="px-3 py-6 text-center text-sm text-muted-foreground">Bildirim yok</p>
         )}
-        {items.map((n) => (
-          <DropdownMenuItem
-            key={n.id}
-            onClick={() => onItemClick(n)}
-            className={n.is_read ? "opacity-60" : ""}
-          >
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs">{n.message}</span>
-              <span className="text-[10px] text-muted-foreground">
-                {new Date(n.created_at).toLocaleString("tr-TR")}
-              </span>
-            </div>
-          </DropdownMenuItem>
-        ))}
+        {items.length > 0 && (
+          <div className="max-h-[60vh] overflow-y-auto sm:max-h-96">
+            {items.map((n) => (
+              <DropdownMenuItem
+                key={n.id}
+                onClick={() => onItemClick(n)}
+                className="items-start gap-2.5 rounded-none border-b border-border/60 px-3 py-3 last:border-b-0"
+              >
+                <span
+                  className={
+                    "mt-1.5 size-2 shrink-0 rounded-full " +
+                    (n.is_read ? "bg-transparent" : "bg-primary")
+                  }
+                  aria-hidden="true"
+                />
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span
+                    className={
+                      "text-sm leading-snug break-words " +
+                      (n.is_read ? "text-muted-foreground" : "font-medium text-foreground")
+                    }
+                  >
+                    {n.message}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(n.created_at).toLocaleString("tr-TR")}
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </div>
+        )}
         {nextCursor && (
-          <DropdownMenuItem onClick={onLoadMore}>Daha fazla yükle</DropdownMenuItem>
+          <>
+            <DropdownMenuSeparator className="my-0" />
+            <DropdownMenuItem onClick={onLoadMore} className="justify-center rounded-none px-3 py-2.5 text-sm">
+              Daha fazla yükle
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
