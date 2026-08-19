@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { refresh } from "next/cache";
 import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyByEmailIfOffline } from "./_email";
@@ -54,6 +55,8 @@ export async function createIdea(
     message: `${getDisplayName(user)}, '${input.versionData.title}' fikrini oluşturdu.`,
   });
 
+  refresh();
+
   return data;
 }
 
@@ -90,6 +93,8 @@ export async function updateIdea(ideaId: string, versionData: IdeaVersionData) {
     type: "idea_updated",
     message: `${getDisplayName(user)}, '${input.versionData.title}' fikrini güncelledi.`,
   });
+
+  refresh();
 
   return data;
 }
@@ -304,7 +309,9 @@ export async function getIdeasForWorkspace(workspaceId: string) {
 
   const { data, error } = await supabase
     .from("ideas")
-    .select("*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id)")
+    .select(
+      "*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id), comments(id, deleted_at)"
+    )
     .eq("workspace_id", id)
     .is("deleted_at", null);
 

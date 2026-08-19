@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { randomBytes } from "crypto";
-import { requireUser, resolveAuthorProfiles, getDisplayName, logActivity } from "./_shared";
+import { requireUser, resolveAuthorProfiles, getDisplayName, logActivity, withAuthRetry } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient } from "@/lib/resend";
 import { workspaceInviteEmailHtml } from "@/lib/email-templates";
@@ -75,13 +75,15 @@ export async function getMyWorkspaces() {
   // üyelik kayıtlarını görünür kılar (co-member listesi için kasıtlı),
   // bu yüzden burada yalnızca çağıran kullanıcının kendi üyelik
   // satırları user_id ile explicit filtrelenir.
-  const { data, error } = await supabase
-    .from("workspace_members")
-    .select("joined_at, role, status, workspace:workspaces(*)")
-    .eq("user_id", user.id)
-    .order("joined_at", { ascending: false });
-
-  if (error) throw error;
+  const data = await withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("workspace_members")
+      .select("joined_at, role, status, workspace:workspaces(*)")
+      .eq("user_id", user.id)
+      .order("joined_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  });
 
   return data
     .filter((row) => row.workspace !== null)

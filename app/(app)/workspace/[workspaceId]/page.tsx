@@ -49,6 +49,7 @@ export default async function WorkspaceBoardPage({
   const voteCountByIdea: Record<string, number> = {};
   const hasVotedByIdea: Record<string, boolean> = {};
   const createdByIdea: Record<string, string> = {};
+  const commentCountByIdea: Record<string, number> = {};
   for (const idea of ideas) {
     const currentVersion = idea.idea_versions.find(
       (v) => v.version_number === idea.current_version
@@ -60,11 +61,12 @@ export default async function WorkspaceBoardPage({
     voteCountByIdea[idea.id] = idea.idea_votes.length;
     hasVotedByIdea[idea.id] = idea.idea_votes.some((v) => v.user_id === user!.id);
     createdByIdea[idea.id] = idea.created_by;
+    commentCountByIdea[idea.id] = idea.comments.filter((c) => !c.deleted_at).length;
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+    <div className="flex h-[calc(100dvh-7rem)] flex-col sm:h-[calc(100dvh-3.5rem)]">
+      <div className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex min-w-0 items-center gap-2">
           <Button
             variant="ghost"
@@ -77,7 +79,10 @@ export default async function WorkspaceBoardPage({
               </Link>
             }
           />
-          <h1 className="truncate text-lg font-semibold">{workspace.title}</h1>
+          <div className="min-w-0">
+            <p className="hidden text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase sm:block">Fikir panosu</p>
+            <h1 className="truncate text-base font-semibold sm:text-lg">{workspace.title}</h1>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <ActivityPanel workspaceId={workspaceId} />
@@ -88,7 +93,7 @@ export default async function WorkspaceBoardPage({
               nativeButton={false}
               render={
                 <Link href={`/workspace/${workspaceId}/settings`}>
-                  <SettingsIcon /> Ayarlar
+                  <SettingsIcon /> <span className="hidden sm:inline">Ayarlar</span>
                 </Link>
               }
             />
@@ -104,6 +109,7 @@ export default async function WorkspaceBoardPage({
         voteCountByIdea={voteCountByIdea}
         hasVotedByIdea={hasVotedByIdea}
         createdByIdea={createdByIdea}
+        commentCountByIdea={commentCountByIdea}
         currentUserId={user!.id}
         members={members}
         tags={tags}

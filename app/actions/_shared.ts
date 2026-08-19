@@ -19,6 +19,31 @@ export async function requireUser() {
   return { supabase, user };
 }
 
+function isTransientAuthError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const code = (err as { code?: string }).code;
+  const message = (err as { message?: string }).message ?? "";
+  return code === "PGRST303" || message.includes("JWT issued at future");
+}
+
+/** Google OAuth'tan hemen sonra mint edilen JWT'nin "iat" (issued-at)
+ * değeri, PostgREST'in sunucu saatine göre birkaç milisaniye "gelecekte"
+ * kalabiliyor — bu da girişten hemen sonraki ilk sorguda nadiren
+ * "JWT issued at future" (PGRST303) hatasına yol açıyor. Bu, auth
+ * callback'inden sonra ilk render'da (workspace listesi/bildirimler gibi)
+ * çalışan sorgular için kısa bir bekleme + tek seferlik retry ile çözülür;
+ * gerçek yetki hataları (giriş yapılmamış vb.) olduğu gibi fırlatılmaya
+ * devam eder. */
+export async function withAuthRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (!isTransientAuthError(err)) throw err;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    return await fn();
+  }
+}
+
 export type Cursor = { createdAt: string; id: string };
 
 export function encodeCursor(cursor: Cursor): string {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -40,11 +41,21 @@ export function TiptapContentView({
     },
   });
 
+  useEffect(() => {
+    if (!editor) return;
+    const nextContent = content ?? "";
+    if (editor.getMarkdown() === nextContent) return;
+    editor.commands.setContent(nextContent, {
+      contentType: "markdown",
+      emitUpdate: false,
+    });
+  }, [content, editor]);
+
   return (
     <div
       className={cn(
-        "max-w-none text-sm text-foreground",
-        clamp && "line-clamp-3",
+        "min-w-0 max-w-none overflow-hidden text-sm text-foreground [overflow-wrap:anywhere] [&_.ProseMirror]:min-w-0 [&_.ProseMirror]:max-w-full [&_pre]:max-w-full",
+        clamp && "line-clamp-2 [&_.ProseMirror]:line-clamp-2",
         className
       )}
     >

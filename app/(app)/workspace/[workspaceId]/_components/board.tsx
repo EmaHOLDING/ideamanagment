@@ -40,6 +40,7 @@ export function Board({
   voteCountByIdea,
   hasVotedByIdea,
   createdByIdea,
+  commentCountByIdea,
   currentUserId,
   members,
   tags,
@@ -56,6 +57,7 @@ export function Board({
   voteCountByIdea: Record<string, number>;
   hasVotedByIdea: Record<string, boolean>;
   createdByIdea: Record<string, string>;
+  commentCountByIdea: Record<string, number>;
   currentUserId: string;
   members: Member[];
   tags: Tag[];
@@ -76,6 +78,7 @@ export function Board({
   const [assigneeFilter, setAssigneeFilter] = useState(ALL_ASSIGNEES);
   const [hiddenIdeaIds, setHiddenIdeaIds] = useState<Set<string>>(new Set());
   const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
+  const [pendingMoveIdeaId, setPendingMoveIdeaId] = useState<string | null>(null);
 
   // Sunucudan gelen versionsByColumn artık taşımayı yansıtınca override gereksizleşir;
   // bunu setState ile effect içinde temizlemek yerine render sırasında türetiyoruz.
@@ -169,6 +172,7 @@ export function Board({
 
   function moveCard(ideaId: string, targetColumnId: string, cancellationReason?: string) {
     setColumnOverrides((prev) => ({ ...prev, [ideaId]: targetColumnId }));
+    setPendingMoveIdeaId(ideaId);
     startMoveTransition(async () => {
       try {
         await moveIdea(ideaId, targetColumnId, cancellationReason);
@@ -181,6 +185,8 @@ export function Board({
           return next;
         });
         toast.error(err instanceof Error ? err.message : "Fikir taşınamadı");
+      } finally {
+        setPendingMoveIdeaId(null);
       }
     });
   }
@@ -215,8 +221,8 @@ export function Board({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5">
-        <div className="relative w-64 max-w-full">
+      <div className="grid grid-cols-2 gap-2 border-b bg-muted/15 px-3 py-3 sm:flex sm:flex-wrap sm:items-center sm:px-4 sm:py-2.5">
+        <div className="relative col-span-2 w-full sm:w-64">
           <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
@@ -226,7 +232,7 @@ export function Board({
           />
         </div>
         <Select value={tagFilter} onValueChange={(v) => v && setTagFilter(v)}>
-          <SelectTrigger size="sm">
+          <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Etikete göre filtrele">
             <SelectValue>
               {() => (tagFilter === ALL_TAGS ? "Tüm etiketler" : tags.find((t) => t.id === tagFilter)?.name)}
             </SelectValue>
@@ -241,7 +247,7 @@ export function Board({
           </SelectContent>
         </Select>
         <Select value={assigneeFilter} onValueChange={(v) => v && setAssigneeFilter(v)}>
-          <SelectTrigger size="sm">
+          <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Atanan kişiye göre filtrele">
             <SelectValue>
               {() =>
                 assigneeFilter === ALL_ASSIGNEES
@@ -267,6 +273,7 @@ export function Board({
             type="button"
             variant="ghost"
             size="sm"
+            className="col-span-2 justify-self-start sm:col-auto"
             onClick={() => {
               setSearchQuery("");
               setTagFilter(ALL_TAGS);
@@ -277,19 +284,45 @@ export function Board({
           </Button>
         )}
       </div>
+      {initialColumns.length > 1 && (
+        <nav
+          aria-label="Pano kolonları"
+          className="scrollbar-subtle flex shrink-0 gap-1.5 overflow-x-auto border-b px-3 py-2 md:hidden"
+        >
+          {initialColumns.map((column, index) => (
+            <button
+              key={column.id}
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById(`board-column-${column.id}`)
+                  ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })
+              }
+              className="flex h-8 max-w-48 shrink-0 items-center gap-1.5 rounded-full border bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+            >
+              <span className="text-[0.65rem] tabular-nums text-muted-foreground/70">
+                {index + 1}
+              </span>
+              <span className="truncate" title={column.title}>{column.title}</span>
+            </button>
+          ))}
+        </nav>
+      )}
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex flex-1 items-start gap-4 overflow-x-auto p-4">
+        <div className="scrollbar-subtle flex flex-1 snap-x snap-mandatory items-stretch overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 sm:px-4">
           {initialColumns.map((col) => (
             <Column
               key={col.id}
               workspaceId={workspaceId}
               column={col}
               versions={filteredVersionsByColumn[col.id] ?? []}
+              emptyMessage={hasActiveFilters ? "Bu filtrelerle eşleşen fikir yok" : "Bu kolonda fikir yok"}
               assigneeByIdea={assigneeByIdea}
               tagsByIdea={tagsByIdea}
               voteCountByIdea={voteCountByIdea}
               hasVotedByIdea={hasVotedByIdea}
               createdByIdea={createdByIdea}
+              commentCountByIdea={commentCountByIdea}
               currentUserId={currentUserId}
               members={members}
               tags={tags}
@@ -297,6 +330,7 @@ export function Board({
               isViewer={isViewer}
               canContribute={canContribute}
               autoOpenIdeaId={autoOpenIdeaId}
+              pendingMoveIdeaId={pendingMoveIdeaId}
               hideIdea={hideIdea}
               showIdea={showIdea}
             />

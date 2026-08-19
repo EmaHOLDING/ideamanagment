@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, encodeCursor, decodeCursor } from "./_shared";
+import { requireUser, encodeCursor, decodeCursor, withAuthRetry } from "./_shared";
 
 const PAGE_SIZE = 20;
 
@@ -25,9 +25,11 @@ export async function getNotifications(cursor?: string) {
     );
   }
 
-  const { data, error } = await query;
-
-  if (error) throw error;
+  const data = await withAuthRetry(async () => {
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  });
 
   const last = data[data.length - 1];
   const nextCursor =

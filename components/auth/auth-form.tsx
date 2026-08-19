@@ -129,13 +129,13 @@ export function AuthForm() {
   }
 
   return (
-    <Card className="shadow-lg shadow-primary/10">
+    <Card className="border-0 bg-card/90 shadow-2xl shadow-primary/10 ring-1 ring-foreground/10 backdrop-blur-md">
       <CardHeader className="items-center text-center">
         <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
           <LockIcon className="size-4.5" />
         </div>
-        <CardTitle className="text-xl">Giriş Yap</CardTitle>
-        <CardDescription>Devam etmek için bir hesapla giriş yapın</CardDescription>
+        <CardTitle className="text-xl">Tekrar hoş geldiniz</CardTitle>
+        <CardDescription>Çalışma alanlarınıza güvenle devam edin</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2.5">
         {OAUTH_PROVIDERS.filter((p) => p.visible).map(({ provider, label, icon }) => (
@@ -144,7 +144,7 @@ export function AuthForm() {
             type="button"
             variant="outline"
             size="lg"
-            className="h-11 w-full justify-start gap-3 px-4 text-[0.9rem] font-normal"
+            className="h-11 w-full justify-center gap-3 px-4 text-[0.9rem] font-medium"
             disabled={pendingProvider !== null}
             onClick={() => onOAuthSignIn(provider)}
           >
@@ -152,6 +152,7 @@ export function AuthForm() {
             {label}
           </Button>
         ))}
+        <p className="mt-2 text-center text-[0.7rem] leading-relaxed text-muted-foreground">Devam ederek hesabınızın güvenli kimlik doğrulama ile açılmasını kabul etmiş olursunuz.</p>
       </CardContent>
     </Card>
   );

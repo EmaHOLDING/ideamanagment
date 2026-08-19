@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { SettingsIcon, LogOutIcon } from "lucide-react";
+import { SettingsIcon, LogOutIcon, LoaderCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -49,26 +49,33 @@ export function UserMenu({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="outline" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-full ring-1 ring-border hover:ring-primary/30" aria-label="Profil menüsünü aç">
               <Avatar className="size-8">
                 <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
               </Avatar>
             </Button>
           }
         />
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-72 p-1.5">
           <DropdownMenuGroup>
-            <DropdownMenuLabel className="flex flex-col gap-0.5">
-              <span className="truncate">{displayName}</span>
-              <span className="truncate text-xs font-normal text-muted-foreground">{email}</span>
+            <DropdownMenuLabel className="flex items-center gap-3 rounded-lg bg-muted/40 p-3">
+              <Avatar size="lg" className="ring-2 ring-background">
+                <AvatarFallback className="bg-primary/10 font-semibold text-primary">{getInitials(displayName)}</AvatarFallback>
+              </Avatar>
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate text-sm font-semibold text-foreground">{displayName}</span>
+                <span className="truncate text-xs font-normal text-muted-foreground">{email}</span>
+              </span>
             </DropdownMenuLabel>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-            <SettingsIcon /> Ayarlar
+          <DropdownMenuItem className="gap-2.5 px-2.5 py-2" onClick={() => setSettingsOpen(true)}>
+            <span className="flex size-7 items-center justify-center rounded-md bg-muted"><SettingsIcon /></span>
+            <span className="flex flex-col"><span>Ayarlar</span><span className="text-[0.7rem] text-muted-foreground">Bildirim tercihlerini yönetin</span></span>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled={isPending} onClick={onSignOut}>
-            <LogOutIcon /> Çıkış Yap
+          <DropdownMenuItem variant="destructive" className="gap-2.5 px-2.5 py-2" disabled={isPending} onClick={onSignOut}>
+            <span className="flex size-7 items-center justify-center rounded-md bg-destructive/10">{isPending ? <LoaderCircleIcon className="animate-spin" /> : <LogOutIcon />}</span>
+            <span>{isPending ? "Çıkış yapılıyor..." : "Çıkış Yap"}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

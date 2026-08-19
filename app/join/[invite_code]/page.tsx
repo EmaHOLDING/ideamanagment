@@ -40,7 +40,7 @@ export default async function JoinPage({
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 py-8 text-center">
       <h1 className="text-xl font-semibold">Katılım Başarısız</h1>
       <p className="text-muted-foreground">{errorMessage}</p>
       <Button render={<Link href="/workspaces">Workspace&apos;lerime dön</Link>} />

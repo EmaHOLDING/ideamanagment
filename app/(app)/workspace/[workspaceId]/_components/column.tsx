@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { STATUS_LABELS, STATUS_BADGE_VARIANT, STATUS_DOT_CLASS } from "@/lib/status";
 import { deleteColumn } from "@/app/actions/columnActions";
+import { cn } from "@/lib/utils";
 import { IdeaCard } from "./idea-card";
 import { IdeaDialog } from "./idea-dialog";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
@@ -34,11 +35,13 @@ export function Column({
   workspaceId,
   column,
   versions,
+  emptyMessage,
   assigneeByIdea,
   tagsByIdea,
   voteCountByIdea,
   hasVotedByIdea,
   createdByIdea,
+  commentCountByIdea,
   currentUserId,
   members,
   tags,
@@ -46,17 +49,20 @@ export function Column({
   isViewer,
   canContribute,
   autoOpenIdeaId,
+  pendingMoveIdeaId,
   hideIdea,
   showIdea,
 }: {
   workspaceId: string;
   column: ColumnRow;
   versions: IdeaVersion[];
+  emptyMessage: string;
   assigneeByIdea: Record<string, string | null>;
   tagsByIdea: Record<string, Tag[]>;
   voteCountByIdea: Record<string, number>;
   hasVotedByIdea: Record<string, boolean>;
   createdByIdea: Record<string, string>;
+  commentCountByIdea: Record<string, number>;
   currentUserId: string;
   members: Member[];
   tags: Tag[];
@@ -64,6 +70,7 @@ export function Column({
   isViewer: boolean;
   canContribute: boolean;
   autoOpenIdeaId: string | null;
+  pendingMoveIdeaId: string | null;
   hideIdea: (ideaId: string) => void;
   showIdea: (ideaId: string) => void;
 }) {
@@ -93,8 +100,12 @@ export function Column({
   }
 
   return (
-    <div className="flex w-72 shrink-0 flex-col gap-3 rounded-xl border bg-card p-3 shadow-sm">
-      <div className="flex items-center justify-between">
+    <section
+      id={`board-column-${column.id}`}
+      aria-label={`${column.title} kolonu, ${ideaCount} fikir`}
+      className="flex h-full w-[min(20rem,calc(100vw-1.5rem))] shrink-0 snap-start flex-col border-r last:border-r-0 sm:w-72"
+    >
+      <div className="flex shrink-0 items-center justify-between px-3 pt-3 pb-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className={`size-2 shrink-0 rounded-full ${STATUS_DOT_CLASS[column.status_type]}`} />
           <h2 className="truncate text-sm font-semibold">{column.title}</h2>
@@ -144,67 +155,78 @@ export function Column({
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={
-              "flex min-h-8 flex-col gap-2 rounded-md transition-colors" +
+              "min-h-8 flex-1 overflow-y-auto transition-colors" +
               (snapshot.isDraggingOver ? " bg-accent/50" : "")
             }
           >
-            {versions.map((v, index) => (
-              <Draggable
-                key={v.idea_id}
-                draggableId={v.idea_id}
-                index={index}
-                isDragDisabled={isViewer}
-              >
-                {(dragProvided) => (
-                  <div
-                    ref={dragProvided.innerRef}
-                    {...dragProvided.draggableProps}
-                    {...dragProvided.dragHandleProps}
-                  >
-                    <IdeaCard
-                      version={v}
-                      assigneeId={assigneeByIdea[v.idea_id] ?? null}
-                      ideaTags={tagsByIdea[v.idea_id] ?? []}
-                      voteCount={voteCountByIdea[v.idea_id] ?? 0}
-                      hasVoted={hasVotedByIdea[v.idea_id] ?? false}
-                      createdBy={createdByIdea[v.idea_id]}
-                      currentUserId={currentUserId}
-                      canManageContent={canManageContent}
-                      canContribute={canContribute}
-                      members={members}
-                      availableTags={tags}
-                      defaultOpen={autoOpenIdeaId === v.idea_id}
-                      hideIdea={hideIdea}
-                      showIdea={showIdea}
-                    />
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-            {versions.length === 0 && (
-              <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
-                <InboxIcon className="size-3.5" />
-                Bu kolonda fikir yok
-              </p>
-            )}
+            <div className="flex flex-col gap-2 px-3 pb-2">
+              {versions.map((v, index) => (
+                <Draggable
+                  key={v.idea_id}
+                  draggableId={v.idea_id}
+                  index={index}
+                  isDragDisabled={isViewer}
+                >
+                  {(dragProvided, dragSnapshot) => (
+                    <div
+                      ref={dragProvided.innerRef}
+                      {...dragProvided.draggableProps}
+                      {...dragProvided.dragHandleProps}
+                      aria-busy={pendingMoveIdeaId === v.idea_id}
+                      className={cn(
+                        "rounded-xl transition-[opacity,filter,box-shadow] duration-150",
+                        dragSnapshot.isDragging &&
+                          "z-20 rotate-[0.5deg] cursor-grabbing shadow-xl ring-2 ring-primary/30",
+                        pendingMoveIdeaId === v.idea_id &&
+                          "pointer-events-none animate-pulse opacity-70"
+                      )}
+                    >
+                      <IdeaCard
+                        version={v}
+                        assigneeId={assigneeByIdea[v.idea_id] ?? null}
+                        ideaTags={tagsByIdea[v.idea_id] ?? []}
+                        voteCount={voteCountByIdea[v.idea_id] ?? 0}
+                        hasVoted={hasVotedByIdea[v.idea_id] ?? false}
+                        createdBy={createdByIdea[v.idea_id]}
+                        commentCount={commentCountByIdea[v.idea_id] ?? 0}
+                        currentUserId={currentUserId}
+                        canManageContent={canManageContent}
+                        canContribute={canContribute}
+                        members={members}
+                        availableTags={tags}
+                        defaultOpen={autoOpenIdeaId === v.idea_id}
+                        hideIdea={hideIdea}
+                        showIdea={showIdea}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+              {versions.length === 0 && (
+                <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
+                  <InboxIcon className="size-3.5" />
+                  {emptyMessage}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </Droppable>
       {!isViewer && (
-        <div className="flex flex-col gap-2">
+        <div className="shrink-0 border-t px-3 py-2">
           <IdeaDialog
             mode="create"
             workspaceId={workspaceId}
             columnId={column.id}
             trigger={
-              <Button variant="ghost" size="sm" className="justify-start text-muted-foreground">
+              <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground">
                 <PlusIcon /> Fikir Ekle
               </Button>
             }
           />
         </div>
       )}
-    </div>
+    </section>
   );
 }

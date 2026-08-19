@@ -1,20 +1,20 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser } from "./_shared";
+import { requireUser, withAuthRetry } from "./_shared";
 
 export async function getTemplates() {
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase
-    .from("board_templates")
-    .select("*")
-    .order("is_system", { ascending: false })
-    .order("created_at", { ascending: true });
-
-  if (error) throw error;
-
-  return data;
+  return withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("board_templates")
+      .select("*")
+      .order("is_system", { ascending: false })
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return data;
+  });
 }
 
 const createTemplateFromBoardSchema = z.object({

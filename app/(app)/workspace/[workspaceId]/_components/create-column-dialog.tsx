@@ -61,7 +61,10 @@ export function CreateColumnDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="outline" className="h-fit w-72 shrink-0 border-dashed py-6">
+          <Button
+            variant="outline"
+            className="ml-3 h-fit w-[min(20rem,calc(100vw-1.5rem))] shrink-0 snap-start self-center border-dashed py-6 sm:w-72"
+          >
             <PlusIcon /> Kolon Ekle
           </Button>
         }
@@ -80,6 +83,7 @@ export function CreateColumnDialog({
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                maxLength={100}
               />
             </div>
             <div className="flex flex-col gap-2">
