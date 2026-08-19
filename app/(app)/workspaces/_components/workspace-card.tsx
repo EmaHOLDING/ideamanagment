@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { MoreVerticalIcon, SettingsIcon } from "lucide-react";
+import { ArrowRightIcon, MoreVerticalIcon, SettingsIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -11,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Database } from "@/lib/types/database.types";
+import { WORKSPACE_ROLE_LABELS } from "@/lib/status";
 
 const ACCENT_CLASSES = [
   "bg-primary",
@@ -53,13 +55,13 @@ export function WorkspaceCard({
       onKeyDown={(e) => {
         if (e.key === "Enter") goToWorkspace();
       }}
-      className="cursor-pointer overflow-hidden py-0 transition-shadow hover:shadow-md"
+      className="group cursor-pointer overflow-hidden py-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className={`h-1.5 w-full ${accentClassFor(id)}`} />
-      <div className="flex flex-col gap-1.5 px-(--card-spacing) py-5">
+      <div className="flex min-h-40 flex-col gap-3 px-(--card-spacing) py-5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2.5 font-heading text-base font-medium">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary ring-1 ring-primary/10">
               {title.charAt(0).toUpperCase()}
             </span>
             <span className="truncate">{title}</span>
@@ -87,9 +89,11 @@ export function WorkspaceCard({
             </DropdownMenu>
           )}
         </div>
-        {description && (
-          <p className="line-clamp-2 pl-[42px] text-sm text-muted-foreground">{description}</p>
-        )}
+        <p className="line-clamp-2 min-h-10 text-sm leading-relaxed text-muted-foreground">{description || "Bu çalışma alanı için henüz bir açıklama eklenmemiş."}</p>
+        <div className="mt-auto flex items-center justify-between border-t pt-3">
+          <Badge variant="secondary" className="font-normal">{WORKSPACE_ROLE_LABELS[role]}</Badge>
+          <span className="flex items-center gap-1 text-xs font-medium text-primary opacity-70 transition-all group-hover:gap-1.5 group-hover:opacity-100">Panoya git <ArrowRightIcon className="size-3.5" /></span>
+        </div>
       </div>
     </Card>
   );
