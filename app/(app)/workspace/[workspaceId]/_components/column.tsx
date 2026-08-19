@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { STATUS_LABELS, STATUS_BADGE_VARIANT, STATUS_DOT_CLASS } from "@/lib/status";
 import { deleteColumn } from "@/app/actions/columnActions";
+import { cn } from "@/lib/utils";
 import { IdeaCard } from "./idea-card";
 import { IdeaDialog } from "./idea-dialog";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
@@ -34,6 +35,7 @@ export function Column({
   workspaceId,
   column,
   versions,
+  emptyMessage,
   assigneeByIdea,
   tagsByIdea,
   voteCountByIdea,
@@ -46,12 +48,14 @@ export function Column({
   isViewer,
   canContribute,
   autoOpenIdeaId,
+  pendingMoveIdeaId,
   hideIdea,
   showIdea,
 }: {
   workspaceId: string;
   column: ColumnRow;
   versions: IdeaVersion[];
+  emptyMessage: string;
   assigneeByIdea: Record<string, string | null>;
   tagsByIdea: Record<string, Tag[]>;
   voteCountByIdea: Record<string, number>;
@@ -64,6 +68,7 @@ export function Column({
   isViewer: boolean;
   canContribute: boolean;
   autoOpenIdeaId: string | null;
+  pendingMoveIdeaId: string | null;
   hideIdea: (ideaId: string) => void;
   showIdea: (ideaId: string) => void;
 }) {
@@ -93,7 +98,11 @@ export function Column({
   }
 
   return (
-    <div className="flex w-72 shrink-0 flex-col gap-3 rounded-xl border bg-card p-3 shadow-sm">
+    <section
+      id={`board-column-${column.id}`}
+      aria-label={`${column.title} kolonu, ${ideaCount} fikir`}
+      className="flex w-[min(20rem,calc(100vw-1.5rem))] shrink-0 snap-start flex-col gap-3 rounded-xl border bg-card p-3 shadow-sm sm:w-72"
+    >
       <div className="flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-2">
           <span className={`size-2 shrink-0 rounded-full ${STATUS_DOT_CLASS[column.status_type]}`} />
@@ -155,11 +164,19 @@ export function Column({
                 index={index}
                 isDragDisabled={isViewer}
               >
-                {(dragProvided) => (
+                {(dragProvided, dragSnapshot) => (
                   <div
                     ref={dragProvided.innerRef}
                     {...dragProvided.draggableProps}
                     {...dragProvided.dragHandleProps}
+                    aria-busy={pendingMoveIdeaId === v.idea_id}
+                    className={cn(
+                      "rounded-xl transition-[opacity,filter,box-shadow] duration-150",
+                      dragSnapshot.isDragging &&
+                        "z-20 rotate-[0.5deg] cursor-grabbing shadow-xl ring-2 ring-primary/30",
+                      pendingMoveIdeaId === v.idea_id &&
+                        "pointer-events-none animate-pulse opacity-70"
+                    )}
                   >
                     <IdeaCard
                       version={v}
@@ -185,7 +202,7 @@ export function Column({
             {versions.length === 0 && (
               <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
                 <InboxIcon className="size-3.5" />
-                Bu kolonda fikir yok
+                {emptyMessage}
               </p>
             )}
           </div>
@@ -205,6 +222,6 @@ export function Column({
           />
         </div>
       )}
-    </div>
+    </section>
   );
 }

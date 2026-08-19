@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowBigUpIcon } from "lucide-react";
+import { ArrowBigUpIcon, LoaderCircleIcon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,12 @@ export function IdeaCard({
   const router = useRouter();
   const [isVotePending, startVoteTransition] = useTransition();
   const assignee = members.find((m) => m.user_id === assigneeId);
+  const visibleTags = ideaTags.slice(0, 3);
+  const hiddenTagCount = Math.max(ideaTags.length - visibleTags.length, 0);
+  const displayedVoteCount = isVotePending
+    ? Math.max(0, voteCount + (hasVoted ? -1 : 1))
+    : voteCount;
+  const displayedHasVoted = isVotePending ? !hasVoted : hasVoted;
 
   function onVoteClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -74,20 +80,66 @@ export function IdeaCard({
       className="cursor-pointer border-border transition-all hover:border-primary/40 hover:shadow-md"
     >
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <CardTitle className="line-clamp-1 flex-1 text-sm">{version.title}</CardTitle>
+        <CardTitle className="line-clamp-2 min-w-0 text-sm leading-snug" title={version.title}>
+          {version.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2.5">
+        {version.content && (
+          <TiptapContentView content={version.content} clamp className="text-muted-foreground" />
+        )}
+        {ideaTags.length > 0 && (
+          <div className="flex min-w-0 flex-wrap gap-1" aria-label={`${ideaTags.length} etiket`}>
+            {visibleTags.map((tag) => (
+              <Badge
+                key={tag.id}
+                variant="outline"
+                title={tag.name}
+                className={`max-w-32 truncate ${tagColorClasses(tag.color).badgeClass}`}
+              >
+                {tag.name}
+              </Badge>
+            ))}
+            {hiddenTagCount > 0 && (
+              <Badge variant="secondary" title={`${hiddenTagCount} etiket daha`}>
+                +{hiddenTagCount}
+              </Badge>
+            )}
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-2 border-t pt-2.5">
+          <div className="flex min-w-0 items-center gap-1.5 text-[0.7rem] text-muted-foreground">
+            <span className="whitespace-nowrap">
+              Etki <strong className="font-semibold text-foreground">{IMPACT_EFFORT_LABELS[version.impact_score ?? "MEDIUM"]}</strong>
+            </span>
+            <span aria-hidden className="text-border">•</span>
+            <span className="whitespace-nowrap">
+              Efor <strong className="font-semibold text-foreground">{IMPACT_EFFORT_LABELS[version.effort_score ?? "MEDIUM"]}</strong>
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {assignee && (
+              <Avatar size="sm" title={assignee.fullName}>
+                <AvatarFallback>{getInitials(assignee.fullName)}</AvatarFallback>
+              </Avatar>
+            )}
           {canContribute ? (
             <Button
               type="button"
-              variant={hasVoted ? "default" : "outline"}
+              variant={displayedHasVoted ? "default" : "outline"}
               size="xs"
               disabled={isVotePending}
               onClick={onVoteClick}
               className="shrink-0 gap-1 px-1.5"
-              title={`${voteCount} / ${members.length} kişi oy verdi`}
+              title={isVotePending ? "Oy güncelleniyor" : `${voteCount} / ${members.length} kişi oy verdi`}
+              aria-label={isVotePending ? "Oy güncelleniyor" : `${voteCount} / ${members.length} kişi oy verdi`}
             >
-              <ArrowBigUpIcon className="size-3.5" />
-              {voteCount}/{members.length}
+              {isVotePending ? (
+                <LoaderCircleIcon className="size-3.5 animate-spin" />
+              ) : (
+                <ArrowBigUpIcon className="size-3.5" />
+              )}
+              <span className="tabular-nums">{displayedVoteCount}/{members.length}</span>
             </Button>
           ) : (
             <Badge
@@ -99,29 +151,7 @@ export function IdeaCard({
               {voteCount}/{members.length}
             </Badge>
           )}
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <TiptapContentView content={version.content} clamp className="text-muted-foreground" />
-        {ideaTags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {ideaTags.map((tag) => (
-              <Badge key={tag.id} variant="outline" className={tagColorClasses(tag.color).badgeClass}>
-                {tag.name}
-              </Badge>
-            ))}
           </div>
-        )}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-wrap gap-1">
-            <Badge variant="outline">Etki: {IMPACT_EFFORT_LABELS[version.impact_score ?? "MEDIUM"]}</Badge>
-            <Badge variant="outline">Efor: {IMPACT_EFFORT_LABELS[version.effort_score ?? "MEDIUM"]}</Badge>
-          </div>
-          {assignee && (
-            <Avatar size="sm" className="shrink-0" title={assignee.fullName}>
-              <AvatarFallback>{getInitials(assignee.fullName)}</AvatarFallback>
-            </Avatar>
-          )}
         </div>
       </CardContent>
     </Card>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { LoaderCircleIcon, MessageSquareIcon, PencilIcon, SendIcon, Trash2Icon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ContentLoading, ContentState } from "@/components/ui/content-state";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -49,6 +50,7 @@ export function CommentsPanel({
   const [items, setItems] = useState<CommentWithAuthor[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [content, setContent] = useState("");
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
   const [isSubmitting, startSubmitTransition] = useTransition();
@@ -57,6 +59,19 @@ export function CommentsPanel({
   const [editContent, setEditContent] = useState("");
   const [isEditSaving, startEditTransition] = useTransition();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
+  const loadComments = useCallback(async () => {
+    setLoaded(false);
+    setLoadError(false);
+    try {
+      const res = await getComments(ideaId);
+      setItems(res.items);
+      setNextCursor(res.nextCursor);
+      setLoaded(true);
+    } catch {
+      setLoadError(true);
+    }
+  }, [ideaId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,8 +82,8 @@ export function CommentsPanel({
         setNextCursor(res.nextCursor);
         setLoaded(true);
       })
-      .catch((err) => {
-        if (!cancelled) toast.error(err instanceof Error ? err.message : "Yorumlar yüklenemedi");
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
       });
     return () => {
       cancelled = true;
@@ -184,10 +199,10 @@ export function CommentsPanel({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {showHeading && <h3 className="text-sm font-semibold">Yorumlar</h3>}
+    <div className="flex min-w-0 flex-col gap-4">
+      {showHeading && <h3 className="flex items-center gap-2 text-sm font-semibold"><MessageSquareIcon className="size-4 text-muted-foreground" /> Yorumlar {loaded && <span className="rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-medium tabular-nums text-muted-foreground">{items.length}</span>}</h3>}
       {canContribute && (
-        <form onSubmit={onSubmit} className="flex flex-col gap-2">
+        <form onSubmit={onSubmit} className="flex flex-col gap-2 rounded-xl border bg-muted/20 p-3">
           <MentionTextarea
             placeholder="Bir yorum yazın... (@ ile üye etiketleyin)"
             value={content}
@@ -196,16 +211,22 @@ export function CommentsPanel({
             mentionedUserIds={mentionedUserIds}
             onMentionedUserIdsChange={setMentionedUserIds}
           />
-          <Button type="submit" size="sm" className="self-end" disabled={isSubmitting || !content.trim()}>
-            Yorum Ekle
-          </Button>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[0.7rem] text-muted-foreground">Ekip arkadaşınızı <strong className="font-medium text-foreground">@</strong> ile etiketleyebilirsiniz.</span>
+            <Button type="submit" size="sm" className="shrink-0" disabled={isSubmitting || !content.trim()} aria-busy={isSubmitting}>
+              {isSubmitting ? <LoaderCircleIcon className="animate-spin" /> : <SendIcon />} {isSubmitting ? "Ekleniyor..." : "Gönder"}
+            </Button>
+          </div>
         </form>
       )}
 
       <div className="flex flex-col gap-3 sm:gap-3.5">
-        {!loaded && <p className="text-sm text-muted-foreground">Yükleniyor...</p>}
+        {!loaded && !loadError && <ContentLoading rows={2} />}
+        {loadError && (
+          <ContentState tone="error" title="Yorumlar yüklenemedi" description="Bağlantınızı kontrol edip yeniden deneyin." onRetry={() => void loadComments()} />
+        )}
         {loaded && items.length === 0 && (
-          <p className="text-sm text-muted-foreground">Henüz yorum yok.</p>
+          <ContentState title="Henüz yorum yok" description="İlk yorumu ekleyerek konuşmayı başlatın." />
         )}
         {items.map((c) => {
           const isAuthor = c.user_id === currentUserId;
@@ -216,7 +237,7 @@ export function CommentsPanel({
           return (
             <div
               key={c.id}
-              className="flex gap-2.5 rounded-xl border border-border/70 bg-card p-3 shadow-sm sm:gap-3"
+              className="group/comment flex min-w-0 gap-2.5 rounded-xl border border-border/70 bg-card p-3 transition-colors hover:border-border sm:gap-3"
             >
               <Avatar size="sm" className="mt-0.5 shrink-0">
                 <AvatarFallback>{getInitials(c.authorFullName)}</AvatarFallback>
@@ -227,9 +248,9 @@ export function CommentsPanel({
                     <span className="truncate text-sm font-semibold">
                       {c.authorFullName ?? "Bilinmeyen kullanıcı"}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[0.7rem] text-muted-foreground">
                       {new Date(c.created_at).toLocaleString("tr-TR")}
-                      {c.updated_at && " (düzenlendi)"}
+                      {c.updated_at && <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5">düzenlendi</span>}
                     </span>
                   </div>
                   <div className="flex shrink-0 items-center gap-0.5">
@@ -282,7 +303,7 @@ export function CommentsPanel({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                  <p className="min-w-0 text-sm leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">{c.content}</p>
                 )}
               </div>
             </div>

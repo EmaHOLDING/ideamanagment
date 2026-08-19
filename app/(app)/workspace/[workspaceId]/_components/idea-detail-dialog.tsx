@@ -189,11 +189,14 @@ export function IdeaDetailDialog({
         <DialogTrigger render={trigger} nativeButton={false} />
         <DialogContent
           showCloseButton
-          className="grid h-[85vh] max-h-[85vh] w-full grid-rows-[auto_1fr] gap-0 overflow-hidden p-0 sm:max-w-4xl"
+          className="grid h-[85dvh] max-h-[85dvh] w-full grid-rows-[auto_1fr] gap-0 overflow-hidden p-0 sm:max-w-4xl"
         >
-          <DialogHeader className="flex-col items-start justify-between gap-3 border-b bg-muted/30 px-5 py-4 sm:flex-row">
+          <DialogHeader className="min-w-0 flex-col items-start justify-between gap-3 overflow-hidden border-b bg-muted/30 px-5 py-4 pr-12 sm:flex-row">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <DialogTitle className="text-lg leading-snug break-words pr-1">
+              <DialogTitle
+                title={data.title}
+                className="line-clamp-2 max-w-full min-w-0 text-lg leading-snug [overflow-wrap:anywhere]"
+              >
                 {data.title}
               </DialogTitle>
               <div className="flex flex-wrap items-center gap-1.5">
@@ -237,7 +240,7 @@ export function IdeaDetailDialog({
                 )}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 sm:pr-9">
+            <div className="flex max-w-full shrink-0 flex-wrap items-center gap-1 sm:gap-1.5">
               <Button type="button" variant="ghost" size="sm" onClick={onCopyLink}>
                 <LinkIcon /> <span className="hidden sm:inline">Link Kopyala</span>
               </Button>
@@ -269,13 +272,13 @@ export function IdeaDetailDialog({
 
           <div
             className={cn(
-              "grid min-h-0 grid-cols-1 overflow-hidden sm:grid-rows-1",
+              "grid min-h-0 min-w-0 grid-cols-1 overflow-hidden sm:grid-rows-1",
               commentsOpen
                 ? "grid-rows-[40vh_1fr] sm:grid-cols-[280px_1fr]"
                 : "grid-rows-[auto_1fr] sm:grid-cols-[auto_1fr]"
             )}
           >
-            <div className="flex min-h-0 flex-col border-b bg-muted/20 sm:border-r sm:border-b-0">
+            <div className="flex min-h-0 min-w-0 flex-col border-b bg-muted/20 sm:border-r sm:border-b-0">
               <button
                 type="button"
                 onClick={() => setCommentsOpen((v) => !v)}
@@ -305,14 +308,14 @@ export function IdeaDetailDialog({
               )}
             </div>
 
-            <ScrollArea className="min-h-0">
-              <div className="flex flex-col gap-6 p-6">
+            <ScrollArea className="min-h-0 min-w-0">
+              <div className="flex min-w-0 flex-col gap-6 p-4 sm:p-6">
                 {data.problemStatement && (
                   <section className="flex flex-col gap-1.5">
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       Problem Tanımı
                     </h3>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
                       {data.problemStatement}
                     </p>
                   </section>
@@ -323,7 +326,7 @@ export function IdeaDetailDialog({
                     <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       <TargetIcon className="size-3.5" /> Hedef Kitle
                     </h3>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
                       {data.targetAudience}
                     </p>
                   </section>
@@ -333,7 +336,7 @@ export function IdeaDetailDialog({
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     İçerik
                   </h3>
-                  <div className="rounded-lg border bg-card p-4">
+                  <div className="min-w-0 overflow-hidden rounded-lg border bg-card p-4">
                     <TiptapContentView content={data.content} />
                   </div>
                 </section>

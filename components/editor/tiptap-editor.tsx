@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -31,13 +31,23 @@ export function TiptapEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-32 rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5",
+          "min-h-32 min-w-0 max-w-full overflow-hidden rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none [overflow-wrap:anywhere] focus-visible:ring-3 focus-visible:ring-ring/50 [&_*]:max-w-full [&_p]:my-1 [&_pre]:overflow-x-auto [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5",
       },
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getMarkdown());
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    const nextContent = content ?? "";
+    if (editor.getMarkdown() === nextContent) return;
+    editor.commands.setContent(nextContent, {
+      contentType: "markdown",
+      emitUpdate: false,
+    });
+  }, [content, editor]);
 
   if (!editor) return null;
 
@@ -59,8 +69,8 @@ export function TiptapEditor({
   }
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <div className="flex items-center gap-1">
+    <div className={cn("flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden", className)}>
+      <div className="flex min-w-0 flex-wrap items-center gap-1">
         <Toggle
           size="sm"
           pressed={editor.isActive("bold")}
@@ -113,7 +123,7 @@ export function TiptapEditor({
           onChange={onFileSelected}
         />
       </div>
-      <EditorContent editor={editor} />
+      <EditorContent editor={editor} className="min-w-0 max-w-full overflow-hidden" />
     </div>
   );
 }

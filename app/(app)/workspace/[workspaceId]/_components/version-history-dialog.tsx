@@ -71,7 +71,7 @@ export function VersionHistoryDialog({
   return (
     <Dialog onOpenChange={onOpenChange}>
       <DialogTrigger render={trigger} />
-      <DialogContent className="flex h-[80vh] max-h-[80vh] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
+      <DialogContent className="flex h-[80dvh] max-h-[80dvh] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
         <DialogHeader className="gap-1.5 border-b px-5 py-4">
           <DialogTitle>Versiyon Geçmişi</DialogTitle>
           <DialogDescription>

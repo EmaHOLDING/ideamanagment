@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition, type DragEvent, type ReactElement } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { UploadIcon, XIcon } from "lucide-react";
+import { LoaderCircleIcon, UploadIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +48,6 @@ type IdeaDialogProps =
     };
 
 export function IdeaDialog(props: IdeaDialogProps) {
-  const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
   const controlledOpen = props.mode === "edit" ? props.open : undefined;
   const isControlled = controlledOpen !== undefined;
@@ -68,6 +66,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
     initial?.effortScore ?? "MEDIUM"
   );
   const [isPending, startTransition] = useTransition();
+  const [submitStage, setSubmitStage] = useState<"saving" | "uploading" | null>(null);
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,12 +127,14 @@ export function IdeaDialog(props: IdeaDialogProps) {
     };
 
     startTransition(async () => {
+      setSubmitStage("saving");
       try {
         if (props.mode === "create") {
           const created = await createIdea(props.workspaceId, props.columnId, versionData);
           toast.success("Fikir oluşturuldu");
 
           if (stagedFiles.length > 0) {
+            setSubmitStage("uploading");
             let failedCount = 0;
             for (const file of stagedFiles) {
               try {
@@ -153,9 +154,10 @@ export function IdeaDialog(props: IdeaDialogProps) {
           toast.success("Fikir güncellendi (yeni versiyon oluşturuldu)");
         }
         onOpenChange(false);
-        router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Bir hata oluştu");
+      } finally {
+        setSubmitStage(null);
       }
     });
   }
@@ -165,26 +167,27 @@ export function IdeaDialog(props: IdeaDialogProps) {
       {props.trigger && (
         <DialogTrigger render={props.trigger} nativeButton={props.mode === "create"} />
       )}
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <form onSubmit={onSubmit}>
+      <DialogContent className="max-h-[90dvh] overflow-x-hidden overflow-y-auto sm:max-w-lg">
+        <form onSubmit={onSubmit} className="min-w-0 max-w-full overflow-hidden">
           <DialogHeader>
             <DialogTitle>{props.mode === "create" ? "Yeni Fikir" : "Fikri Düzenle"}</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-4">
-            <div className="flex flex-col gap-2">
+          <div className="flex min-w-0 max-w-full flex-col gap-4 py-4">
+            <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor="idea-title">Başlık</Label>
               <Input
                 id="idea-title"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                maxLength={255}
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-2">
               <Label>İçerik</Label>
               <TiptapEditor content={content} onChange={setContent} />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor="idea-problem">Problem Tanımı</Label>
               <Textarea
                 id="idea-problem"
@@ -192,7 +195,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
                 onChange={(e) => setProblemStatement(e.target.value)}
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor="idea-audience">Hedef Kitle</Label>
               <Textarea
                 id="idea-audience"
@@ -200,7 +203,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
                 onChange={(e) => setTargetAudience(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label>Etki</Label>
                 <Select
@@ -301,8 +304,17 @@ export function IdeaDialog(props: IdeaDialogProps) {
             )}
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending}>
-              {props.mode === "create" ? "Oluştur" : "Kaydet"}
+            <Button type="submit" disabled={isPending} aria-busy={isPending}>
+              {isPending && <LoaderCircleIcon className="animate-spin" />}
+              {submitStage === "uploading"
+                ? "Dosyalar yükleniyor..."
+                : isPending
+                  ? props.mode === "create"
+                    ? "Oluşturuluyor..."
+                    : "Kaydediliyor..."
+                  : props.mode === "create"
+                    ? "Oluştur"
+                    : "Kaydet"}
             </Button>
           </DialogFooter>
         </form>

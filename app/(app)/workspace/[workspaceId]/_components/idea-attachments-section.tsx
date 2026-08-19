@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, type DragEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type DragEvent } from "react";
 import { toast } from "sonner";
 import {
   UploadIcon,
@@ -12,8 +12,10 @@ import {
   DownloadIcon,
   PaperclipIcon,
   EyeIcon,
+  LoaderCircleIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ContentLoading, ContentState } from "@/components/ui/content-state";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,12 +70,24 @@ export function IdeaAttachmentsSection({
 }) {
   const [items, setItems] = useState<AttachmentItem[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, startUploadTransition] = useTransition();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<AttachmentItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hardDeleteTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const loadAttachments = useCallback(async () => {
+    setLoaded(false);
+    setLoadError(false);
+    try {
+      setItems(await getAttachmentsForIdea(ideaId));
+      setLoaded(true);
+    } catch {
+      setLoadError(true);
+    }
+  }, [ideaId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,8 +97,8 @@ export function IdeaAttachmentsSection({
         setItems(res);
         setLoaded(true);
       })
-      .catch((err) => {
-        if (!cancelled) toast.error(err instanceof Error ? err.message : "Dosyalar yüklenemedi");
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
       });
     return () => {
       cancelled = true;
@@ -172,7 +186,7 @@ export function IdeaAttachmentsSection({
   }
 
   return (
-    <section className="flex flex-col gap-1.5">
+    <section className="flex min-w-0 flex-col gap-1.5">
       <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         <PaperclipIcon className="size-3.5" /> Ekler ve Dosyalar
       </h3>
@@ -185,14 +199,20 @@ export function IdeaAttachmentsSection({
           }}
           onDragLeave={() => setIsDragOver(false)}
           onDrop={onDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
+          aria-busy={isUploading}
           className={
-            "flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground transition-colors" +
+            "flex min-w-0 cursor-pointer flex-col items-center gap-1 overflow-hidden rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground transition-colors [overflow-wrap:anywhere]" +
+            (isUploading ? " pointer-events-none opacity-70" : "") +
             (isDragOver ? " border-primary bg-primary/5" : " border-border hover:border-primary/40")
           }
         >
-          <UploadIcon className="size-4" />
-          {isUploading ? "Yükleniyor..." : "Dosyaları buraya sürükleyin veya seçmek için tıklayın"}
+          {isUploading ? (
+            <LoaderCircleIcon className="size-4 animate-spin" />
+          ) : (
+            <UploadIcon className="size-4" />
+          )}
+          {isUploading ? "Dosyalar yükleniyor..." : "Dosyaları buraya sürükleyin veya seçmek için tıklayın"}
           <span className="text-[0.65rem]">Maks 10MB · Görsel, PDF, DOCX, TXT, MD, ZIP</span>
           <input
             ref={fileInputRef}
@@ -208,9 +228,12 @@ export function IdeaAttachmentsSection({
       )}
 
       <div className="flex flex-col gap-1.5">
-        {!loaded && <p className="text-sm text-muted-foreground">Yükleniyor...</p>}
+        {!loaded && !loadError && <ContentLoading rows={1} />}
+        {loadError && (
+          <ContentState tone="error" title="Dosyalar yüklenemedi" description="Bağlantınızı kontrol edip yeniden deneyin." onRetry={() => void loadAttachments()} />
+        )}
         {loaded && items.length === 0 && (
-          <p className="text-sm text-muted-foreground">Henüz dosya eklenmemiş.</p>
+          <ContentState title="Henüz dosya eklenmemiş" description={canContribute ? "İlgili belgeleri ve görselleri yukarıdaki alandan ekleyin." : undefined} />
         )}
         {items.map((a) => {
           const canDelete = a.uploaded_by === currentUserId || canManageContent;
@@ -240,7 +263,7 @@ export function IdeaAttachmentsSection({
                     {a.file_name}
                   </a>
                 )}
-                <span className="text-[0.7rem] text-muted-foreground">
+                <span className="truncate text-[0.7rem] text-muted-foreground" title={`${a.uploaderFullName ?? "Bilinmeyen kullanıcı"} · ${new Date(a.created_at).toLocaleDateString("tr-TR")}`}>
                   {formatFileSize(a.file_size)} · {a.uploaderFullName ?? "Bilinmeyen kullanıcı"} ·{" "}
                   {new Date(a.created_at).toLocaleDateString("tr-TR")}
                 </span>

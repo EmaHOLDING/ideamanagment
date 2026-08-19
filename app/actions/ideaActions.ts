@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { refresh } from "next/cache";
 import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyByEmailIfOffline } from "./_email";
@@ -54,6 +55,8 @@ export async function createIdea(
     message: `${getDisplayName(user)}, '${input.versionData.title}' fikrini oluşturdu.`,
   });
 
+  refresh();
+
   return data;
 }
 
@@ -90,6 +93,8 @@ export async function updateIdea(ideaId: string, versionData: IdeaVersionData) {
     type: "idea_updated",
     message: `${getDisplayName(user)}, '${input.versionData.title}' fikrini güncelledi.`,
   });
+
+  refresh();
 
   return data;
 }
