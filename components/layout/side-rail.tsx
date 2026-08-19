@@ -11,7 +11,7 @@ export function SideRail() {
   const isBoard = pathname.startsWith("/workspace/");
 
   return (
-    <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-14 shrink-0 flex-col items-center gap-2 border-r bg-sidebar py-3 sm:flex">
+    <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-14 shrink-0 flex-col items-center gap-2 border-r bg-sidebar py-3 sm:flex">
       <div className="mb-1 flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <LightbulbIcon className="size-4" />
       </div>
