@@ -38,6 +38,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -362,18 +363,29 @@ export function IdeaDetailDialog({
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Fikri Sil</AlertDialogTitle>
-            <AlertDialogDescription>
-              &quot;{data.title}&quot; fikrini silmek istediğinize emin misiniz? Silme sonrası
-              kısa bir süre geri alabilirsiniz.
+            <AlertDialogMedia className="rounded-full bg-destructive/10 text-destructive ring-1 ring-destructive/15">
+              <Trash2Icon className="size-5" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Bu fikri silmek istiyor musunuz?</AlertDialogTitle>
+            <AlertDialogDescription className="flex flex-col gap-2 text-left">
+              <span className="line-clamp-2 rounded-lg border border-border/70 bg-muted/50 px-3 py-2 font-medium text-foreground" title={data.title}>
+                {data.title}
+              </span>
+              <span>
+                Fikir panodan kaldırılacak. İşlemden sonra kısa bir süre boyunca geri alabilirsiniz.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Vazgeç</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={onConfirmDelete}>
-              Sil
+            <AlertDialogAction
+              variant="destructive"
+              className="bg-destructive text-white hover:bg-destructive/90 dark:text-white"
+              onClick={onConfirmDelete}
+            >
+              <Trash2Icon /> Fikri Sil
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
