@@ -6,7 +6,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
 import { getNotifications } from "@/app/actions/notificationActions";
-import { getEmailNotificationsPreference } from "@/app/actions/userSettingsActions";
+import { getMyNotificationPreferences } from "@/app/actions/userSettingsActions";
 import { getDisplayName } from "@/lib/user-display";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -19,9 +19,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/login");
   }
 
-  const [{ items, nextCursor }, emailNotificationsEnabled] = await Promise.all([
+  const [{ items, nextCursor }, notificationPreferences] = await Promise.all([
     getNotifications(),
-    getEmailNotificationsPreference(),
+    getMyNotificationPreferences(),
   ]);
 
   return (
@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Header
         displayName={getDisplayName(user)}
         email={user.email ?? ""}
-        initialEmailNotificationsEnabled={emailNotificationsEnabled}
+        initialNotificationPreferences={notificationPreferences}
       >
         <NotificationBell
           currentUserId={user.id}

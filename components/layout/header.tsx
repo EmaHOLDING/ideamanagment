@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { LightbulbIcon } from "lucide-react";
 import { UserMenu } from "@/components/layout/user-menu";
+import type { NotificationEventType } from "@/lib/notification-registry";
 
 export function Header({
   displayName,
   email,
-  initialEmailNotificationsEnabled,
+  initialNotificationPreferences,
   children,
 }: {
   displayName: string;
   email: string;
-  initialEmailNotificationsEnabled: boolean;
+  initialNotificationPreferences: Record<NotificationEventType, boolean>;
   children?: React.ReactNode;
 }) {
   return (
@@ -30,7 +31,7 @@ export function Header({
         <UserMenu
           displayName={displayName}
           email={email}
-          initialEmailNotificationsEnabled={initialEmailNotificationsEnabled}
+          initialNotificationPreferences={initialNotificationPreferences}
         />
       </div>
     </header>

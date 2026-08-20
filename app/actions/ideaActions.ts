@@ -3,9 +3,8 @@
 import { z } from "zod";
 import { refresh } from "next/cache";
 import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { notifyByEmailIfOffline } from "./_email";
-import { assignmentEmailHtml } from "@/lib/email-templates";
+import { notifyEvent } from "./_notifications";
+import { assignmentEmailHtml, ideaMovedEmailHtml } from "@/lib/email-templates";
 
 const impactEffortSchema = z.enum(["LOW", "MEDIUM", "HIGH"]).optional();
 
@@ -153,15 +152,25 @@ export async function moveIdea(
 
   // Bölüm 6.D: sadece fikri oluşturan kullanıcı (taşıyan actor hariç) bildirim alır.
   if (idea.created_by && idea.created_by !== user.id) {
-    const admin = createAdminClient();
-    const { error: notificationError } = await admin.from("notifications").insert({
-      user_id: idea.created_by,
-      actor_id: user.id,
-      idea_id: input.ideaId,
-      workspace_id: idea.workspace_id,
-      message: `${getDisplayName(user)}, '${ideaTitle}' kartını '${targetColumn.title}' durumuna taşıdı.`,
+    const actorName = getDisplayName(user);
+    await notifyEvent({
+      type: "idea_moved",
+      recipientUserIds: [idea.created_by],
+      actorId: user.id,
+      workspaceId: idea.workspace_id,
+      ideaId: input.ideaId,
+      message: `${actorName}, '${ideaTitle}' kartını '${targetColumn.title}' durumuna taşıdı.`,
+      email: {
+        subject: `${actorName} bir fikrinizi taşıdı`,
+        html: ideaMovedEmailHtml({
+          actorName,
+          ideaTitle,
+          workspaceId: idea.workspace_id,
+          ideaId: input.ideaId,
+          targetColumnTitle: targetColumn.title,
+        }),
+      },
     });
-    if (notificationError) throw notificationError;
   }
 
   await logActivity(supabase, {
@@ -265,26 +274,18 @@ export async function assignIdea(ideaId: string, assigneeUserId: string | null) 
   const ideaTitle = latestVersion?.title ?? "";
 
   if (input.assigneeUserId && input.assigneeUserId !== user.id) {
-    const admin = createAdminClient();
-    const { error: notificationError } = await admin.from("notifications").insert({
-      user_id: input.assigneeUserId,
-      actor_id: user.id,
-      idea_id: input.ideaId,
-      workspace_id: idea.workspace_id,
-      message: `${getDisplayName(user)}, '${ideaTitle}' fikrini size atadı.`,
-    });
-    if (notificationError) throw notificationError;
-
     const actorName = getDisplayName(user);
-    await notifyByEmailIfOffline({
-      recipientUserId: input.assigneeUserId,
-      subject: `${actorName} size bir fikir atadı`,
-      html: assignmentEmailHtml({
-        actorName,
-        ideaTitle,
-        workspaceId: idea.workspace_id,
-        ideaId: input.ideaId,
-      }),
+    await notifyEvent({
+      type: "idea_assigned",
+      recipientUserIds: [input.assigneeUserId],
+      actorId: user.id,
+      workspaceId: idea.workspace_id,
+      ideaId: input.ideaId,
+      message: `${actorName}, '${ideaTitle}' fikrini size atadı.`,
+      email: {
+        subject: `${actorName} size bir fikir atadı`,
+        html: assignmentEmailHtml({ actorName, ideaTitle, workspaceId: idea.workspace_id, ideaId: input.ideaId }),
+      },
     });
   }
 

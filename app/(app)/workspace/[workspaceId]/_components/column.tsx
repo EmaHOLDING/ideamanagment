@@ -203,7 +203,7 @@ export function Column({
                 </Draggable>
               ))}
               {provided.placeholder}
-              {versions.length === 0 && (
+              {versions.length === 0 && !snapshot.isDraggingOver && (
                 <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
                   <InboxIcon className="size-3.5" />
                   {emptyMessage}
@@ -214,17 +214,24 @@ export function Column({
         )}
       </Droppable>
       {!isViewer && (
-        <div className="shrink-0 border-t px-3 py-2">
-          <IdeaDialog
-            mode="create"
-            workspaceId={workspaceId}
-            columnId={column.id}
-            trigger={
-              <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground">
-                <PlusIcon /> Fikir Ekle
-              </Button>
-            }
-          />
+        <div className="relative shrink-0">
+          <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent" />
+          <div className="bg-background px-3 pt-1 pb-2">
+            <IdeaDialog
+              mode="create"
+              workspaceId={workspaceId}
+              columnId={column.id}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-muted-foreground hover:bg-transparent hover:text-muted-foreground dark:hover:bg-transparent"
+                >
+                  <PlusIcon /> Fikir Ekle
+                </Button>
+              }
+            />
+          </div>
         </div>
       )}
     </section>

@@ -3,9 +3,9 @@
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import { requireUser, resolveAuthorProfiles, getDisplayName, logActivity, withAuthRetry } from "./_shared";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyEvent } from "./_notifications";
 import { getResendClient } from "@/lib/resend";
-import { workspaceInviteEmailHtml } from "@/lib/email-templates";
+import { workspaceInviteEmailHtml, workspaceJoinedEmailHtml } from "@/lib/email-templates";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 const createWorkspaceSchema = z.object({
@@ -357,7 +357,8 @@ export async function acceptWorkspaceInvite(workspaceId: string) {
   }
 
   // Katılan kişi hariç, workspace'teki mevcut aktif üyelere bildirim +
-  // aktivite akışı kaydı düşülür (sadece uygulama içi zil — e-posta yok).
+  // aktivite akışı kaydı düşülür (e-posta tercihi varsayılan kapalı —
+  // registry'deki workspace_joined.defaultEmailEnabled).
   const { data: workspace } = await supabase
     .from("workspaces")
     .select("title")
@@ -365,7 +366,8 @@ export async function acceptWorkspaceInvite(workspaceId: string) {
     .single();
 
   const joinerName = getDisplayName(user);
-  const message = `${joinerName}, '${workspace?.title ?? ""}' workspace'ine katıldı.`;
+  const workspaceTitle = workspace?.title ?? "";
+  const message = `${joinerName}, '${workspaceTitle}' workspace'ine katıldı.`;
 
   const { data: existingMembers } = await supabase
     .from("workspace_members")
@@ -375,17 +377,18 @@ export async function acceptWorkspaceInvite(workspaceId: string) {
     .neq("user_id", user.id);
 
   if (existingMembers && existingMembers.length > 0) {
-    const admin = createAdminClient();
-    const { error: notificationError } = await admin.from("notifications").insert(
-      existingMembers.map((m) => ({
-        user_id: m.user_id,
-        actor_id: user.id,
-        idea_id: null,
-        workspace_id: id,
-        message,
-      }))
-    );
-    if (notificationError) throw notificationError;
+    await notifyEvent({
+      type: "workspace_joined",
+      recipientUserIds: existingMembers.map((m) => m.user_id),
+      actorId: user.id,
+      workspaceId: id,
+      ideaId: null,
+      message,
+      email: {
+        subject: `${joinerName} workspace'inize katıldı`,
+        html: workspaceJoinedEmailHtml({ actorName: joinerName, workspaceTitle, workspaceId: id }),
+      },
+    });
   }
 
   await logActivity(supabase, {

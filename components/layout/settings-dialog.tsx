@@ -14,29 +14,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { setEmailNotificationsEnabled } from "@/app/actions/userSettingsActions";
+import { setNotificationPreference } from "@/app/actions/userSettingsActions";
+import { NOTIFICATION_EVENTS, EMAIL_ELIGIBLE_EVENT_TYPES, type NotificationEventType } from "@/lib/notification-registry";
 
 export function SettingsDialog({
   open,
   onOpenChange,
-  initialEmailNotificationsEnabled,
+  initialNotificationPreferences,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialEmailNotificationsEnabled: boolean;
+  initialNotificationPreferences: Record<NotificationEventType, boolean>;
 }) {
-  const [enabled, setEnabled] = useState(initialEmailNotificationsEnabled);
+  const [preferences, setPreferences] = useState(initialNotificationPreferences);
   const [, startTransition] = useTransition();
   const { theme, setTheme } = useTheme();
 
-  function onCheckedChange(checked: boolean) {
-    setEnabled(checked);
+  function onPreferenceChange(eventType: NotificationEventType, checked: boolean) {
+    setPreferences((prev) => ({ ...prev, [eventType]: checked }));
     startTransition(async () => {
       try {
-        await setEmailNotificationsEnabled(checked);
-        toast.success("Ayar güncellendi");
+        await setNotificationPreference(eventType, checked);
       } catch (err) {
-        setEnabled(!checked);
+        setPreferences((prev) => ({ ...prev, [eventType]: !checked }));
         toast.error(err instanceof Error ? err.message : "Ayar güncellenemedi");
       }
     });
@@ -48,8 +48,8 @@ export function SettingsDialog({
         <DialogHeader>
           <DialogTitle>Ayarlar</DialogTitle>
           <DialogDescription>
-            Uygulamada değilken sizi ilgilendiren olaylar için e-posta alıp almayacağınızı
-            buradan yönetebilirsiniz.
+            Uygulamada değilken hangi olaylar için e-posta almak istediğinizi olay bazında
+            yönetebilirsiniz.
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-center justify-between gap-2.5 rounded-lg border p-3">
@@ -78,16 +78,26 @@ export function SettingsDialog({
             </Button>
           </div>
         </div>
-        <label className="flex items-center gap-2.5 rounded-lg border p-3">
-          <Checkbox checked={enabled} onCheckedChange={onCheckedChange} />
-          <div className="flex flex-col gap-0.5">
-            <Label className="text-sm">E-posta Bildirimlerini Aktif Et</Label>
-            <span className="text-xs text-muted-foreground">
-              Sizi bir yorumda etiketleyen veya size bir fikir atayan olaylar için, sadece
-              çevrimdışıyken e-posta gönderilir.
-            </span>
+        <div className="flex flex-col gap-2">
+          <Label className="text-sm">E-posta Bildirimleri</Label>
+          <div className="flex flex-col gap-2">
+            {EMAIL_ELIGIBLE_EVENT_TYPES.map((eventType) => {
+              const config = NOTIFICATION_EVENTS[eventType];
+              return (
+                <label key={eventType} className="flex items-center gap-2.5 rounded-lg border p-3">
+                  <Checkbox
+                    checked={preferences[eventType]}
+                    onCheckedChange={(checked) => onPreferenceChange(eventType, checked === true)}
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    <Label className="text-sm">{config.label}</Label>
+                    <span className="text-xs text-muted-foreground">{config.description}</span>
+                  </div>
+                </label>
+              );
+            })}
           </div>
-        </label>
+        </div>
       </DialogContent>
     </Dialog>
   );

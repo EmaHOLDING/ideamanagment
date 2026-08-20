@@ -2,9 +2,8 @@
 
 import { z } from "zod";
 import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { notifyByEmailIfOffline } from "./_email";
-import { mentionEmailHtml } from "@/lib/email-templates";
+import { notifyEvent } from "./_notifications";
+import { mentionEmailHtml, commentEmailHtml } from "@/lib/email-templates";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 const addCommentSchema = z.object({
@@ -82,48 +81,36 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
     .sort((a, b) => b.version_number - a.version_number)[0];
   const ideaTitle = latestVersion?.title ?? "";
 
+  const actorName = getDisplayName(user);
+
   if (recipientIds.size > 0) {
-    const admin = createAdminClient();
-    const { error: notificationError } = await admin.from("notifications").insert(
-      Array.from(recipientIds).map((recipientId) => ({
-        user_id: recipientId,
-        actor_id: user.id,
-        idea_id: input.ideaId,
-        workspace_id: idea.workspace_id,
-        message: `${getDisplayName(user)}, '${ideaTitle}' fikrine yorum yaptı.`,
-      }))
-    );
-    if (notificationError) throw notificationError;
+    await notifyEvent({
+      type: "comment_added",
+      recipientUserIds: Array.from(recipientIds),
+      actorId: user.id,
+      workspaceId: idea.workspace_id,
+      ideaId: input.ideaId,
+      message: `${actorName}, '${ideaTitle}' fikrine yorum yaptı.`,
+      email: {
+        subject: `${actorName} bir fikre yorum yaptı`,
+        html: commentEmailHtml({ actorName, ideaTitle, workspaceId: idea.workspace_id, ideaId: input.ideaId }),
+      },
+    });
   }
 
   if (mentionedIds.length > 0) {
-    const admin = createAdminClient();
-    const { error: mentionNotificationError } = await admin.from("notifications").insert(
-      mentionedIds.map((recipientId) => ({
-        user_id: recipientId,
-        actor_id: user.id,
-        idea_id: input.ideaId,
-        workspace_id: idea.workspace_id,
-        message: `${getDisplayName(user)}, '${ideaTitle}' fikrindeki bir yorumda sizi etiketledi.`,
-      }))
-    );
-    if (mentionNotificationError) throw mentionNotificationError;
-
-    const actorName = getDisplayName(user);
-    await Promise.all(
-      mentionedIds.map((recipientId) =>
-        notifyByEmailIfOffline({
-          recipientUserId: recipientId,
-          subject: `${actorName} sizi bir yorumda etiketledi`,
-          html: mentionEmailHtml({
-            actorName,
-            ideaTitle,
-            workspaceId: idea.workspace_id,
-            ideaId: input.ideaId,
-          }),
-        })
-      )
-    );
+    await notifyEvent({
+      type: "mention",
+      recipientUserIds: mentionedIds,
+      actorId: user.id,
+      workspaceId: idea.workspace_id,
+      ideaId: input.ideaId,
+      message: `${actorName}, '${ideaTitle}' fikrindeki bir yorumda sizi etiketledi.`,
+      email: {
+        subject: `${actorName} sizi bir yorumda etiketledi`,
+        html: mentionEmailHtml({ actorName, ideaTitle, workspaceId: idea.workspace_id, ideaId: input.ideaId }),
+      },
+    });
   }
 
   await logActivity(supabase, {
@@ -131,7 +118,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
     actorId: user.id,
     ideaId: input.ideaId,
     type: "comment_added",
-    message: `${getDisplayName(user)}, '${ideaTitle}' fikrine yorum yaptı.`,
+    message: `${actorName}, '${ideaTitle}' fikrine yorum yaptı.`,
   });
 
   return comment;

@@ -8,11 +8,12 @@ import { getResendClient } from "@/lib/resend";
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000;
 
 /**
- * Sadece mention (@etiketleme) ve sorumlu atama olaylarında çağrılır.
- * Karar sırası: tercih kapalıysa iptal -> alıcı çevrimiçiyse iptal ->
- * aksi halde Resend ile e-posta gönderilir. Hiçbir hata çağıran server
- * action'ı patlatmaz (mention/atama işlemi e-posta yüzünden asla başarısız
- * olmamalı).
+ * app/actions/_notifications.ts'teki notifyEvent() tarafından, olay-tipi
+ * tercihi zaten kontrol edildikten sonra çağrılır — burada sadece "alıcı
+ * şu an çevrimiçi mi" kontrolü kalıyor. Karar sırası: alıcı çevrimiçiyse
+ * iptal -> aksi halde Resend ile e-posta gönderilir. Hiçbir hata çağıran
+ * server action'ı patlatmaz (bildirim işlemi e-posta yüzünden asla
+ * başarısız olmamalı).
  */
 export async function notifyByEmailIfOffline(params: {
   recipientUserId: string;
@@ -25,9 +26,6 @@ export async function notifyByEmailIfOffline(params: {
     const { data } = await admin.auth.admin.getUserById(params.recipientUserId);
     const recipient = data?.user;
     if (!recipient?.email) return;
-
-    const prefsEnabled = recipient.user_metadata?.email_notifications_enabled;
-    if (prefsEnabled === false) return;
 
     const { data: presence } = await admin
       .from("user_presence")

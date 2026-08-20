@@ -417,6 +417,27 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          email_enabled: boolean
+          event_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          email_enabled: boolean
+          event_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          email_enabled?: boolean
+          event_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           actor_id: string
@@ -425,6 +446,7 @@ export type Database = {
           idea_id: string | null
           is_read: boolean
           message: string
+          type: string
           user_id: string
           workspace_id: string
         }
@@ -435,6 +457,7 @@ export type Database = {
           idea_id?: string | null
           is_read?: boolean
           message: string
+          type: string
           user_id: string
           workspace_id: string
         }
@@ -445,6 +468,7 @@ export type Database = {
           idea_id?: string | null
           is_read?: boolean
           message?: string
+          type?: string
           user_id?: string
           workspace_id?: string
         }

@@ -18,15 +18,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { signOut } from "@/app/auth/actions";
 import { getInitials } from "@/lib/user-display";
 import { SettingsDialog } from "./settings-dialog";
+import type { NotificationEventType } from "@/lib/notification-registry";
 
 export function UserMenu({
   displayName,
   email,
-  initialEmailNotificationsEnabled,
+  initialNotificationPreferences,
 }: {
   displayName: string;
   email: string;
-  initialEmailNotificationsEnabled: boolean;
+  initialNotificationPreferences: Record<NotificationEventType, boolean>;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -82,7 +83,7 @@ export function UserMenu({
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
-        initialEmailNotificationsEnabled={initialEmailNotificationsEnabled}
+        initialNotificationPreferences={initialNotificationPreferences}
       />
     </>
   );

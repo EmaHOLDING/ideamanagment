@@ -39,6 +39,37 @@ export function assignmentEmailHtml(ctx: EmailContext) {
   );
 }
 
+export function commentEmailHtml(ctx: EmailContext) {
+  return wrapper(
+    `<strong>${ctx.actorName}</strong>, '<strong>${ctx.ideaTitle}</strong>' fikrine yorum yaptı.`,
+    ideaUrl(ctx)
+  );
+}
+
+export function ideaMovedEmailHtml(ctx: EmailContext & { targetColumnTitle: string }) {
+  return wrapper(
+    `<strong>${ctx.actorName}</strong>, '<strong>${ctx.ideaTitle}</strong>' fikrinizi '<strong>${ctx.targetColumnTitle}</strong>' durumuna taşıdı.`,
+    ideaUrl(ctx)
+  );
+}
+
+export function workspaceJoinedEmailHtml({
+  actorName,
+  workspaceTitle,
+  workspaceId,
+}: {
+  actorName: string;
+  workspaceTitle: string;
+  workspaceId: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  return wrapper(
+    `<strong>${actorName}</strong>, '<strong>${workspaceTitle}</strong>' workspace'ine katıldı.`,
+    `${appUrl}/workspace/${workspaceId}`,
+    "Workspace'i Görüntüle"
+  );
+}
+
 export function workspaceInviteEmailHtml({
   actorName,
   workspaceTitle,
