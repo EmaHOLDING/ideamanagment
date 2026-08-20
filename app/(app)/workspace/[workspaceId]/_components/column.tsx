@@ -1,25 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Trash2Icon, PlusIcon, InboxIcon } from "lucide-react";
+import { PlusIcon, InboxIcon } from "lucide-react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { STATUS_LABELS, STATUS_BADGE_VARIANT, STATUS_DOT_CLASS } from "@/lib/status";
-import { deleteColumn } from "@/app/actions/columnActions";
 import { cn } from "@/lib/utils";
 import { IdeaCard } from "./idea-card";
 import { IdeaDialog } from "./idea-dialog";
@@ -74,30 +59,7 @@ export function Column({
   hideIdea: (ideaId: string) => void;
   showIdea: (ideaId: string) => void;
 }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const ideaCount = versions.length;
-
-  function onConfirmDelete() {
-    startTransition(async () => {
-      try {
-        const result = await deleteColumn(column.id);
-        if (!result.success) {
-          toast.error(
-            `Bu kolonda ${result.ideaCount ?? ideaCount} fikir var. Kolonu silmeden önce fikirleri başka bir kolona taşıyın veya silin.`
-          );
-          setOpen(false);
-          return;
-        }
-        toast.success("Kolon silindi");
-        setOpen(false);
-        router.refresh();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Kolon silinemedi");
-      }
-    });
-  }
 
   return (
     <section
@@ -114,39 +76,6 @@ export function Column({
           <Badge variant={STATUS_BADGE_VARIANT[column.status_type]}>
             {STATUS_LABELS[column.status_type]}
           </Badge>
-          {canManageContent && (
-            <AlertDialog open={open} onOpenChange={setOpen}>
-              <AlertDialogTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="rounded-full hover:bg-destructive/15 hover:text-destructive"
-                  >
-                    <Trash2Icon />
-                  </Button>
-                }
-              />
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Kolonu Sil</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {ideaCount > 0
-                      ? `Bu kolonda ${ideaCount} adet fikir var. Kolonu silmeden önce fikirleri başka bir kolona taşıyın veya silin.`
-                      : `"${column.title}" kolonunu silmek istediğinize emin misiniz?`}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Vazgeç</AlertDialogCancel>
-                  {ideaCount === 0 && (
-                    <AlertDialogAction disabled={isPending} onClick={onConfirmDelete}>
-                      Sil
-                    </AlertDialogAction>
-                  )}
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
         </div>
       </div>
       <Droppable droppableId={column.id} type="CARD" isDropDisabled={isViewer}>

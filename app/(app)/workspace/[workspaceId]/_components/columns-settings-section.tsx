@@ -4,12 +4,22 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
-import { GripVerticalIcon } from "lucide-react";
+import { GripVerticalIcon, Trash2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { STATUS_DOT_CLASS } from "@/lib/status";
-import { reorderColumns, updateColumn } from "@/app/actions/columnActions";
+import { reorderColumns, updateColumn, deleteColumn } from "@/app/actions/columnActions";
 import { SaveAsTemplateDialog } from "./save-as-template-dialog";
 import type { Database } from "@/lib/types/database.types";
 
@@ -29,6 +39,8 @@ export function ColumnsSettingsSection({
   const [titleDrafts, setTitleDrafts] = useState<Record<string, string>>({});
   const [isReordering, startReorderTransition] = useTransition();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   function onDragEnd(result: DropResult) {
     if (!result.destination) return;
@@ -77,6 +89,32 @@ export function ColumnsSettingsSection({
       })
       .finally(() => setSavingId(null));
   }
+
+  function onConfirmDelete() {
+    if (!deleteTargetId) return;
+    const targetId = deleteTargetId;
+    startDeleteTransition(async () => {
+      try {
+        const result = await deleteColumn(targetId);
+        if (!result.success) {
+          toast.error(
+            `Bu kolonda ${result.ideaCount} fikir var. Kolonu silmeden önce fikirleri başka bir kolona taşıyın veya silin.`
+          );
+          setDeleteTargetId(null);
+          return;
+        }
+        setColumns((prev) => prev.filter((c) => c.id !== targetId));
+        setDeleteTargetId(null);
+        toast.success("Kolon silindi");
+        router.refresh();
+      } catch (err) {
+        setDeleteTargetId(null);
+        toast.error(err instanceof Error ? err.message : "Kolon silinemedi");
+      }
+    });
+  }
+
+  const deleteTargetColumn = columns.find((c) => c.id === deleteTargetId) ?? null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -139,6 +177,16 @@ export function ColumnsSettingsSection({
                           >
                             Kaydet
                           </Button>
+                          <Button
+                            type="button"
+                            size="icon-sm"
+                            variant="ghost"
+                            className="shrink-0 hover:bg-destructive/15 hover:text-destructive"
+                            aria-label="Kolonu sil"
+                            onClick={() => setDeleteTargetId(column.id)}
+                          >
+                            <Trash2Icon />
+                          </Button>
                         </div>
                       )}
                     </Draggable>
@@ -167,6 +215,28 @@ export function ColumnsSettingsSection({
         </div>
         <SaveAsTemplateDialog workspaceId={workspaceId} />
       </div>
+
+      <AlertDialog
+        open={deleteTargetId !== null}
+        onOpenChange={(open) => !open && setDeleteTargetId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kolonu Sil</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTargetColumn
+                ? `"${deleteTargetColumn.title}" kolonunu silmek istediğinize emin misiniz? Kolonda fikir varsa silme işlemi engellenir.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" disabled={isDeleting} onClick={onConfirmDelete}>
+              Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
