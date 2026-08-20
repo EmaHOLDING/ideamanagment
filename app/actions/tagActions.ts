@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, logActivity, getDisplayName } from "./_shared";
+import { requireUser, logActivity, getDisplayName, withAuthRetry } from "./_shared";
 
 const workspaceIdSchema = z.string().uuid();
 
@@ -9,15 +9,15 @@ export async function getWorkspaceTags(workspaceId: string) {
   const id = workspaceIdSchema.parse(workspaceId);
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase
-    .from("tags")
-    .select("*")
-    .eq("workspace_id", id)
-    .order("name", { ascending: true });
-
-  if (error) throw error;
-
-  return data;
+  return withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("tags")
+      .select("*")
+      .eq("workspace_id", id)
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return data;
+  });
 }
 
 const createTagSchema = z.object({

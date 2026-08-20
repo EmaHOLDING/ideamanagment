@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { refresh } from "next/cache";
-import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
+import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName, withAuthRetry } from "./_shared";
 import { notifyEvent } from "./_notifications";
 import { assignmentEmailHtml, ideaMovedEmailHtml } from "@/lib/email-templates";
 
@@ -308,17 +308,17 @@ export async function getIdeasForWorkspace(workspaceId: string) {
   const id = workspaceIdForIdeasSchema.parse(workspaceId);
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase
-    .from("ideas")
-    .select(
-      "*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id), comments(id, deleted_at)"
-    )
-    .eq("workspace_id", id)
-    .is("deleted_at", null);
-
-  if (error) throw error;
-
-  return data;
+  return withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("ideas")
+      .select(
+        "*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id), comments(id, deleted_at)"
+      )
+      .eq("workspace_id", id)
+      .is("deleted_at", null);
+    if (error) throw error;
+    return data;
+  });
 }
 
 export async function toggleIdeaVote(ideaId: string) {

@@ -96,15 +96,17 @@ export async function getWorkspaceForUser(workspaceId: string) {
   const id = workspaceIdSchema.parse(workspaceId);
   const { supabase, user } = await requireUser();
 
-  const { data, error } = await supabase
-    .from("workspaces")
-    .select("*, kanban_columns(*), workspace_members!inner(role)")
-    .eq("id", id)
-    .eq("workspace_members.user_id", user.id)
-    .order("order", { referencedTable: "kanban_columns", ascending: true })
-    .single();
-
-  if (error) throw error;
+  const data = await withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("workspaces")
+      .select("*, kanban_columns(*), workspace_members!inner(role)")
+      .eq("id", id)
+      .eq("workspace_members.user_id", user.id)
+      .order("order", { referencedTable: "kanban_columns", ascending: true })
+      .single();
+    if (error) throw error;
+    return data;
+  });
 
   const { workspace_members, ...workspace } = data;
   const role = workspace_members[0]?.role ?? "MEMBER";
@@ -116,14 +118,16 @@ export async function getWorkspaceMembers(workspaceId: string) {
   const id = workspaceIdSchema.parse(workspaceId);
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase
-    .from("workspace_members")
-    .select("*")
-    .eq("workspace_id", id)
-    .eq("status", "ACTIVE")
-    .order("joined_at", { ascending: true });
-
-  if (error) throw error;
+  const data = await withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("workspace_members")
+      .select("*")
+      .eq("workspace_id", id)
+      .eq("status", "ACTIVE")
+      .order("joined_at", { ascending: true });
+    if (error) throw error;
+    return data;
+  });
 
   const profileById = await resolveAuthorProfiles(data.map((m) => m.user_id));
 
@@ -420,13 +424,13 @@ export async function getWorkspaceMemberCount(workspaceId: string) {
   const id = workspaceIdSchema.parse(workspaceId);
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase.rpc("get_workspace_member_count", {
-    _workspace_id: id,
+  return withAuthRetry(async () => {
+    const { data, error } = await supabase.rpc("get_workspace_member_count", {
+      _workspace_id: id,
+    });
+    if (error) throw error;
+    return data;
   });
-
-  if (error) throw error;
-
-  return data;
 }
 
 const sendWorkspaceInviteEmailSchema = z.object({
