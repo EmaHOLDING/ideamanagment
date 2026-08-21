@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState, useTransition, type DragEvent, type ReactElement } from "react";
 import { toast } from "sonner";
-import { LoaderCircleIcon, UploadIcon, XIcon } from "lucide-react";
+import { LightbulbIcon, LoaderCircleIcon, UploadIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -168,17 +169,36 @@ export function IdeaDialog(props: IdeaDialogProps) {
       {props.trigger && (
         <DialogTrigger render={props.trigger} nativeButton={props.mode === "create"} />
       )}
-      <DialogContent className="max-h-[90dvh] overflow-x-hidden overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90dvh] overflow-x-hidden overflow-y-auto bg-gradient-to-br from-popover via-popover to-primary/[0.025] sm:max-w-lg">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-16 top-0 h-px bg-gradient-to-r from-transparent via-primary/75 to-transparent"
+        />
         <form
           onSubmit={onSubmit}
           onPointerDown={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
           className="min-w-0 max-w-full overflow-hidden"
         >
-          <DialogHeader>
-            <DialogTitle>{props.mode === "create" ? "Yeni Fikir" : "Fikri Düzenle"}</DialogTitle>
+          <DialogHeader className="pr-10">
+            <div className="flex items-start gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                <LightbulbIcon className="size-4" />
+              </span>
+              <div className="flex min-w-0 flex-col gap-1">
+                <DialogTitle>
+                  {props.mode === "create" ? "Yeni Fikir" : "Fikri Düzenle"}
+                </DialogTitle>
+                <DialogDescription>
+                  {props.mode === "create"
+                    ? "Fikrin özünü yazın; bağlam ve öncelik bilgileriyle güçlendirin."
+                    : "Fikrin güncel içeriğini ve değerlendirme bilgilerini düzenleyin."}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="flex min-w-0 max-w-full flex-col gap-4 py-4">
+          <div className="flex min-w-0 max-w-full flex-col gap-3 py-4">
+            <section className="flex min-w-0 flex-col gap-4 rounded-xl border border-border/70 bg-background/30 p-3 shadow-[0_1px_0_rgb(255_255_255/0.02)_inset]">
             <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor={`${fieldId}-title`}>Başlık</Label>
               <Input
@@ -194,6 +214,16 @@ export function IdeaDialog(props: IdeaDialogProps) {
               <Label>İçerik</Label>
               <TiptapEditor content={content} onChange={setContent} />
             </div>
+            </section>
+            <section className="flex min-w-0 flex-col gap-4 rounded-xl border border-border/60 bg-muted/15 p-3">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.06em] text-primary uppercase">
+                  Bağlam
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Problemi ve bu fikirden etkilenecek kitleyi netleştirin.
+                </p>
+              </div>
             <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor={`${fieldId}-problem`}>Problem Tanımı</Label>
               <Textarea
@@ -210,6 +240,11 @@ export function IdeaDialog(props: IdeaDialogProps) {
                 onChange={(e) => setTargetAudience(e.target.value)}
               />
             </div>
+            </section>
+            <section className="rounded-xl border border-border/60 bg-gradient-to-r from-muted/20 to-primary/[0.035] p-3">
+              <p className="mb-3 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                Değerlendirme
+              </p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label>Etki</Label>
@@ -248,9 +283,10 @@ export function IdeaDialog(props: IdeaDialogProps) {
                 </Select>
               </div>
             </div>
+            </section>
 
             {props.mode === "create" && (
-              <div className="flex flex-col gap-2">
+              <section className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/10 p-3">
                 <Label>Ekler ve Dosyalar</Label>
                 <div
                   onDragOver={(e) => {
@@ -262,7 +298,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
                   onClick={() => fileInputRef.current?.click()}
                   className={
                     "flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground transition-colors" +
-                    (isDragOver ? " border-primary bg-primary/5" : " border-border hover:border-primary/40")
+                    (isDragOver ? " border-primary bg-primary/8" : " border-border/70 bg-background/25 hover:border-primary/40 hover:bg-primary/[0.025]")
                   }
                 >
                   <UploadIcon className="size-4" />
@@ -307,7 +343,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
                     ))}
                   </div>
                 )}
-              </div>
+              </section>
             )}
           </div>
           <DialogFooter>
