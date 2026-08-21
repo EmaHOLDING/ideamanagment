@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, type DragEvent, type ReactElement } from "react";
+import { useId, useRef, useState, useTransition, type DragEvent, type ReactElement } from "react";
 import { toast } from "sonner";
 import { LoaderCircleIcon, UploadIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ type IdeaDialogProps =
     };
 
 export function IdeaDialog(props: IdeaDialogProps) {
+  const fieldId = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const controlledOpen = props.mode === "edit" ? props.open : undefined;
   const isControlled = controlledOpen !== undefined;
@@ -106,7 +107,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
   }
 
   function onOpenChange(next: boolean) {
-    if (next) resetForm();
+    if (next && !open) resetForm();
     if (props.mode === "edit") {
       props.onOpenChange?.(next);
     }
@@ -168,15 +169,21 @@ export function IdeaDialog(props: IdeaDialogProps) {
         <DialogTrigger render={props.trigger} nativeButton={props.mode === "create"} />
       )}
       <DialogContent className="max-h-[90dvh] overflow-x-hidden overflow-y-auto sm:max-w-lg">
-        <form onSubmit={onSubmit} className="min-w-0 max-w-full overflow-hidden">
+        <form
+          onSubmit={onSubmit}
+          onPointerDown={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+          className="min-w-0 max-w-full overflow-hidden"
+        >
           <DialogHeader>
             <DialogTitle>{props.mode === "create" ? "Yeni Fikir" : "Fikri Düzenle"}</DialogTitle>
           </DialogHeader>
           <div className="flex min-w-0 max-w-full flex-col gap-4 py-4">
             <div className="flex min-w-0 flex-col gap-2">
-              <Label htmlFor="idea-title">Başlık</Label>
+              <Label htmlFor={`${fieldId}-title`}>Başlık</Label>
               <Input
-                id="idea-title"
+                id={`${fieldId}-title`}
+                autoFocus
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -188,17 +195,17 @@ export function IdeaDialog(props: IdeaDialogProps) {
               <TiptapEditor content={content} onChange={setContent} />
             </div>
             <div className="flex min-w-0 flex-col gap-2">
-              <Label htmlFor="idea-problem">Problem Tanımı</Label>
+              <Label htmlFor={`${fieldId}-problem`}>Problem Tanımı</Label>
               <Textarea
-                id="idea-problem"
+                id={`${fieldId}-problem`}
                 value={problemStatement}
                 onChange={(e) => setProblemStatement(e.target.value)}
               />
             </div>
             <div className="flex min-w-0 flex-col gap-2">
-              <Label htmlFor="idea-audience">Hedef Kitle</Label>
+              <Label htmlFor={`${fieldId}-audience`}>Hedef Kitle</Label>
               <Textarea
-                id="idea-audience"
+                id={`${fieldId}-audience`}
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
               />
