@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { LoaderCircleIcon, PlusIcon, SaveIcon, TagIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -86,7 +86,7 @@ function TagRow({ tag }: { tag: Tag }) {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-md border bg-background p-2">
+    <div className="flex flex-col gap-2.5 border-b px-4 py-3 last:border-b-0 sm:flex-row sm:items-center">
       <ColorSwatches value={color} onChange={setColor} />
       <Input
         value={name}
@@ -94,7 +94,7 @@ function TagRow({ tag }: { tag: Tag }) {
         onKeyDown={(e) => {
           if (e.key === "Enter") onSave();
         }}
-        className="h-8 flex-1"
+        className="h-9 min-w-0 flex-1"
         maxLength={50}
       />
       <Button
@@ -104,6 +104,7 @@ function TagRow({ tag }: { tag: Tag }) {
         disabled={!isDirty || isSaving}
         onClick={onSave}
       >
+        {isSaving ? <LoaderCircleIcon className="animate-spin" /> : <SaveIcon />}
         Kaydet
       </Button>
       <AlertDialog>
@@ -114,7 +115,8 @@ function TagRow({ tag }: { tag: Tag }) {
               variant="ghost"
               size="icon-sm"
               disabled={isDeleting}
-              aria-label="Etiketi sil"
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              aria-label={`${tag.name} etiketini sil`}
             >
               <Trash2Icon />
             </Button>
@@ -171,45 +173,60 @@ export function TagsSettingsSection({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border bg-card p-5">
-      <div>
-        <h2 className="text-sm font-semibold">Etiketler</h2>
-        <p className="text-sm text-muted-foreground">
-          Workspace&apos;in etiket havuzunu yönetin — adlarını/renklerini düzenleyin veya
-          silin.
-        </p>
+    <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <TagIcon className="size-4" />
+          </span>
+          <div>
+            <h2 className="font-semibold">Etiketler</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Fikirleri sınıflandırmak için etiket adlarını ve renklerini yönetin.
+            </p>
+          </div>
+        </div>
+        <span className="shrink-0 rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+          {tags.length} etiket
+        </span>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div>
         {tags.map((tag) => (
           <TagRow key={tag.id} tag={tag} />
         ))}
         {tags.length === 0 && (
-          <p className="text-sm text-muted-foreground">Henüz etiket yok.</p>
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+            Henüz etiket yok. İlk etiketi aşağıdan ekleyebilirsiniz.
+          </p>
         )}
       </div>
 
-      <div className="flex items-center gap-2 border-t pt-3">
-        <ColorSwatches value={newColor} onChange={setNewColor} />
-        <Input
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onCreate();
-          }}
-          placeholder="Yeni etiket adı"
-          className="h-8 flex-1"
-          maxLength={50}
-        />
-        <Button
-          type="button"
-          size="sm"
-          disabled={isCreating || !newName.trim()}
-          onClick={onCreate}
-        >
-          <PlusIcon /> Ekle
-        </Button>
+      <div className="border-t bg-muted/20 px-4 py-4 sm:px-5">
+        <p className="mb-3 text-sm font-medium">Yeni etiket</p>
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+          <ColorSwatches value={newColor} onChange={setNewColor} />
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onCreate();
+            }}
+            placeholder="Etiket adı"
+            className="h-9 min-w-0 flex-1"
+            maxLength={50}
+          />
+          <Button
+            type="button"
+            size="sm"
+            disabled={isCreating || !newName.trim()}
+            onClick={onCreate}
+          >
+            {isCreating ? <LoaderCircleIcon className="animate-spin" /> : <PlusIcon />}
+            Etiket ekle
+          </Button>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
