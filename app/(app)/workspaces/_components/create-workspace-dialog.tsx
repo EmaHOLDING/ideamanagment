@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,7 +61,7 @@ export function CreateWorkspaceDialog({ templates }: { templates: Template[] }) 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button>Workspace Oluştur</Button>} />
+      <DialogTrigger render={<Button><PlusIcon /> Workspace oluştur</Button>} />
       <DialogContent>
         <form onSubmit={onSubmit}>
           <DialogHeader>

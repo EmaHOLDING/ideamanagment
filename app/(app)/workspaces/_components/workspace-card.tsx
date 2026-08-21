@@ -55,13 +55,16 @@ export function WorkspaceCard({
       onKeyDown={(e) => {
         if (e.key === "Enter") goToWorkspace();
       }}
-      className="group cursor-pointer overflow-hidden py-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative isolate cursor-pointer overflow-hidden bg-gradient-to-br from-card via-card to-primary/[0.035] py-0 shadow-[0_1px_0_rgb(255_255_255/0.025)_inset] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/15 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <div className={`h-1.5 w-full ${accentClassFor(id)}`} />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
+      />
       <div className="flex min-h-40 flex-col gap-3 px-(--card-spacing) py-5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2.5 font-heading text-base font-medium">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary ring-1 ring-primary/10">
+            <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 ${accentClassFor(id)}`}>
               {title.charAt(0).toUpperCase()}
             </span>
             <span className="truncate">{title}</span>
@@ -90,7 +93,7 @@ export function WorkspaceCard({
           )}
         </div>
         <p className="line-clamp-2 min-h-10 text-sm leading-relaxed text-muted-foreground">{description || "Bu çalışma alanı için henüz bir açıklama eklenmemiş."}</p>
-        <div className="mt-auto flex items-center justify-between border-t pt-3">
+        <div className="-mx-(--card-spacing) -mb-5 mt-auto flex items-center justify-between border-t border-border/60 bg-muted/20 px-(--card-spacing) py-3">
           <Badge variant="secondary" className="font-normal">{WORKSPACE_ROLE_LABELS[role]}</Badge>
           <span className="flex items-center gap-1 text-xs font-medium text-primary opacity-70 transition-all group-hover:gap-1.5 group-hover:opacity-100">Panoya git <ArrowRightIcon className="size-3.5" /></span>
         </div>
