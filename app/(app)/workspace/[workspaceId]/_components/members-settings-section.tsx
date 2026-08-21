@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { CrownIcon, Trash2Icon } from "lucide-react";
+import { CrownIcon, Trash2Icon, UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -85,39 +85,47 @@ export function MembersSettingsSection({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border bg-card p-5">
-      <div>
-        <h2 className="text-sm font-semibold">Üyeler</h2>
-        <p className="text-sm text-muted-foreground">
-          {members.length} üye · roller ve erişim burada yönetilir.
-        </p>
+    <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+      <div className="flex items-start justify-between gap-4 border-b px-5 py-4 sm:px-6">
+        <div>
+          <h2 className="text-base font-semibold">Üyeler</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Roller ve workspace erişimini yönetin.
+          </p>
+        </div>
+        <Badge variant="secondary" className="shrink-0 gap-1.5 tabular-nums">
+          <UsersIcon className="size-3.5" /> {members.length} üye
+        </Badge>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="divide-y">
         {members.map((m) => (
-          <div key={m.id} className="flex items-center justify-between gap-2 rounded-md p-1.5">
-            <div className="flex min-w-0 items-center gap-2">
-              <Avatar size="sm">
+          <div
+            key={m.id}
+            className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar>
                 <AvatarFallback>{getInitials(m.fullName)}</AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">
-                <span className="truncate text-sm">{m.fullName}</span>
+                <span className="truncate text-sm font-medium">{m.fullName}</span>
                 {m.email && <span className="truncate text-xs text-muted-foreground">{m.email}</span>}
               </div>
               {m.role === "OWNER" && (
-                <Badge variant="outline" className="gap-1">
+                <Badge variant="outline" className="shrink-0 gap-1">
                   <CrownIcon className="size-3" /> {WORKSPACE_ROLE_LABELS.OWNER}
                 </Badge>
               )}
             </div>
             {m.role !== "OWNER" && (
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex flex-wrap items-center gap-1.5 pl-11 sm:shrink-0 sm:justify-end sm:pl-0">
                 <Select
                   value={m.role}
                   onValueChange={(v) => v && onRoleChange(m.user_id, v as AssignableRole)}
                   disabled={isPending}
                 >
-                  <SelectTrigger size="sm" className="h-7 text-xs">
+                  <SelectTrigger size="sm" className="h-8 min-w-28 text-xs">
                     <SelectValue>{() => WORKSPACE_ROLE_LABELS[m.role]}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -143,6 +151,7 @@ export function MembersSettingsSection({
                   type="button"
                   variant="ghost"
                   size="icon-xs"
+                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   disabled={isPending}
                   onClick={() => onRemove(m.user_id)}
                   aria-label="Üyeyi çıkar"

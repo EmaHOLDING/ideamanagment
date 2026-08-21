@@ -76,32 +76,38 @@ export function WorkspaceSettingsView({
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
-      <div className="flex items-center gap-2">
+    <div className="mx-auto flex w-full max-w-[64rem] flex-col gap-7 px-4 py-6 sm:px-6 sm:py-8">
+      <div className="flex items-center gap-3">
         <Link
           href={`/workspace/${workspaceId}`}
           aria-label="Panoya dön"
-          className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted/60 hover:text-foreground"
         >
           <ArrowLeftIcon className="size-4" />
         </Link>
-        <div>
-          <h1 className="text-lg font-semibold">Workspace Ayarları</h1>
-          <p className="text-sm text-muted-foreground">{title}</p>
+        <div className="min-w-0">
+          <p className="text-[0.65rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+            {title}
+          </p>
+          <h1 className="truncate text-xl font-semibold tracking-tight">Workspace Ayarları</h1>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
-        <nav className="flex gap-1 overflow-x-auto sm:flex-col sm:overflow-visible">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[13rem_minmax(0,44rem)] lg:gap-8">
+        <nav
+          aria-label="Workspace ayar bölümleri"
+          className="scrollbar-subtle -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:sticky lg:top-6 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0"
+        >
           {SETTINGS_SECTIONS.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => onSelectSection(s.id)}
+              aria-current={section === s.id ? "page" : undefined}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                "flex h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-left text-sm transition-colors",
                 section === s.id
-                  ? "bg-accent text-accent-foreground font-medium"
+                  ? "bg-accent font-medium text-accent-foreground shadow-xs"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 s.id === "danger" && section !== s.id && "text-destructive/70 hover:text-destructive"
               )}
@@ -112,7 +118,7 @@ export function WorkspaceSettingsView({
           ))}
         </nav>
 
-        <div className="min-w-0">
+        <div className="min-w-0 w-full">
           {section === "general" && (
             <GeneralSettingsSection
               workspaceId={workspaceId}
