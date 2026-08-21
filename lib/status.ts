@@ -51,14 +51,14 @@ export const IMPACT_EFFORT_LABELS: Record<ImpactEffortLevel, string> = {
 };
 
 export const TAG_COLORS = [
-  { value: "gray", dotClass: "bg-gray-400", badgeClass: "border-gray-300 text-gray-700 dark:text-gray-300" },
-  { value: "red", dotClass: "bg-red-500", badgeClass: "border-red-300 text-red-700 dark:text-red-300" },
-  { value: "orange", dotClass: "bg-orange-500", badgeClass: "border-orange-300 text-orange-700 dark:text-orange-300" },
-  { value: "amber", dotClass: "bg-amber-500", badgeClass: "border-amber-300 text-amber-700 dark:text-amber-300" },
-  { value: "green", dotClass: "bg-green-500", badgeClass: "border-green-300 text-green-700 dark:text-green-300" },
-  { value: "blue", dotClass: "bg-blue-500", badgeClass: "border-blue-300 text-blue-700 dark:text-blue-300" },
-  { value: "purple", dotClass: "bg-purple-500", badgeClass: "border-purple-300 text-purple-700 dark:text-purple-300" },
-  { value: "pink", dotClass: "bg-pink-500", badgeClass: "border-pink-300 text-pink-700 dark:text-pink-300" },
+  { value: "gray", dotClass: "bg-gray-400", badgeClass: "border-gray-300 text-gray-700 dark:text-gray-300", softClass: "bg-gray-500/10 text-gray-700 dark:bg-gray-400/15 dark:text-gray-200" },
+  { value: "red", dotClass: "bg-red-500", badgeClass: "border-red-300 text-red-700 dark:text-red-300", softClass: "bg-red-500/10 text-red-700 dark:bg-red-400/15 dark:text-red-200" },
+  { value: "orange", dotClass: "bg-orange-500", badgeClass: "border-orange-300 text-orange-700 dark:text-orange-300", softClass: "bg-orange-500/10 text-orange-700 dark:bg-orange-400/15 dark:text-orange-200" },
+  { value: "amber", dotClass: "bg-amber-500", badgeClass: "border-amber-300 text-amber-700 dark:text-amber-300", softClass: "bg-amber-500/10 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200" },
+  { value: "green", dotClass: "bg-green-500", badgeClass: "border-green-300 text-green-700 dark:text-green-300", softClass: "bg-green-500/10 text-green-700 dark:bg-green-400/15 dark:text-green-200" },
+  { value: "blue", dotClass: "bg-blue-500", badgeClass: "border-blue-300 text-blue-700 dark:text-blue-300", softClass: "bg-blue-500/10 text-blue-700 dark:bg-blue-400/15 dark:text-blue-200" },
+  { value: "purple", dotClass: "bg-purple-500", badgeClass: "border-purple-300 text-purple-700 dark:text-purple-300", softClass: "bg-purple-500/10 text-purple-700 dark:bg-purple-400/15 dark:text-purple-200" },
+  { value: "pink", dotClass: "bg-pink-500", badgeClass: "border-pink-300 text-pink-700 dark:text-pink-300", softClass: "bg-pink-500/10 text-pink-700 dark:bg-pink-400/15 dark:text-pink-200" },
 ] as const;
 
 export function tagColorClasses(color: string) {

@@ -79,7 +79,7 @@ export function IdeaCard({
   const cardTrigger = (
     <Card
       size="sm"
-      className="cursor-pointer border-border transition-all hover:border-primary/40 hover:shadow-md"
+      className="cursor-pointer transition-[background-color,box-shadow] hover:bg-accent/15 hover:shadow-sm hover:ring-primary/30"
     >
       <CardHeader>
         <CardTitle
@@ -91,18 +91,26 @@ export function IdeaCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-2.5">
         {version.content && (
-          <TiptapContentView content={version.content} clamp className="text-muted-foreground" />
+          <TiptapContentView
+            content={version.content}
+            clamp
+            className="text-xs leading-relaxed text-muted-foreground"
+          />
         )}
         {ideaTags.length > 0 && (
           <div className="flex min-w-0 flex-wrap gap-1" aria-label={`${ideaTags.length} etiket`}>
             {visibleTags.map((tag) => (
               <Badge
                 key={tag.id}
-                variant="outline"
+                variant="secondary"
                 title={tag.name}
-                className={`max-w-32 truncate ${tagColorClasses(tag.color).badgeClass}`}
+                className={`h-5 max-w-36 gap-1.5 border-0 px-2 text-[0.68rem] font-medium ${tagColorClasses(tag.color).softClass}`}
               >
-                {tag.name}
+                <span
+                  aria-hidden
+                  className={`size-1.5 shrink-0 rounded-full ${tagColorClasses(tag.color).dotClass}`}
+                />
+                <span className="truncate">{tag.name}</span>
               </Badge>
             ))}
             {hiddenTagCount > 0 && (
@@ -112,14 +120,14 @@ export function IdeaCard({
             )}
           </div>
         )}
-        <div className="flex items-center justify-between gap-2 border-t pt-2.5">
-          <div className="flex min-w-0 items-center gap-1.5 text-[0.7rem] text-muted-foreground">
+        <div className="flex items-center justify-between gap-2 border-t border-border/70 pt-2.5">
+          <div className="flex min-w-0 items-center gap-1.5 text-[0.66rem] text-muted-foreground/80">
             <span className="whitespace-nowrap">
-              Etki <strong className="font-semibold text-foreground">{IMPACT_EFFORT_LABELS[version.impact_score ?? "MEDIUM"]}</strong>
+              Etki <strong className="font-medium text-muted-foreground">{IMPACT_EFFORT_LABELS[version.impact_score ?? "MEDIUM"]}</strong>
             </span>
-            <span aria-hidden className="text-border">•</span>
+            <span aria-hidden className="text-border/80">•</span>
             <span className="whitespace-nowrap">
-              Efor <strong className="font-semibold text-foreground">{IMPACT_EFFORT_LABELS[version.effort_score ?? "MEDIUM"]}</strong>
+              Efor <strong className="font-medium text-muted-foreground">{IMPACT_EFFORT_LABELS[version.effort_score ?? "MEDIUM"]}</strong>
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
