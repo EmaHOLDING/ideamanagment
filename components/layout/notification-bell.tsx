@@ -78,9 +78,12 @@ export function NotificationBell({
     }
   );
 
-  const unreadCount = items.filter((n) => !n.is_read).length;
-  const unreadItems = items.filter((n) => !n.is_read);
-  const readItems = items.filter((n) => n.is_read);
+  const sortedItems = [...items].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+  const unreadCount = sortedItems.filter((n) => !n.is_read).length;
+  const unreadItems = sortedItems.filter((n) => !n.is_read);
+  const readItems = sortedItems.filter((n) => n.is_read);
 
   function renderNotificationItem(notification: Notification) {
     const Icon =
