@@ -225,7 +225,7 @@ export function Column({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-muted-foreground hover:bg-transparent hover:text-muted-foreground dark:hover:bg-transparent"
+                  className="w-full justify-start text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent/80 active:text-foreground"
                 >
                   <PlusIcon /> Fikir Ekle
                 </Button>
