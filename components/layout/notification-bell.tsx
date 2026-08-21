@@ -3,7 +3,16 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { BellIcon } from "lucide-react";
+import {
+  ArrowLeftRightIcon,
+  AtSignIcon,
+  BellIcon,
+  CheckCheckIcon,
+  LoaderCircleIcon,
+  MessageCircleIcon,
+  UserRoundPlusIcon,
+  UsersIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,6 +29,31 @@ import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
 
 type Notification = Awaited<ReturnType<typeof getNotifications>>["items"][number];
 
+const NOTIFICATION_ICONS = {
+  mention: AtSignIcon,
+  idea_assigned: UserRoundPlusIcon,
+  comment_added: MessageCircleIcon,
+  idea_moved: ArrowLeftRightIcon,
+  workspace_joined: UsersIcon,
+} as const;
+
+function formatNotificationTime(value: string) {
+  const date = new Date(value);
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+
+  if (elapsedSeconds < 60) return "Az önce";
+  if (elapsedSeconds < 3600) return `${Math.floor(elapsedSeconds / 60)} dk önce`;
+  if (elapsedSeconds < 86400) return `${Math.floor(elapsedSeconds / 3600)} sa önce`;
+  if (elapsedSeconds < 604800) return `${Math.floor(elapsedSeconds / 86400)} gün önce`;
+
+  return date.toLocaleString("tr-TR", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function NotificationBell({
   currentUserId,
   initialItems,
@@ -32,7 +66,7 @@ export function NotificationBell({
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   useRealtimeSubscription(
     `notifications-${currentUserId}`,
@@ -45,6 +79,60 @@ export function NotificationBell({
   );
 
   const unreadCount = items.filter((n) => !n.is_read).length;
+  const unreadItems = items.filter((n) => !n.is_read);
+  const readItems = items.filter((n) => n.is_read);
+
+  function renderNotificationItem(notification: Notification) {
+    const Icon =
+      NOTIFICATION_ICONS[notification.type as keyof typeof NOTIFICATION_ICONS] ?? BellIcon;
+
+    return (
+      <DropdownMenuItem
+        key={notification.id}
+        onClick={() => onItemClick(notification)}
+        className={
+          "group/notification relative items-start gap-3 rounded-lg border px-3 py-3 transition-colors " +
+          (notification.is_read
+            ? "border-transparent text-muted-foreground hover:border-border/60 hover:bg-muted/30"
+            : "border-primary/10 bg-gradient-to-r from-primary/[0.09] to-primary/[0.025] shadow-[0_1px_0_rgb(255_255_255/0.02)_inset] hover:border-primary/20 hover:from-primary/[0.12]")
+        }
+      >
+        {!notification.is_read && (
+          <span
+            aria-hidden
+            className="absolute top-3 bottom-3 left-0 w-0.5 rounded-full bg-primary"
+          />
+        )}
+        <span
+          className={
+            "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ring-1 transition-colors " +
+            (notification.is_read
+              ? "bg-muted/40 text-muted-foreground ring-border/60 group-hover/notification:text-foreground"
+              : "bg-primary/12 text-primary ring-primary/15")
+          }
+        >
+          <Icon className="size-3.5" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span
+            className={
+              "text-sm leading-snug break-words " +
+              (notification.is_read ? "text-muted-foreground" : "font-medium text-foreground")
+            }
+          >
+            {notification.message}
+          </span>
+          <time
+            dateTime={notification.created_at}
+            title={new Date(notification.created_at).toLocaleString("tr-TR")}
+            className="text-[0.68rem] text-muted-foreground/70"
+          >
+            {formatNotificationTime(notification.created_at)}
+          </time>
+        </div>
+      </DropdownMenuItem>
+    );
+  }
 
   function onItemClick(notification: Notification) {
     // Bazı bildirimler (örn. "workspace'e katıldı") belirli bir fikirle
@@ -109,58 +197,91 @@ export function NotificationBell({
           </Button>
         }
       />
-      <DropdownMenuContent align="end" className="w-[min(24rem,calc(100vw-2rem))] p-0">
+      <DropdownMenuContent
+        align="end"
+        className="w-[min(24rem,calc(100vw-1rem))] overflow-hidden bg-gradient-to-br from-popover via-popover to-primary/[0.025] p-0"
+      >
         <DropdownMenuGroup>
-          <div className="flex items-center justify-between px-3 py-2.5">
-            <DropdownMenuLabel className="p-0 text-sm">Bildirimler</DropdownMenuLabel>
+          <div className="relative flex items-center justify-between gap-3 px-3.5 py-3">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
+            />
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/15">
+                <BellIcon className="size-3.5" />
+              </span>
+              <div className="flex min-w-0 flex-col">
+                <DropdownMenuLabel className="p-0 text-sm font-semibold">
+                  Bildirimler
+                </DropdownMenuLabel>
+                <span className="text-[0.68rem] text-muted-foreground">
+                  {unreadCount > 0 ? `${unreadCount} okunmamış bildirim` : "Her şey güncel"}
+                </span>
+              </div>
+            </div>
             {unreadCount > 0 && (
-              <Button variant="ghost" size="xs" onClick={onMarkAllAsRead}>
-                Tümünü okundu yap
+              <Button
+                variant="ghost"
+                size="xs"
+                disabled={isPending}
+                onClick={onMarkAllAsRead}
+                className="shrink-0 text-muted-foreground hover:text-foreground"
+              >
+                {isPending ? <LoaderCircleIcon className="animate-spin" /> : <CheckCheckIcon />}
+                <span className="hidden sm:inline">Tümünü okundu yap</span>
+                <span className="sm:hidden">Okundu yap</span>
               </Button>
             )}
           </div>
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="my-0" />
         {items.length === 0 && (
-          <p className="px-3 py-6 text-center text-sm text-muted-foreground">Bildirim yok</p>
+          <div className="flex flex-col items-center gap-2 px-4 py-9 text-center">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-muted/40 text-muted-foreground ring-1 ring-border/60">
+              <BellIcon className="size-4" />
+            </span>
+            <p className="text-sm font-medium">Yeni bildirim yok</p>
+            <p className="max-w-52 text-xs leading-relaxed text-muted-foreground">
+              Fikirlerinizdeki önemli gelişmeler burada görünecek.
+            </p>
+          </div>
         )}
         {items.length > 0 && (
-          <div className="max-h-[60vh] overflow-y-auto sm:max-h-96">
-            {items.map((n) => (
-              <DropdownMenuItem
-                key={n.id}
-                onClick={() => onItemClick(n)}
-                className="items-start gap-2.5 rounded-none border-b border-border/60 px-3 py-3 last:border-b-0"
-              >
-                <span
-                  className={
-                    "mt-1.5 size-2 shrink-0 rounded-full " +
-                    (n.is_read ? "bg-transparent" : "bg-primary")
-                  }
-                  aria-hidden="true"
-                />
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span
-                    className={
-                      "text-sm leading-snug break-words " +
-                      (n.is_read ? "text-muted-foreground" : "font-medium text-foreground")
-                    }
-                  >
-                    {n.message}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(n.created_at).toLocaleString("tr-TR")}
-                  </span>
-                </div>
-              </DropdownMenuItem>
-            ))}
+          <div className="max-h-[60vh] space-y-4 overflow-y-auto p-2 sm:max-h-96">
+            {unreadItems.length > 0 && (
+              <section aria-labelledby="new-notifications-title">
+                <p
+                  id="new-notifications-title"
+                  className="px-1.5 pb-1.5 text-[0.62rem] font-semibold tracking-[0.08em] text-primary uppercase"
+                >
+                  Yeni
+                </p>
+                <div className="space-y-1">{unreadItems.map(renderNotificationItem)}</div>
+              </section>
+            )}
+            {readItems.length > 0 && (
+              <section aria-labelledby="earlier-notifications-title">
+                <p
+                  id="earlier-notifications-title"
+                  className="px-1.5 pb-1.5 text-[0.62rem] font-semibold tracking-[0.08em] text-muted-foreground/70 uppercase"
+                >
+                  Daha önce
+                </p>
+                <div className="space-y-1">{readItems.map(renderNotificationItem)}</div>
+              </section>
+            )}
           </div>
         )}
         {nextCursor && (
           <>
             <DropdownMenuSeparator className="my-0" />
-            <DropdownMenuItem onClick={onLoadMore} className="justify-center rounded-none px-3 py-2.5 text-sm">
-              Daha fazla yükle
+            <DropdownMenuItem
+              onClick={onLoadMore}
+              className="justify-center rounded-none px-3 py-2.5 text-xs font-medium text-muted-foreground"
+            >
+              {isPending && <LoaderCircleIcon className="animate-spin" />}
+              Daha fazla bildirim yükle
             </DropdownMenuItem>
           </>
         )}
