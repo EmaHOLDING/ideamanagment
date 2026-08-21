@@ -79,11 +79,15 @@ export function IdeaCard({
   const cardTrigger = (
     <Card
       size="sm"
-      className="cursor-pointer transition-[background-color,box-shadow] hover:bg-accent/15 hover:shadow-sm hover:ring-primary/30"
+      className="relative isolate cursor-pointer bg-gradient-to-br from-card via-card to-primary/[0.035] shadow-[0_1px_0_rgb(255_255_255/0.025)_inset] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/15 hover:ring-primary/35"
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-80"
+      />
       <CardHeader>
         <CardTitle
-          className="line-clamp-2 min-w-0 [overflow-wrap:anywhere] text-sm leading-snug"
+          className="line-clamp-2 min-w-0 [overflow-wrap:anywhere] text-sm leading-snug font-semibold tracking-[-0.01em]"
           title={version.title}
         >
           {version.title}
@@ -91,11 +95,13 @@ export function IdeaCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-2.5">
         {version.content && (
-          <TiptapContentView
-            content={version.content}
-            clamp
-            className="text-xs leading-relaxed text-muted-foreground"
-          />
+          <div className="rounded-lg border border-border/50 bg-background/35 px-2.5 py-2 shadow-[0_1px_0_rgb(255_255_255/0.02)_inset]">
+            <TiptapContentView
+              content={version.content}
+              clamp
+              className="text-xs leading-relaxed text-muted-foreground"
+            />
+          </div>
         )}
         {ideaTags.length > 0 && (
           <div className="flex min-w-0 flex-wrap gap-1" aria-label={`${ideaTags.length} etiket`}>
@@ -104,7 +110,7 @@ export function IdeaCard({
                 key={tag.id}
                 variant="secondary"
                 title={tag.name}
-                className={`h-5 max-w-36 gap-1.5 border-0 px-2 text-[0.68rem] font-medium ${tagColorClasses(tag.color).softClass}`}
+                className={`h-5 max-w-36 gap-1.5 rounded-md border-0 px-2 text-[0.66rem] font-medium shadow-[0_0_0_1px_rgb(255_255_255/0.035)_inset] ${tagColorClasses(tag.color).softClass}`}
               >
                 <span
                   aria-hidden
@@ -120,19 +126,29 @@ export function IdeaCard({
             )}
           </div>
         )}
-        <div className="flex items-center justify-between gap-2 border-t border-border/70 pt-2.5">
-          <div className="flex min-w-0 items-center gap-1.5 text-[0.66rem] text-muted-foreground/80">
-            <span className="whitespace-nowrap">
-              Etki <strong className="font-medium text-muted-foreground">{IMPACT_EFFORT_LABELS[version.impact_score ?? "MEDIUM"]}</strong>
+        <div className="-mx-3 -mb-3 mt-0.5 flex items-center justify-between gap-2 border-t border-border/60 bg-muted/20 px-3 py-2.5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex flex-col">
+              <span className="text-[0.58rem] leading-none font-medium tracking-[0.08em] text-muted-foreground/60 uppercase">
+                Etki
+              </span>
+              <strong className="mt-1 text-[0.7rem] leading-none font-semibold text-foreground/90">
+                {IMPACT_EFFORT_LABELS[version.impact_score ?? "MEDIUM"]}
+              </strong>
             </span>
-            <span aria-hidden className="text-border/80">•</span>
-            <span className="whitespace-nowrap">
-              Efor <strong className="font-medium text-muted-foreground">{IMPACT_EFFORT_LABELS[version.effort_score ?? "MEDIUM"]}</strong>
+            <span aria-hidden className="h-5 w-px bg-border/70" />
+            <span className="flex flex-col">
+              <span className="text-[0.58rem] leading-none font-medium tracking-[0.08em] text-muted-foreground/60 uppercase">
+                Efor
+              </span>
+              <strong className="mt-1 text-[0.7rem] leading-none font-semibold text-foreground/90">
+                {IMPACT_EFFORT_LABELS[version.effort_score ?? "MEDIUM"]}
+              </strong>
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             {assignee && (
-              <Avatar size="sm" title={assignee.fullName}>
+              <Avatar size="sm" className="ring-1 ring-border" title={assignee.fullName}>
                 <AvatarFallback>{getInitials(assignee.fullName)}</AvatarFallback>
               </Avatar>
             )}
@@ -143,7 +159,7 @@ export function IdeaCard({
               size="xs"
               disabled={isVotePending}
               onClick={onVoteClick}
-              className="shrink-0 gap-1 px-1.5"
+              className="h-7 shrink-0 gap-1 rounded-full px-2 shadow-sm"
               title={isVotePending ? "Oy güncelleniyor" : `${voteCount} / ${members.length} kişi oy verdi`}
               aria-label={isVotePending ? "Oy güncelleniyor" : `${voteCount} / ${members.length} kişi oy verdi`}
             >
@@ -157,7 +173,7 @@ export function IdeaCard({
           ) : (
             <Badge
               variant="outline"
-              className="shrink-0 gap-1"
+              className="h-7 shrink-0 gap-1 rounded-full bg-background/60 px-2"
               title={`${voteCount} / ${members.length} kişi oy verdi`}
             >
               <ArrowBigUpIcon className="size-3.5" />
