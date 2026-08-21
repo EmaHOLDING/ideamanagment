@@ -82,7 +82,10 @@ export function IdeaCard({
       className="cursor-pointer border-border transition-all hover:border-primary/40 hover:shadow-md"
     >
       <CardHeader>
-        <CardTitle className="line-clamp-2 min-w-0 text-sm leading-snug" title={version.title}>
+        <CardTitle
+          className="line-clamp-2 min-w-0 [overflow-wrap:anywhere] text-sm leading-snug"
+          title={version.title}
+        >
           {version.title}
         </CardTitle>
       </CardHeader>

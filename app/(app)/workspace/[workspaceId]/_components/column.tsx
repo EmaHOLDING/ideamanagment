@@ -159,7 +159,7 @@ export function Column({
               (snapshot.isDraggingOver ? " bg-accent/50" : "")
             }
           >
-            <div className="flex flex-col gap-2 px-3 pb-2">
+            <div className="flex flex-col gap-2 px-3 pt-1 pb-2">
               {versions.map((v, index) => (
                 <Draggable
                   key={v.idea_id}
