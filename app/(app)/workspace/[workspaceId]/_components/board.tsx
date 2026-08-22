@@ -3,11 +3,13 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { SearchIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, SearchIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { moveIdea } from "@/app/actions/ideaActions";
 import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -76,6 +78,7 @@ export function Board({
   const [searchQuery, setSearchQuery] = useState("");
   const [tagFilter, setTagFilter] = useState(ALL_TAGS);
   const [assigneeFilter, setAssigneeFilter] = useState(ALL_ASSIGNEES);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [hiddenIdeaIds, setHiddenIdeaIds] = useState<Set<string>>(new Set());
   const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
   const [pendingMoveIdeaId, setPendingMoveIdeaId] = useState<string | null>(null);
@@ -105,8 +108,12 @@ export function Board({
     });
   }
 
-  const hasActiveFilters =
-    searchQuery.trim() !== "" || tagFilter !== ALL_TAGS || assigneeFilter !== ALL_ASSIGNEES;
+  const activeFilterCount = [
+    searchQuery.trim() !== "",
+    tagFilter !== ALL_TAGS,
+    assigneeFilter !== ALL_ASSIGNEES,
+  ].filter(Boolean).length;
+  const hasActiveFilters = activeFilterCount > 0;
 
   const allIdeaIds = useMemo(
     () => Array.from(new Set(Object.values(versionsByColumn).flat().map((v) => v.idea_id))),
@@ -221,68 +228,99 @@ export function Board({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-2 border-b bg-muted/15 px-3 py-3 sm:flex sm:flex-wrap sm:items-center sm:px-4 sm:py-2.5">
-        <div className="relative col-span-2 w-full sm:w-64">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Fikir ara..."
-            className="h-8 pl-8"
+      <div className="border-b bg-muted/15">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-2 px-3 py-2.5 sm:hidden"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <SlidersHorizontalIcon className="size-4 text-muted-foreground" />
+            Arama ve Filtreleme
+            {hasActiveFilters && (
+              <Badge
+                variant="secondary"
+                className="h-4.5 min-w-4.5 justify-center px-1 text-[0.65rem] tabular-nums"
+              >
+                {activeFilterCount}
+              </Badge>
+            )}
+          </span>
+          <ChevronDownIcon
+            className={cn(
+              "size-4 shrink-0 text-muted-foreground transition-transform",
+              filtersOpen && "rotate-180"
+            )}
           />
+        </button>
+        <div
+          className={cn(
+            "gap-2 px-3 pb-3 sm:flex sm:flex-wrap sm:items-center sm:px-4 sm:py-2.5",
+            filtersOpen ? "grid grid-cols-2" : "hidden sm:flex"
+          )}
+        >
+          <div className="relative col-span-2 w-full sm:w-64">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Fikir ara..."
+              className="h-8 pl-8"
+            />
+          </div>
+          <Select value={tagFilter} onValueChange={(v) => v && setTagFilter(v)}>
+            <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Etikete göre filtrele">
+              <SelectValue>
+                {() => (tagFilter === ALL_TAGS ? "Tüm etiketler" : tags.find((t) => t.id === tagFilter)?.name)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_TAGS}>Tüm etiketler</SelectItem>
+              {tags.map((tag) => (
+                <SelectItem key={tag.id} value={tag.id}>
+                  {tag.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={assigneeFilter} onValueChange={(v) => v && setAssigneeFilter(v)}>
+            <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Atanan kişiye göre filtrele">
+              <SelectValue>
+                {() =>
+                  assigneeFilter === ALL_ASSIGNEES
+                    ? "Tüm atananlar"
+                    : assigneeFilter === UNASSIGNED
+                      ? "Atanmamış"
+                      : members.find((m) => m.user_id === assigneeFilter)?.fullName
+                }
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ASSIGNEES}>Tüm atananlar</SelectItem>
+              <SelectItem value={UNASSIGNED}>Atanmamış</SelectItem>
+              {members.map((m) => (
+                <SelectItem key={m.user_id} value={m.user_id}>
+                  {m.fullName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {hasActiveFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="col-span-2 justify-self-start sm:col-auto"
+              onClick={() => {
+                setSearchQuery("");
+                setTagFilter(ALL_TAGS);
+                setAssigneeFilter(ALL_ASSIGNEES);
+              }}
+            >
+              <XIcon /> Temizle
+            </Button>
+          )}
         </div>
-        <Select value={tagFilter} onValueChange={(v) => v && setTagFilter(v)}>
-          <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Etikete göre filtrele">
-            <SelectValue>
-              {() => (tagFilter === ALL_TAGS ? "Tüm etiketler" : tags.find((t) => t.id === tagFilter)?.name)}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_TAGS}>Tüm etiketler</SelectItem>
-            {tags.map((tag) => (
-              <SelectItem key={tag.id} value={tag.id}>
-                {tag.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={assigneeFilter} onValueChange={(v) => v && setAssigneeFilter(v)}>
-          <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Atanan kişiye göre filtrele">
-            <SelectValue>
-              {() =>
-                assigneeFilter === ALL_ASSIGNEES
-                  ? "Tüm atananlar"
-                  : assigneeFilter === UNASSIGNED
-                    ? "Atanmamış"
-                    : members.find((m) => m.user_id === assigneeFilter)?.fullName
-              }
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_ASSIGNEES}>Tüm atananlar</SelectItem>
-            <SelectItem value={UNASSIGNED}>Atanmamış</SelectItem>
-            {members.map((m) => (
-              <SelectItem key={m.user_id} value={m.user_id}>
-                {m.fullName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {hasActiveFilters && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="col-span-2 justify-self-start sm:col-auto"
-            onClick={() => {
-              setSearchQuery("");
-              setTagFilter(ALL_TAGS);
-              setAssigneeFilter(ALL_ASSIGNEES);
-            }}
-          >
-            <XIcon /> Temizle
-          </Button>
-        )}
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="scrollbar-subtle flex flex-1 items-stretch overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 sm:px-4">

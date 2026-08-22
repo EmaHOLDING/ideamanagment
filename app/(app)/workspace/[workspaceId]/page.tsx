@@ -102,7 +102,7 @@ export default async function WorkspaceBoardPage({
               size="sm"
               nativeButton={false}
               render={
-                <Link href={`/workspace/${workspaceId}/settings`}>
+                <Link href={`/workspace/${workspaceId}/settings`} aria-label="Ayarlar">
                   <SettingsIcon /> <span className="hidden sm:inline">Ayarlar</span>
                 </Link>
               }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
   ActivityIcon,
@@ -57,6 +58,8 @@ function formatActivityTime(value: string) {
 }
 
 export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<ActivityRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -100,13 +103,36 @@ export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
     });
   }
 
+  function onItemClick(item: ActivityRow) {
+    if (!item.idea_id) return;
+    setOpen(false);
+    router.push(`${pathname}?idea=${item.idea_id}`, { scroll: false });
+  }
+
   function renderActivityItem(item: ActivityRow) {
     const Icon = ACTIVITY_ICONS[item.type as keyof typeof ACTIVITY_ICONS] ?? ActivityIcon;
+    const clickable = item.idea_id !== null;
 
     return (
       <div
         key={item.id}
-        className="group/activity flex items-start gap-3 rounded-lg border border-transparent px-3 py-3 transition-colors hover:border-border/60 hover:bg-muted/30"
+        role={clickable ? "button" : undefined}
+        tabIndex={clickable ? 0 : undefined}
+        onClick={clickable ? () => onItemClick(item) : undefined}
+        onKeyDown={
+          clickable
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onItemClick(item);
+                }
+              }
+            : undefined
+        }
+        className={
+          "group/activity flex items-start gap-3 rounded-lg border border-transparent px-3 py-3 transition-colors hover:border-border/60 hover:bg-muted/30" +
+          (clickable ? " cursor-pointer" : "")
+        }
       >
         <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/40 text-muted-foreground ring-1 ring-border/60 transition-colors group-hover/activity:text-foreground">
           <Icon className="size-3.5" />
@@ -129,8 +155,8 @@ export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
-          <Button variant="outline" size="sm">
-            <ActivityIcon /> Aktivite
+          <Button variant="outline" size="sm" aria-label="Aktivite">
+            <ActivityIcon /> <span className="hidden sm:inline">Aktivite</span>
           </Button>
         }
       />
