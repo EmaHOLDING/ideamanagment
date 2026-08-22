@@ -98,7 +98,7 @@ export default async function WorkspaceOverviewPage({
   ];
 
   return (
-    <div className="min-h-[calc(100dvh-7rem)] bg-[radial-gradient(circle_at_top_left,color-mix(in_oklch,var(--primary)_10%,transparent),transparent_32rem)] sm:min-h-[calc(100dvh-3.5rem)]">
+    <div className="min-h-[calc(100dvh-3.5rem)] bg-[radial-gradient(circle_at_top_left,color-mix(in_oklch,var(--primary)_10%,transparent),transparent_32rem)]">
       <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
         <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex min-w-0 items-start gap-3">

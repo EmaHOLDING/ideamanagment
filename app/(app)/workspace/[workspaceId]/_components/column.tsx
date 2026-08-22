@@ -65,7 +65,7 @@ export function Column({
     <section
       id={`board-column-${column.id}`}
       aria-label={`${column.title} kolonu, ${ideaCount} fikir`}
-      className="flex h-full w-[min(20rem,calc(100vw-1.5rem))] shrink-0 snap-start flex-col border-r last:border-r-0 sm:w-72"
+      className="flex h-full w-[min(20rem,calc(100vw-1.5rem))] shrink-0 flex-col border-r last:border-r-0 sm:w-72"
     >
       <div className="flex shrink-0 items-center justify-between px-3 pt-3 pb-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -158,7 +158,7 @@ export function Column({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent/80 active:text-foreground"
+                  className="w-full justify-start text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground active:bg-transparent active:text-foreground dark:hover:bg-transparent"
                 >
                   <PlusIcon /> Fikir Ekle
                 </Button>

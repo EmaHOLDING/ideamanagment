@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/header";
 import { SideRail } from "@/components/layout/side-rail";
-import { MobileNav } from "@/components/layout/mobile-nav";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
 import { getNotifications } from "@/app/actions/notificationActions";
@@ -40,9 +39,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </Header>
       <div className="flex flex-1">
         <SideRail />
-        <main className="min-w-0 flex-1 pb-14 sm:pb-0">{children}</main>
+        <main className="min-w-0 flex-1">{children}</main>
       </div>
-      <MobileNav />
     </div>
   );
 }

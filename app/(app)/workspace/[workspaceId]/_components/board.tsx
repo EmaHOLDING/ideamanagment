@@ -284,32 +284,8 @@ export function Board({
           </Button>
         )}
       </div>
-      {initialColumns.length > 1 && (
-        <nav
-          aria-label="Pano kolonları"
-          className="scrollbar-subtle flex shrink-0 gap-1.5 overflow-x-auto border-b px-3 py-2 md:hidden"
-        >
-          {initialColumns.map((column, index) => (
-            <button
-              key={column.id}
-              type="button"
-              onClick={() =>
-                document
-                  .getElementById(`board-column-${column.id}`)
-                  ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })
-              }
-              className="flex h-8 max-w-48 shrink-0 items-center gap-1.5 rounded-full border bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-            >
-              <span className="text-[0.65rem] tabular-nums text-muted-foreground/70">
-                {index + 1}
-              </span>
-              <span className="truncate" title={column.title}>{column.title}</span>
-            </button>
-          ))}
-        </nav>
-      )}
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="scrollbar-subtle flex flex-1 snap-x snap-mandatory items-stretch overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 sm:px-4">
+        <div className="scrollbar-subtle flex flex-1 items-stretch overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 sm:px-4">
           {initialColumns.map((col) => (
             <Column
               key={col.id}
