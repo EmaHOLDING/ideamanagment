@@ -94,7 +94,7 @@ export async function reorderColumns(workspaceId: string, orderedIds: string[]) 
 
 const deleteColumnSchema = z.string().uuid();
 
-export async function deleteColumn(columnId: string) {
+export async function softDeleteColumn(columnId: string) {
   const id = deleteColumnSchema.parse(columnId);
   const { supabase, user } = await requireUser();
 
@@ -106,36 +106,22 @@ export async function deleteColumn(columnId: string) {
 
   if (columnError) throw columnError;
 
-  const { count, error: countError } = await supabase
-    .from("ideas")
-    .select("id", { count: "exact", head: true })
-    .eq("column_id", id);
+  const { error } = await supabase.rpc("soft_delete_column", { _column_id: id });
 
-  if (countError) throw countError;
-
-  if (count && count > 0) {
-    return {
-      success: false as const,
-      reason: "COLUMN_NOT_EMPTY" as const,
-      ideaCount: count,
-    };
-  }
-
-  const { error: deleteError, count: deletedCount } = await supabase
-    .from("kanban_columns")
-    .delete({ count: "exact" })
-    .eq("id", id);
-
-  if (deleteError) {
-    // 23503: foreign_key_violation — ON DELETE RESTRICT tarafından engellendi
-    // (Bölüm 6.I). Yukarıdaki count kontrolüne rağmen bir race condition
-    // olması ihtimaline karşı burada da yakalanır.
-    if (deleteError.code === "23503") {
-      return { success: false as const, reason: "COLUMN_NOT_EMPTY" as const, ideaCount: null };
+  if (error) {
+    const notEmptyMatch = error.message.match(/column_not_empty:(\d+)/);
+    if (notEmptyMatch) {
+      return {
+        success: false as const,
+        reason: "COLUMN_NOT_EMPTY" as const,
+        ideaCount: Number(notEmptyMatch[1]),
+      };
     }
-    throw deleteError;
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu işlemi yapma yetkiniz yok.");
+    }
+    throw error;
   }
-  if (!deletedCount) throw new Error("Bu işlemi yapma yetkiniz yok.");
 
   await logActivity(supabase, {
     workspaceId: column.workspace_id,
@@ -143,6 +129,22 @@ export async function deleteColumn(columnId: string) {
     type: "column_deleted",
     message: `${getDisplayName(user)}, '${column.title}' kolonunu sildi.`,
   });
+
+  return { success: true as const };
+}
+
+export async function undoDeleteColumn(columnId: string) {
+  const id = deleteColumnSchema.parse(columnId);
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase.rpc("undo_delete_column", { _column_id: id });
+
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu kolonu geri yükleme yetkiniz yok.");
+    }
+    throw error;
+  }
 
   return { success: true as const };
 }

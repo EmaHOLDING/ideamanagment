@@ -16,6 +16,7 @@ import {
 import {
   getWorkspaceMembers,
   removeMember,
+  undoRemoveMember,
   transferOwnership,
   updateMemberRole,
 } from "@/app/actions/workspaceActions";
@@ -48,12 +49,28 @@ export function MembersSettingsSection({
     () => refreshMembers()
   );
 
-  function onRemove(userId: string) {
+  function onRemove(member: Member) {
     startTransition(async () => {
       try {
-        await removeMember(workspaceId, userId);
-        toast.success("Üye çıkarıldı");
+        const result = await removeMember(workspaceId, member.user_id);
         refreshMembers();
+
+        function onUndo() {
+          undoRemoveMember(workspaceId, member.user_id, result.role)
+            .then(() => {
+              toast.success("Üye geri eklendi");
+              refreshMembers();
+            })
+            .catch((err) => {
+              toast.error(err instanceof Error ? err.message : "Üye geri eklenemedi");
+            });
+        }
+
+        toast(`${member.fullName} workspace'ten çıkarıldı.`, {
+          position: "bottom-center",
+          duration: 30000,
+          action: { label: "Geri Al", onClick: onUndo },
+        });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Üye çıkarılamadı");
       }
@@ -144,7 +161,7 @@ export function MembersSettingsSection({
                   variant="ghost"
                   size="icon-xs"
                   disabled={isPending}
-                  onClick={() => onRemove(m.user_id)}
+                  onClick={() => onRemove(m)}
                   aria-label="Üyeyi çıkar"
                 >
                   <Trash2Icon />

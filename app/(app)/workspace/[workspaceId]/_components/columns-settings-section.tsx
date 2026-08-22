@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { STATUS_DOT_CLASS } from "@/lib/status";
-import { reorderColumns, updateColumn, deleteColumn } from "@/app/actions/columnActions";
+import { reorderColumns, updateColumn, softDeleteColumn, undoDeleteColumn } from "@/app/actions/columnActions";
 import { SaveAsTemplateDialog } from "./save-as-template-dialog";
 import type { Database } from "@/lib/types/database.types";
 
@@ -93,24 +93,49 @@ export function ColumnsSettingsSection({
   function onConfirmDelete() {
     if (!deleteTargetId) return;
     const targetId = deleteTargetId;
+    setDeleteTargetId(null);
+
     startDeleteTransition(async () => {
+      // Önce boş mu diye gerçek silme denenir — dolu kolonda "Geri Al"
+      // toast'ı göstermenin bir anlamı yok, çünkü hiçbir şey silinmedi.
+      let result;
       try {
-        const result = await deleteColumn(targetId);
-        if (!result.success) {
-          toast.error(
-            `Bu kolonda ${result.ideaCount} fikir var. Kolonu silmeden önce fikirleri başka bir kolona taşıyın veya silin.`
-          );
-          setDeleteTargetId(null);
-          return;
-        }
-        setColumns((prev) => prev.filter((c) => c.id !== targetId));
-        setDeleteTargetId(null);
-        toast.success("Kolon silindi");
-        router.refresh();
+        result = await softDeleteColumn(targetId);
       } catch (err) {
-        setDeleteTargetId(null);
         toast.error(err instanceof Error ? err.message : "Kolon silinemedi");
+        return;
       }
+      if (!result.success) {
+        toast.error(
+          `Bu kolonda ${result.ideaCount} fikir var. Kolonu silmeden önce fikirleri başka bir kolona taşıyın veya silin.`
+        );
+        return;
+      }
+
+      const index = columns.findIndex((c) => c.id === targetId);
+      const removed = columns[index];
+      setColumns((prev) => prev.filter((c) => c.id !== targetId));
+      router.refresh();
+
+      function onUndo() {
+        setColumns((prev) => {
+          const next = prev.slice();
+          next.splice(index, 0, removed);
+          return next;
+        });
+        undoDeleteColumn(targetId)
+          .then(() => router.refresh())
+          .catch((err) => {
+            setColumns((prev) => prev.filter((c) => c.id !== targetId));
+            toast.error(err instanceof Error ? err.message : "Kolon geri yüklenemedi");
+          });
+      }
+
+      toast("Kolon silindi.", {
+        position: "bottom-center",
+        duration: 30000,
+        action: { label: "Geri Al", onClick: onUndo },
+      });
     });
   }
 
@@ -225,7 +250,7 @@ export function ColumnsSettingsSection({
             <AlertDialogTitle>Kolonu Sil</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTargetColumn
-                ? `"${deleteTargetColumn.title}" kolonunu silmek istediğinize emin misiniz? Kolonda fikir varsa silme işlemi engellenir.`
+                ? `"${deleteTargetColumn.title}" kolonunu silmek istediğinize emin misiniz? Kolonda fikir varsa silme işlemi engellenir. Silme sonrası kısa bir süre geri alabilirsiniz.`
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>

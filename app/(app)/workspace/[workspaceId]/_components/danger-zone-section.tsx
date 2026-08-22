@@ -16,13 +16,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deleteWorkspaceAction } from "@/app/actions/workspaceActions";
+import { softDeleteWorkspaceAction, undoDeleteWorkspaceAction } from "@/app/actions/workspaceActions";
 
 export function DangerZoneSection({
   workspaceId,
+  workspaceTitle,
   isOwner,
 }: {
   workspaceId: string;
+  workspaceTitle: string;
   isOwner: boolean;
 }) {
   const router = useRouter();
@@ -41,12 +43,30 @@ export function DangerZoneSection({
   function onDeleteWorkspace() {
     startTransition(async () => {
       try {
-        await deleteWorkspaceAction(workspaceId);
-        toast.success("Workspace silindi");
-        router.push("/workspaces");
+        await softDeleteWorkspaceAction(workspaceId);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Workspace silinemedi");
+        return;
       }
+
+      router.push("/workspaces");
+
+      function onUndo() {
+        undoDeleteWorkspaceAction(workspaceId)
+          .then(() => {
+            toast.success("Workspace geri yüklendi");
+            router.push(`/workspace/${workspaceId}`);
+          })
+          .catch((err) => {
+            toast.error(err instanceof Error ? err.message : "Workspace geri yüklenemedi");
+          });
+      }
+
+      toast(`'${workspaceTitle}' workspace'i silindi.`, {
+        position: "bottom-center",
+        duration: 30000,
+        action: { label: "Geri Al", onClick: onUndo },
+      });
     });
   }
 
@@ -55,8 +75,8 @@ export function DangerZoneSection({
       <div>
         <h2 className="text-sm font-semibold text-destructive">Tehlikeli Alan</h2>
         <p className="text-sm text-muted-foreground">
-          Bu işlem geri alınamaz. Workspace&apos;e ait tüm kolonlar, fikirler, yorumlar ve
-          bildirimler kalıcı olarak silinir.
+          Workspace&apos;e ait tüm kolonlar, fikirler, yorumlar ve bildirimler erişilemez hale
+          gelir. Silme sonrası kısa bir süre geri alabilirsiniz.
         </p>
       </div>
       <AlertDialog>
@@ -71,14 +91,14 @@ export function DangerZoneSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Workspace&apos;i Sil</AlertDialogTitle>
             <AlertDialogDescription>
-              Bu işlem geri alınamaz. Workspace&apos;e ait tüm kolonlar, fikirler, yorumlar ve
-              bildirimler kalıcı olarak silinir.
+              Workspace&apos;e ait tüm kolonlar, fikirler, yorumlar ve bildirimler erişilemez
+              hale gelir. Silme sonrası kısa bir süre geri alabilirsiniz.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Vazgeç</AlertDialogCancel>
             <AlertDialogAction disabled={isPending} onClick={onDeleteWorkspace}>
-              Kalıcı Olarak Sil
+              Sil
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

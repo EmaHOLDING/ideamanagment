@@ -86,7 +86,7 @@ export async function updateTag(tagId: string, name: string, color: string) {
 
 const tagIdSchema = z.string().uuid();
 
-export async function deleteTag(tagId: string) {
+export async function softDeleteTag(tagId: string) {
   const id = tagIdSchema.parse(tagId);
   const { supabase, user } = await requireUser();
 
@@ -98,10 +98,14 @@ export async function deleteTag(tagId: string) {
 
   if (tagError) throw tagError;
 
-  const { error, count } = await supabase.from("tags").delete({ count: "exact" }).eq("id", id);
+  const { error } = await supabase.rpc("soft_delete_tag", { _tag_id: id });
 
-  if (error) throw error;
-  if (!count) throw new Error("Bu işlemi yapma yetkiniz yok.");
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu işlemi yapma yetkiniz yok.");
+    }
+    throw error;
+  }
 
   await logActivity(supabase, {
     workspaceId: tag.workspace_id,
@@ -109,6 +113,22 @@ export async function deleteTag(tagId: string) {
     type: "tag_deleted",
     message: `${getDisplayName(user)}, '${tag.name}' etiketini sildi.`,
   });
+
+  return { success: true as const };
+}
+
+export async function undoDeleteTag(tagId: string) {
+  const id = tagIdSchema.parse(tagId);
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase.rpc("undo_delete_tag", { _tag_id: id });
+
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu etiketi geri yükleme yetkiniz yok.");
+    }
+    throw error;
+  }
 
   return { success: true as const };
 }

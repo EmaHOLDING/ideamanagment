@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PlusIcon, Trash2Icon } from "lucide-react";
@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { createTag, deleteTag, updateTag } from "@/app/actions/tagActions";
+import { createTag, softDeleteTag, undoDeleteTag, updateTag } from "@/app/actions/tagActions";
 import { TAG_COLORS } from "@/lib/status";
 import type { Database } from "@/lib/types/database.types";
 
@@ -47,12 +47,19 @@ function ColorSwatches({
   );
 }
 
-function TagRow({ tag }: { tag: Tag }) {
+function TagRow({
+  tag,
+  isDeleting,
+  onDelete,
+}: {
+  tag: Tag;
+  isDeleting: boolean;
+  onDelete: (tag: Tag) => void;
+}) {
   const router = useRouter();
   const [name, setName] = useState(tag.name);
   const [color, setColor] = useState(tag.color);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, startDeleteTransition] = useTransition();
 
   const isDirty = name.trim().length > 0 && (name.trim() !== tag.name || color !== tag.color);
 
@@ -71,18 +78,6 @@ function TagRow({ tag }: { tag: Tag }) {
         toast.error(err instanceof Error ? err.message : "Etiket güncellenemedi");
       })
       .finally(() => setIsSaving(false));
-  }
-
-  function onDelete() {
-    startDeleteTransition(async () => {
-      try {
-        await deleteTag(tag.id);
-        toast.success("Etiket silindi");
-        router.refresh();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Etiket silinemedi");
-      }
-    });
   }
 
   return (
@@ -125,12 +120,12 @@ function TagRow({ tag }: { tag: Tag }) {
             <AlertDialogTitle>Etiketi Sil</AlertDialogTitle>
             <AlertDialogDescription>
               &apos;{tag.name}&apos; etiketi silinsin mi? Bu etikete sahip fikirlerden de
-              kaldırılır.
+              kaldırılır. Silme sonrası kısa bir süre geri alabilirsiniz.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Vazgeç</AlertDialogCancel>
-            <AlertDialogAction disabled={isDeleting} onClick={onDelete}>
+            <AlertDialogAction disabled={isDeleting} onClick={() => onDelete(tag)}>
               Sil
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -152,6 +147,7 @@ export function TagsSettingsSection({
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState<string>(TAG_COLORS[0].value);
   const [isCreating, setIsCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function onCreate() {
     const trimmed = newName.trim();
@@ -170,6 +166,40 @@ export function TagsSettingsSection({
       .finally(() => setIsCreating(false));
   }
 
+  function onDeleteTag(tag: Tag) {
+    setDeletingId(tag.id);
+    softDeleteTag(tag.id)
+      .then(() => {
+        const index = tags.findIndex((t) => t.id === tag.id);
+        setTags((prev) => prev.filter((t) => t.id !== tag.id));
+        router.refresh();
+
+        function onUndo() {
+          setTags((prev) => {
+            const next = prev.slice();
+            next.splice(index, 0, tag);
+            return next;
+          });
+          undoDeleteTag(tag.id)
+            .then(() => router.refresh())
+            .catch((err) => {
+              setTags((prev) => prev.filter((t) => t.id !== tag.id));
+              toast.error(err instanceof Error ? err.message : "Etiket geri yüklenemedi");
+            });
+        }
+
+        toast("Etiket silindi.", {
+          position: "bottom-center",
+          duration: 30000,
+          action: { label: "Geri Al", onClick: onUndo },
+        });
+      })
+      .catch((err) => {
+        toast.error(err instanceof Error ? err.message : "Etiket silinemedi");
+      })
+      .finally(() => setDeletingId(null));
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-xl border bg-card p-5">
       <div>
@@ -182,7 +212,12 @@ export function TagsSettingsSection({
 
       <div className="flex flex-col gap-1.5">
         {tags.map((tag) => (
-          <TagRow key={tag.id} tag={tag} />
+          <TagRow
+            key={tag.id}
+            tag={tag}
+            isDeleting={deletingId === tag.id}
+            onDelete={onDeleteTag}
+          />
         ))}
         {tags.length === 0 && (
           <p className="text-sm text-muted-foreground">Henüz etiket yok.</p>

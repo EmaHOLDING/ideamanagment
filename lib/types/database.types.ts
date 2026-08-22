@@ -385,6 +385,8 @@ export type Database = {
       kanban_columns: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           order: number
           status_type: Database["public"]["Enums"]["status_type"]
@@ -393,6 +395,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           order?: number
           status_type?: Database["public"]["Enums"]["status_type"]
@@ -401,6 +405,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           order?: number
           status_type?: Database["public"]["Enums"]["status_type"]
@@ -511,6 +517,8 @@ export type Database = {
         Row: {
           color: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           name: string
           workspace_id: string
@@ -518,6 +526,8 @@ export type Database = {
         Insert: {
           color?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           name: string
           workspace_id: string
@@ -525,6 +535,8 @@ export type Database = {
         Update: {
           color?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           name?: string
           workspace_id?: string
@@ -593,6 +605,8 @@ export type Database = {
         Row: {
           created_at: string
           default_invite_role: Database["public"]["Enums"]["workspace_role"]
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           id: string
           invite_code: string
@@ -601,6 +615,8 @@ export type Database = {
         Insert: {
           created_at?: string
           default_invite_role?: Database["public"]["Enums"]["workspace_role"]
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           id?: string
           invite_code?: string
@@ -609,6 +625,8 @@ export type Database = {
         Update: {
           created_at?: string
           default_invite_role?: Database["public"]["Enums"]["workspace_role"]
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           id?: string
           invite_code?: string
@@ -700,6 +718,8 @@ export type Database = {
         Returns: {
           created_at: string
           default_invite_role: Database["public"]["Enums"]["workspace_role"]
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           id: string
           invite_code: string
@@ -756,6 +776,8 @@ export type Database = {
         Returns: {
           created_at: string
           default_invite_role: Database["public"]["Enums"]["workspace_role"]
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           id: string
           invite_code: string
@@ -815,6 +837,25 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      soft_delete_column: {
+        Args: { _column_id: string }
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          order: number
+          status_type: Database["public"]["Enums"]["status_type"]
+          title: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "kanban_columns"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       soft_delete_comment: {
         Args: { _comment_id: string }
         Returns: {
@@ -857,6 +898,43 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      soft_delete_tag: {
+        Args: { _tag_id: string }
+        Returns: {
+          color: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          name: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tags"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      soft_delete_workspace: {
+        Args: { _workspace_id: string }
+        Returns: {
+          created_at: string
+          default_invite_role: Database["public"]["Enums"]["workspace_role"]
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          id: string
+          invite_code: string
+          title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspaces"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       transfer_workspace_ownership: {
         Args: { _new_owner_user_id: string; _workspace_id: string }
         Returns: undefined
@@ -878,6 +956,25 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "attachments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      undo_delete_column: {
+        Args: { _column_id: string }
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          order: number
+          status_type: Database["public"]["Enums"]["status_type"]
+          title: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "kanban_columns"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -920,6 +1017,64 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      undo_delete_tag: {
+        Args: { _tag_id: string }
+        Returns: {
+          color: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          name: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tags"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      undo_delete_workspace: {
+        Args: { _workspace_id: string }
+        Returns: {
+          created_at: string
+          default_invite_role: Database["public"]["Enums"]["workspace_role"]
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          id: string
+          invite_code: string
+          title: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspaces"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      undo_remove_member: {
+        Args: {
+          _role: Database["public"]["Enums"]["workspace_role"]
+          _user_id: string
+          _workspace_id: string
+        }
+        Returns: {
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["workspace_role"]
+          status: Database["public"]["Enums"]["workspace_member_status"]
+          user_id: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspace_members"
           isOneToOne: true
           isSetofReturn: false
         }

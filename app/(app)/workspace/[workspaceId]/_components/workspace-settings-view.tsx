@@ -143,7 +143,9 @@ export function WorkspaceSettingsView({
               isOwner={isOwner}
             />
           )}
-          {section === "danger" && <DangerZoneSection workspaceId={workspaceId} isOwner={isOwner} />}
+          {section === "danger" && (
+            <DangerZoneSection workspaceId={workspaceId} workspaceTitle={title} isOwner={isOwner} />
+          )}
         </div>
       </div>
     </div>

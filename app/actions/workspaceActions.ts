@@ -169,10 +169,43 @@ export async function removeMember(workspaceId: string, userId: string) {
   if (error) throw error;
   if (!count) throw new Error("Bu işlemi yapma yetkiniz yok.");
 
-  return { success: true };
+  // "Geri Al" toast'ının undoRemoveMember çağırabilmesi için, çıkarılan
+  // üyenin rolü client'a geri döndürülüyor (workspace_members zaten
+  // silindiği için buradan sonra tekrar okunamaz).
+  return { success: true, role: target.role as "MEMBER" | "ADMIN" | "VIEWER" };
 }
 
 const assignableRoleSchema = z.enum(["MEMBER", "ADMIN", "VIEWER"]);
+
+const undoRemoveMemberSchema = z.object({
+  workspaceId: z.string().uuid(),
+  userId: z.string().uuid(),
+  role: assignableRoleSchema,
+});
+
+export async function undoRemoveMember(
+  workspaceId: string,
+  userId: string,
+  role: "MEMBER" | "ADMIN" | "VIEWER"
+) {
+  const input = undoRemoveMemberSchema.parse({ workspaceId, userId, role });
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase.rpc("undo_remove_member", {
+    _workspace_id: input.workspaceId,
+    _user_id: input.userId,
+    _role: input.role,
+  });
+
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu üyeyi geri ekleme yetkiniz yok.");
+    }
+    throw error;
+  }
+
+  return { success: true };
+}
 
 const updateMemberRoleSchema = z.object({
   workspaceId: z.string().uuid(),
@@ -488,20 +521,38 @@ export async function sendWorkspaceInviteEmail(workspaceId: string, email: strin
   return { success: true };
 }
 
-export async function deleteWorkspaceAction(workspaceId: string) {
+export async function softDeleteWorkspaceAction(workspaceId: string) {
   const id = workspaceIdSchema.parse(workspaceId);
   const { supabase } = await requireUser();
 
-  // RLS (owner-only) engellerse Postgres/PostgREST hata değil 0 satır
-  // döner — count kontrolü olmadan bu, kalıcı silme gerçekleşmediği
-  // hâlde "başarılı" olarak raporlanırdı.
-  const { error, count } = await supabase
-    .from("workspaces")
-    .delete({ count: "exact" })
-    .eq("id", id);
+  // Plain UPDATE ile deleted_at doldurmak, satırı kendi SELECT
+  // politikasınca (deleted_at IS NULL) görünmez kıldığı için Postgres
+  // tarafından reddedilir — soft-delete/undo bu yüzden SECURITY DEFINER
+  // RPC üzerinden yapılıyor (bkz. 20260821090000 migration'ındaki not).
+  const { error } = await supabase.rpc("soft_delete_workspace", { _workspace_id: id });
 
-  if (error) throw error;
-  if (!count) throw new Error("Bu işlemi yapma yetkiniz yok.");
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu işlemi yapma yetkiniz yok.");
+    }
+    throw error;
+  }
+
+  return { success: true };
+}
+
+export async function undoDeleteWorkspaceAction(workspaceId: string) {
+  const id = workspaceIdSchema.parse(workspaceId);
+  const { supabase } = await requireUser();
+
+  const { error } = await supabase.rpc("undo_delete_workspace", { _workspace_id: id });
+
+  if (error) {
+    if (error.message.includes("permission_denied")) {
+      throw new Error("Bu workspace'i geri yükleme yetkiniz yok.");
+    }
+    throw error;
+  }
 
   return { success: true };
 }
