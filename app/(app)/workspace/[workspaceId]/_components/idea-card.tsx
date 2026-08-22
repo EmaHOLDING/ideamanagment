@@ -88,31 +88,33 @@ export function IdeaCard({
         aria-hidden
         className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-80"
       />
-      {activePresence && (
-        <div
-          title={
-            activePresence.action === "editing"
-              ? `${activePresence.fullName} bu fikri düzenliyor`
-              : `${activePresence.fullName} bu fikri taşıyor`
-          }
-          className="absolute -top-2 right-3 z-10 flex items-center gap-1 rounded-full border border-primary/30 bg-popover px-2 py-0.5 text-[0.65rem] font-medium text-primary shadow-sm"
-        >
-          {activePresence.action === "editing" ? (
-            <PencilIcon className="size-3" />
-          ) : (
-            <MoveIcon className="size-3" />
-          )}
-          <span className="max-w-20 truncate">{activePresence.fullName}</span>
-          {presence.length > 1 && <span>+{presence.length - 1}</span>}
-        </div>
-      )}
       <CardHeader>
-        <CardTitle
-          className="line-clamp-2 min-w-0 [overflow-wrap:anywhere] text-sm leading-snug font-semibold tracking-[-0.01em]"
-          title={version.title}
-        >
-          {version.title}
-        </CardTitle>
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle
+            className="line-clamp-2 min-w-0 flex-1 [overflow-wrap:anywhere] text-sm leading-snug font-semibold tracking-[-0.01em]"
+            title={version.title}
+          >
+            {version.title}
+          </CardTitle>
+          {activePresence && (
+            <div
+              title={
+                activePresence.action === "editing"
+                  ? `${activePresence.fullName} bu fikri düzenliyor`
+                  : `${activePresence.fullName} bu fikri taşıyor`
+              }
+              className="flex shrink-0 items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[0.65rem] font-medium text-primary"
+            >
+              {activePresence.action === "editing" ? (
+                <PencilIcon className="size-3" />
+              ) : (
+                <MoveIcon className="size-3" />
+              )}
+              <span className="max-w-16 truncate">{activePresence.fullName}</span>
+              {presence.length > 1 && <span>+{presence.length - 1}</span>}
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2.5">
         {version.content && (
