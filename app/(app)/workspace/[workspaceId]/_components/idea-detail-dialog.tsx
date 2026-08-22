@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type ReactElement } from "react";
+import { useEffect, useState, useTransition, type ReactElement } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -51,6 +51,7 @@ import {
 } from "@/app/actions/ideaActions";
 import { setIdeaTags } from "@/app/actions/tagActions";
 import { IMPACT_EFFORT_LABELS } from "@/lib/status";
+import { useIdeaPresence, useIdeaPresenceActions } from "@/lib/hooks/use-idea-presence";
 import { IdeaDialog } from "./idea-dialog";
 import { VersionHistoryDialog } from "./version-history-dialog";
 import { CommentsPanel } from "./comments-panel";
@@ -120,6 +121,15 @@ export function IdeaDetailDialog({
   const [commentCount, setCommentCount] = useState(initialCommentCount);
   const [isAssignPending, startAssignTransition] = useTransition();
   const [, startTagTransition] = useTransition();
+  const presence = useIdeaPresence(ideaId);
+  const editors = presence.filter((p) => p.action === "editing");
+  const { setEditing } = useIdeaPresenceActions();
+
+  useEffect(() => {
+    setEditing(editOpen ? ideaId : null);
+    return () => setEditing(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editOpen, ideaId]);
 
   function onConfirmDelete() {
     setDeleteOpen(false);
@@ -242,6 +252,17 @@ export function IdeaDetailDialog({
                     </Badge>
                   ))
                 )}
+                {editors.length > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="gap-1 border-primary/30 bg-primary/10 text-primary"
+                    title={editors.map((e) => e.fullName).join(", ")}
+                  >
+                    <PencilIcon className="size-3" />
+                    {editors[0].fullName}
+                    {editors.length > 1 ? ` +${editors.length - 1}` : ""} düzenliyor
+                  </Badge>
+                )}
               </div>
             </div>
             <div className="flex max-w-full shrink-0 flex-wrap items-center gap-1 sm:gap-1.5">
@@ -257,7 +278,19 @@ export function IdeaDetailDialog({
                 }
               />
               {canEditIdea && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (editors.length > 0) {
+                      toast.warning(
+                        `${editors[0].fullName} şu an bu fikri düzenliyor. Aynı anda kaydederseniz birinizin değişikliği kaybolabilir.`
+                      );
+                    }
+                    setEditOpen(true);
+                  }}
+                >
                   <PencilIcon /> <span className="hidden sm:inline">Düzenle</span>
                 </Button>
               )}

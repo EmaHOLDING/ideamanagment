@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowBigUpIcon, LoaderCircleIcon } from "lucide-react";
+import { ArrowBigUpIcon, LoaderCircleIcon, MoveIcon, PencilIcon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { toggleIdeaVote } from "@/app/actions/ideaActions";
 import { IMPACT_EFFORT_LABELS, tagColorClasses } from "@/lib/status";
 import { IdeaDetailDialog } from "./idea-detail-dialog";
 import { getInitials } from "@/lib/user-display";
+import { useIdeaPresence } from "@/lib/hooks/use-idea-presence";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { Database } from "@/lib/types/database.types";
 
@@ -62,6 +63,8 @@ export function IdeaCard({
     ? Math.max(0, voteCount + (hasVoted ? -1 : 1))
     : voteCount;
   const displayedHasVoted = isVotePending ? !hasVoted : hasVoted;
+  const presence = useIdeaPresence(version.idea_id);
+  const activePresence = presence.find((p) => p.action === "editing") ?? presence[0];
 
   function onVoteClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -85,6 +88,24 @@ export function IdeaCard({
         aria-hidden
         className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-80"
       />
+      {activePresence && (
+        <div
+          title={
+            activePresence.action === "editing"
+              ? `${activePresence.fullName} bu fikri düzenliyor`
+              : `${activePresence.fullName} bu fikri taşıyor`
+          }
+          className="absolute -top-2 right-3 z-10 flex items-center gap-1 rounded-full border border-primary/30 bg-popover px-2 py-0.5 text-[0.65rem] font-medium text-primary shadow-sm"
+        >
+          {activePresence.action === "editing" ? (
+            <PencilIcon className="size-3" />
+          ) : (
+            <MoveIcon className="size-3" />
+          )}
+          <span className="max-w-20 truncate">{activePresence.fullName}</span>
+          {presence.length > 1 && <span>+{presence.length - 1}</span>}
+        </div>
+      )}
       <CardHeader>
         <CardTitle
           className="line-clamp-2 min-w-0 [overflow-wrap:anywhere] text-sm leading-snug font-semibold tracking-[-0.01em]"

@@ -4,9 +4,10 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ChevronDownIcon, SearchIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
-import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
+import { DragDropContext, type DragStart, type DropResult } from "@hello-pangea/dnd";
 import { moveIdea } from "@/app/actions/ideaActions";
 import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
+import { IdeaPresenceProvider, useIdeaPresenceActions } from "@/lib/hooks/use-idea-presence";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +34,39 @@ const ALL_TAGS = "all";
 const ALL_ASSIGNEES = "all";
 const UNASSIGNED = "unassigned";
 
-export function Board({
+export function Board(props: {
+  workspaceId: string;
+  initialColumns: ColumnRow[];
+  versionsByColumn: Record<string, IdeaVersion[]>;
+  assigneeByIdea: Record<string, string | null>;
+  tagsByIdea: Record<string, Tag[]>;
+  voteCountByIdea: Record<string, number>;
+  hasVotedByIdea: Record<string, boolean>;
+  createdByIdea: Record<string, string>;
+  commentCountByIdea: Record<string, number>;
+  currentUserId: string;
+  members: Member[];
+  tags: Tag[];
+  canManageContent: boolean;
+  isViewer: boolean;
+  canContribute: boolean;
+  autoOpenIdeaId: string | null;
+}) {
+  const currentUserName =
+    props.members.find((m) => m.user_id === props.currentUserId)?.fullName ?? "Bir kullanıcı";
+
+  return (
+    <IdeaPresenceProvider
+      workspaceId={props.workspaceId}
+      currentUserId={props.currentUserId}
+      currentUserName={currentUserName}
+    >
+      <BoardInner {...props} />
+    </IdeaPresenceProvider>
+  );
+}
+
+function BoardInner({
   workspaceId,
   initialColumns,
   versionsByColumn,
@@ -69,6 +102,7 @@ export function Board({
   autoOpenIdeaId: string | null;
 }) {
   const router = useRouter();
+  const { setDragging } = useIdeaPresenceActions();
   const [isMovePending, startMoveTransition] = useTransition();
   const [pendingCancellation, setPendingCancellation] = useState<{
     ideaId: string;
@@ -198,7 +232,12 @@ export function Board({
     });
   }
 
+  function onDragStart(start: DragStart) {
+    setDragging(start.draggableId);
+  }
+
   function onDragEnd(result: DropResult) {
+    setDragging(null);
     if (isViewer) return;
     if (!result.destination) return;
 
@@ -322,7 +361,7 @@ export function Board({
           )}
         </div>
       </div>
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="scrollbar-subtle flex flex-1 items-stretch overflow-x-auto overflow-y-hidden overscroll-x-contain px-3 sm:px-4">
           {initialColumns.map((col) => (
             <Column

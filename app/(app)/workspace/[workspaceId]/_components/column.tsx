@@ -8,6 +8,7 @@ import { STATUS_LABELS, STATUS_BADGE_VARIANT, STATUS_DOT_CLASS } from "@/lib/sta
 import { cn } from "@/lib/utils";
 import { IdeaCard } from "./idea-card";
 import { IdeaDialog } from "./idea-dialog";
+import { useIdeaPresenceMap } from "@/lib/hooks/use-idea-presence";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { Database } from "@/lib/types/database.types";
 
@@ -60,6 +61,7 @@ export function Column({
   showIdea: (ideaId: string) => void;
 }) {
   const ideaCount = versions.length;
+  const presenceMap = useIdeaPresenceMap();
 
   return (
     <section
@@ -89,12 +91,14 @@ export function Column({
             }
           >
             <div className="flex flex-col gap-2 px-3 pt-1 pb-2">
-              {versions.map((v, index) => (
+              {versions.map((v, index) => {
+                const lockedBy = (presenceMap[v.idea_id] ?? []).find((p) => p.action === "dragging");
+                return (
                 <Draggable
                   key={v.idea_id}
                   draggableId={v.idea_id}
                   index={index}
-                  isDragDisabled={isViewer}
+                  isDragDisabled={isViewer || Boolean(lockedBy)}
                 >
                   {(dragProvided, dragSnapshot) => (
                     <div
@@ -102,12 +106,14 @@ export function Column({
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
                       aria-busy={pendingMoveIdeaId === v.idea_id}
+                      title={lockedBy ? `${lockedBy.fullName} bu fikri taşıyor` : undefined}
                       className={cn(
                         "rounded-xl transition-[opacity,filter,box-shadow] duration-150",
                         dragSnapshot.isDragging &&
                           "z-20 rotate-[0.5deg] cursor-grabbing shadow-xl ring-2 ring-primary/30",
                         pendingMoveIdeaId === v.idea_id &&
-                          "pointer-events-none animate-pulse opacity-70"
+                          "pointer-events-none animate-pulse opacity-70",
+                        lockedBy && "cursor-not-allowed opacity-60 saturate-50"
                       )}
                     >
                       <IdeaCard
@@ -130,7 +136,8 @@ export function Column({
                     </div>
                   )}
                 </Draggable>
-              ))}
+                );
+              })}
               {provided.placeholder}
               {versions.length === 0 && !snapshot.isDraggingOver && (
                 <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border/60 bg-gradient-to-br from-muted/20 to-primary/[0.025] px-3 py-5 text-center">
