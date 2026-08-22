@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, useTransition, type DragEvent, type ReactElement } from "react";
+import { useId, useRef, useState, useTransition, type DragEvent, type ReactElement } from "react";
 import { toast } from "sonner";
-import { LoaderCircleIcon, UploadIcon, XIcon } from "lucide-react";
+import { LightbulbIcon, LoaderCircleIcon, UploadIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -48,6 +49,7 @@ type IdeaDialogProps =
     };
 
 export function IdeaDialog(props: IdeaDialogProps) {
+  const fieldId = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const controlledOpen = props.mode === "edit" ? props.open : undefined;
   const isControlled = controlledOpen !== undefined;
@@ -106,7 +108,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
   }
 
   function onOpenChange(next: boolean) {
-    if (next) resetForm();
+    if (next && !open) resetForm();
     if (props.mode === "edit") {
       props.onOpenChange?.(next);
     }
@@ -167,44 +169,88 @@ export function IdeaDialog(props: IdeaDialogProps) {
       {props.trigger && (
         <DialogTrigger render={props.trigger} nativeButton={props.mode === "create"} />
       )}
-      <DialogContent className="max-h-[90dvh] overflow-x-hidden overflow-y-auto sm:max-w-lg">
-        <form onSubmit={onSubmit} className="min-w-0 max-w-full overflow-hidden">
-          <DialogHeader>
-            <DialogTitle>{props.mode === "create" ? "Yeni Fikir" : "Fikri Düzenle"}</DialogTitle>
+      <DialogContent className="max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto bg-gradient-to-br from-popover via-popover to-primary/[0.025] sm:max-h-[calc(100dvh-1.5rem)] sm:max-w-lg">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-16 top-0 h-px bg-gradient-to-r from-transparent via-primary/75 to-transparent"
+        />
+        <form
+          onSubmit={onSubmit}
+          onPointerDown={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+          className="min-w-0 max-w-full overflow-hidden"
+        >
+          <DialogHeader className="pr-10">
+            <div className="flex items-start gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                <LightbulbIcon className="size-4" />
+              </span>
+              <div className="flex min-w-0 flex-col gap-1">
+                <DialogTitle>
+                  {props.mode === "create" ? "Yeni Fikir" : "Fikri Düzenle"}
+                </DialogTitle>
+                <DialogDescription>
+                  {props.mode === "create"
+                    ? "Fikrin özünü yazın; bağlam ve öncelik bilgileriyle güçlendirin."
+                    : "Fikrin güncel içeriğini ve değerlendirme bilgilerini düzenleyin."}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="flex min-w-0 max-w-full flex-col gap-4 py-4">
-            <div className="flex min-w-0 flex-col gap-2">
-              <Label htmlFor="idea-title">Başlık</Label>
+          <div className="flex min-w-0 max-w-full flex-col gap-2.5 py-3">
+            <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-2.5 shadow-[0_1px_0_rgb(255_255_255/0.02)_inset]">
+              <div className="flex min-w-0 flex-col gap-1.5">
+              <Label htmlFor={`${fieldId}-title`}>Başlık</Label>
               <Input
-                id="idea-title"
+                id={`${fieldId}-title`}
+                autoFocus
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={255}
               />
-            </div>
-            <div className="flex min-w-0 flex-col gap-2">
+              </div>
+              <div className="flex min-w-0 flex-col gap-1.5">
               <Label>İçerik</Label>
-              <TiptapEditor content={content} onChange={setContent} />
-            </div>
-            <div className="flex min-w-0 flex-col gap-2">
-              <Label htmlFor="idea-problem">Problem Tanımı</Label>
+              <TiptapEditor content={content} onChange={setContent} compact />
+              </div>
+            </section>
+            <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/60 bg-muted/15 p-2.5">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.06em] text-primary uppercase">
+                  Bağlam
+                </p>
+                <p className="mt-1 hidden text-xs text-muted-foreground sm:block">
+                  Problemi ve bu fikirden etkilenecek kitleyi netleştirin.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <Label htmlFor={`${fieldId}-problem`}>Problem Tanımı</Label>
               <Textarea
-                id="idea-problem"
+                id={`${fieldId}-problem`}
                 value={problemStatement}
                 onChange={(e) => setProblemStatement(e.target.value)}
+                className="min-h-14 resize-none"
               />
             </div>
-            <div className="flex min-w-0 flex-col gap-2">
-              <Label htmlFor="idea-audience">Hedef Kitle</Label>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <Label htmlFor={`${fieldId}-audience`}>Hedef Kitle</Label>
               <Textarea
-                id="idea-audience"
+                id={`${fieldId}-audience`}
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
+                className="min-h-14 resize-none"
               />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-2">
+              </div>
+            </section>
+            <section className="rounded-xl border border-border/60 bg-gradient-to-r from-muted/20 to-primary/[0.035] p-2.5">
+              <p className="mb-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                Değerlendirme
+              </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
                 <Label>Etki</Label>
                 <Select
                   value={impactScore}
@@ -222,7 +268,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 <Label>Efor</Label>
                 <Select
                   value={effortScore}
@@ -241,9 +287,10 @@ export function IdeaDialog(props: IdeaDialogProps) {
                 </Select>
               </div>
             </div>
+            </section>
 
             {props.mode === "create" && (
-              <div className="flex flex-col gap-2">
+              <section className="flex flex-col gap-1.5 rounded-xl border border-border/60 bg-muted/10 p-2.5">
                 <Label>Ekler ve Dosyalar</Label>
                 <div
                   onDragOver={(e) => {
@@ -254,8 +301,8 @@ export function IdeaDialog(props: IdeaDialogProps) {
                   onDrop={onDropFiles}
                   onClick={() => fileInputRef.current?.click()}
                   className={
-                    "flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground transition-colors" +
-                    (isDragOver ? " border-primary bg-primary/5" : " border-border hover:border-primary/40")
+                    "flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed p-3 text-center text-xs text-muted-foreground transition-colors" +
+                    (isDragOver ? " border-primary bg-primary/8" : " border-border/70 bg-background/25 hover:border-primary/40 hover:bg-primary/[0.025]")
                   }
                 >
                   <UploadIcon className="size-4" />
@@ -300,10 +347,10 @@ export function IdeaDialog(props: IdeaDialogProps) {
                     ))}
                   </div>
                 )}
-              </div>
+              </section>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="mx-0 mb-0 border-0 bg-transparent p-0 pt-1">
             <Button type="submit" disabled={isPending} aria-busy={isPending}>
               {isPending && <LoaderCircleIcon className="animate-spin" />}
               {submitStage === "uploading"

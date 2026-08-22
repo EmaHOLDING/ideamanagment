@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
+import { ArrowLeftIcon, ChartNoAxesCombinedIcon, SettingsIcon } from "lucide-react";
 import { getWorkspaceForUser, getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import { getIdeasForWorkspace } from "@/app/actions/ideaActions";
 import { getWorkspaceTags } from "@/app/actions/tagActions";
@@ -85,6 +85,16 @@ export default async function WorkspaceBoardPage({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={
+              <Link href={`/workspace/${workspaceId}/overview`}>
+                <ChartNoAxesCombinedIcon /> <span className="hidden sm:inline">Genel Bakış</span>
+              </Link>
+            }
+          />
           <ActivityPanel workspaceId={workspaceId} />
           {canManageContent && (
             <Button

@@ -69,11 +69,14 @@ export function PendingWorkspaceCard({
   if (hidden) return null;
 
   return (
-    <Card className="overflow-hidden py-0">
-      <div className={`h-1.5 w-full ${accentClassFor(id)}`} />
+    <Card className="relative isolate overflow-hidden bg-gradient-to-br from-card via-card to-primary/[0.035] py-0 shadow-[0_1px_0_rgb(255_255_255/0.025)_inset]">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
+      />
       <CardHeader className="pt-5">
         <CardTitle className="flex items-center gap-2.5">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+          <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 ${accentClassFor(id)}`}>
             {title.charAt(0).toUpperCase()}
           </span>
           <span className="truncate">{title}</span>

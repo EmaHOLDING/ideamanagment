@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { RefreshCwIcon, CopyIcon, MailIcon } from "lucide-react";
+import { RefreshCwIcon, CopyIcon, MailIcon, LinkIcon, LoaderCircleIcon, ShieldCheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,68 +87,105 @@ export function InviteSettingsSection({
   }
 
   return (
-    <div className="flex flex-col gap-5 rounded-xl border bg-card p-5">
-      <div>
-        <h2 className="text-sm font-semibold">Davet</h2>
-        <p className="text-sm text-muted-foreground">
+    <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+      <div className="border-b px-5 py-4 sm:px-6">
+        <h2 className="text-base font-semibold">Davet</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Yeni üyelerin bu workspace&apos;e nasıl katılacağını yönetin.
         </p>
       </div>
 
-      <form onSubmit={onSendInvite} className="flex flex-col gap-2">
-        <Label htmlFor="invite-email">E-posta ile Davet Et</Label>
-        <div className="flex flex-wrap gap-2">
-          <Input
-            id="invite-email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="ornek@sirket.com"
-            className="max-w-xs"
-          />
-          <Button type="submit" size="sm" disabled={isSendingInvite || !email.trim()}>
-            <MailIcon /> Davet Gönder
-          </Button>
-        </div>
-      </form>
-
-      <div className="flex flex-col gap-2">
-        <Label>Davet Kodu</Label>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-md border bg-muted/40 px-2.5 py-1.5 font-mono text-sm">{code}</span>
-          <Button type="button" variant="outline" size="sm" onClick={onCopyLink}>
-            <CopyIcon /> Linki Kopyala
-          </Button>
-          {isOwner && (
-            <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={onRegenerateCode}>
-              <RefreshCwIcon /> Kodu Yenile
+      <div className="divide-y">
+        <section className="grid gap-3 px-5 py-5 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-6 sm:px-6">
+          <div>
+            <Label htmlFor="invite-email">E-posta ile davet</Label>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Katılım bağlantısını doğrudan ekip arkadaşınıza gönderin.
+            </p>
+          </div>
+          <form onSubmit={onSendInvite} className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start">
+            <Input
+              id="invite-email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ornek@sirket.com"
+              className="min-w-0 flex-1"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              className="shrink-0 self-start"
+              disabled={isSendingInvite || !email.trim()}
+            >
+              {isSendingInvite ? <LoaderCircleIcon className="animate-spin" /> : <MailIcon />}
+              Davet Gönder
             </Button>
-          )}
-        </div>
-      </div>
+          </form>
+        </section>
 
-      {isOwner && (
-        <div className="flex flex-col gap-2">
-          <Label>Davetle Katılanların Varsayılan Rolü</Label>
-          <Select
-            value={defaultRole}
-            onValueChange={(v) => v && onDefaultRoleChange(v as AssignableRole)}
-            disabled={isPending}
-          >
-            <SelectTrigger size="sm" className="w-48">
-              <SelectValue>{() => WORKSPACE_ROLE_LABELS[defaultRole]}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {ASSIGNABLE_WORKSPACE_ROLES.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {WORKSPACE_ROLE_LABELS[role]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+        <section className="grid gap-3 px-5 py-5 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-6 sm:px-6">
+          <div>
+            <Label>Davet bağlantısı</Label>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Bağlantıya sahip kullanıcılar belirlenen rolle katılabilir.
+            </p>
+          </div>
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2 rounded-lg border bg-muted/25 p-2">
+              <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
+              <code className="min-w-0 flex-1 truncate font-mono text-sm" title={code}>{code}</code>
+              <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={onCopyLink}>
+                <CopyIcon /> <span className="hidden sm:inline">Kopyala</span>
+              </Button>
+            </div>
+            {isOwner && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-2 text-muted-foreground"
+                disabled={isPending}
+                onClick={onRegenerateCode}
+              >
+                {isPending ? <LoaderCircleIcon className="animate-spin" /> : <RefreshCwIcon />}
+                Davet kodunu yenile
+              </Button>
+            )}
+          </div>
+        </section>
+
+        {isOwner && (
+          <section className="grid gap-3 px-5 py-5 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-6 sm:px-6">
+            <div>
+              <Label>Varsayılan rol</Label>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Davet bağlantısıyla katılan yeni üyelerin ilk erişim düzeyi.
+              </p>
+            </div>
+            <div className="flex min-w-0 items-center gap-2">
+              <ShieldCheckIcon className="size-4 shrink-0 text-muted-foreground" />
+              <Select
+                value={defaultRole}
+                onValueChange={(v) => v && onDefaultRoleChange(v as AssignableRole)}
+                disabled={isPending}
+              >
+                <SelectTrigger size="sm" className="w-full max-w-56">
+                  <SelectValue>{() => WORKSPACE_ROLE_LABELS[defaultRole]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSIGNABLE_WORKSPACE_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {WORKSPACE_ROLE_LABELS[role]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

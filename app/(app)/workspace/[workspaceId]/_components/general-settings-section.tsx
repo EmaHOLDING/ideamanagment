@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CalendarDaysIcon, LoaderCircleIcon, SaveIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,75 +62,92 @@ export function GeneralSettingsSection({
   }
 
   return (
-    <div className="flex flex-col gap-5 rounded-xl border bg-card p-5">
-      <div>
-        <h2 className="text-sm font-semibold">Genel</h2>
-        <p className="text-sm text-muted-foreground">Workspace&apos;in temel bilgileri.</p>
+    <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+      <div className="border-b px-5 py-4 sm:px-6">
+        <h2 className="text-base font-semibold">Genel</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Workspace&apos;in ekip tarafından görünen temel bilgilerini yönetin.
+        </p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="workspace-name">Workspace Adı</Label>
-        {isOwner ? (
-          <div className="flex gap-2">
-            <Input
-              id="workspace-name"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="max-w-sm"
-            />
-            <Button
-              type="button"
-              size="sm"
-              disabled={isPending || !value.trim() || value.trim() === title}
-              onClick={onSave}
-            >
-              Kaydet
-            </Button>
+      <div className="divide-y">
+        <section className="grid gap-3 px-5 py-5 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-6 sm:px-6">
+          <div>
+            <Label htmlFor="workspace-name">Workspace Adı</Label>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Pano başlığında ve workspace listesinde görünür.
+            </p>
           </div>
-        ) : (
-          <p className="text-sm">{title}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="workspace-description">Açıklama</Label>
-          {isOwner && (
-            <span className="text-xs text-muted-foreground">
-              {descriptionValue.length}/{DESCRIPTION_MAX_LENGTH}
-            </span>
+          {isOwner ? (
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start">
+              <Input
+                id="workspace-name"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="min-w-0 flex-1"
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="shrink-0 self-start"
+                disabled={isPending || !value.trim() || value.trim() === title}
+                onClick={onSave}
+              >
+                {isPending ? <LoaderCircleIcon className="animate-spin" /> : <SaveIcon />}
+                Kaydet
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm">{title}</p>
           )}
-        </div>
-        {isOwner ? (
-          <div className="flex flex-col gap-2">
-            <Textarea
-              id="workspace-description"
-              value={descriptionValue}
-              onChange={(e) => setDescriptionValue(e.target.value.slice(0, DESCRIPTION_MAX_LENGTH))}
-              placeholder="Bu workspace ne için kullanılıyor?"
-              maxLength={DESCRIPTION_MAX_LENGTH}
-              className="max-w-sm resize-none"
-            />
-            <Button
-              type="button"
-              size="sm"
-              className="self-start"
-              disabled={
-                isDescriptionPending || descriptionValue.trim() === (description ?? "")
-              }
-              onClick={onSaveDescription}
-            >
-              Kaydet
-            </Button>
+        </section>
+
+        <section className="grid gap-3 px-5 py-5 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:gap-6 sm:px-6">
+          <div>
+            <Label htmlFor="workspace-description">Açıklama</Label>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Ekibin bu alanın amacını hızlıca anlamasına yardımcı olur.
+            </p>
           </div>
-        ) : (
-          <p className="text-sm">{description || "Açıklama eklenmemiş."}</p>
-        )}
+          {isOwner ? (
+            <div className="min-w-0">
+              <Textarea
+                id="workspace-description"
+                value={descriptionValue}
+                onChange={(e) => setDescriptionValue(e.target.value.slice(0, DESCRIPTION_MAX_LENGTH))}
+                placeholder="Bu workspace ne için kullanılıyor?"
+                maxLength={DESCRIPTION_MAX_LENGTH}
+                className="min-h-24 resize-none"
+              />
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {descriptionValue.length}/{DESCRIPTION_MAX_LENGTH}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={
+                    isDescriptionPending || descriptionValue.trim() === (description ?? "")
+                  }
+                  onClick={onSaveDescription}
+                >
+                  {isDescriptionPending ? <LoaderCircleIcon className="animate-spin" /> : <SaveIcon />}
+                  Kaydet
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm leading-relaxed">{description || "Açıklama eklenmemiş."}</p>
+          )}
+        </section>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <Label className="text-muted-foreground">Oluşturulma Tarihi</Label>
-        <p className="text-sm">{new Date(createdAt).toLocaleDateString("tr-TR", { dateStyle: "long" })}</p>
+      <div className="flex items-center gap-2 border-t bg-muted/20 px-5 py-3.5 text-xs text-muted-foreground sm:px-6">
+        <CalendarDaysIcon className="size-3.5" />
+        <span>Oluşturulma tarihi</span>
+        <span className="font-medium text-foreground/80">
+          {new Date(createdAt).toLocaleDateString("tr-TR", { dateStyle: "long" })}
+        </span>
       </div>
     </div>
   );

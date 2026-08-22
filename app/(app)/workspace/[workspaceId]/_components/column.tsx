@@ -88,7 +88,7 @@ export function Column({
               (snapshot.isDraggingOver ? " bg-accent/50" : "")
             }
           >
-            <div className="flex flex-col gap-2 px-3 pb-2">
+            <div className="flex flex-col gap-2 px-3 pt-1 pb-2">
               {versions.map((v, index) => (
                 <Draggable
                   key={v.idea_id}
@@ -133,10 +133,14 @@ export function Column({
               ))}
               {provided.placeholder}
               {versions.length === 0 && !snapshot.isDraggingOver && (
-                <p className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
-                  <InboxIcon className="size-3.5" />
-                  {emptyMessage}
-                </p>
+                <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border/60 bg-gradient-to-br from-muted/20 to-primary/[0.025] px-3 py-5 text-center">
+                  <span className="flex size-8 items-center justify-center rounded-lg bg-background/70 text-muted-foreground ring-1 ring-border/70">
+                    <InboxIcon className="size-3.5" />
+                  </span>
+                  <p className="max-w-44 text-xs leading-relaxed text-muted-foreground">
+                    {emptyMessage}
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -154,7 +158,7 @@ export function Column({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-muted-foreground hover:bg-transparent hover:text-muted-foreground dark:hover:bg-transparent"
+                  className="w-full justify-start text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent/80 active:text-foreground"
                 >
                   <PlusIcon /> Fikir Ekle
                 </Button>

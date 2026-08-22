@@ -46,8 +46,12 @@ export default async function WorkspacesPage() {
       )}
 
       {active.length === 0 && pendingWithCounts.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed bg-muted/20 px-5 py-16 text-center sm:py-20">
-          <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
+        <div className="relative isolate flex flex-col items-center gap-3 overflow-hidden rounded-2xl border bg-gradient-to-br from-card via-card to-primary/[0.045] px-5 py-16 text-center shadow-[0_1px_0_rgb(255_255_255/0.025)_inset] sm:py-20">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-1/3 top-0 h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent"
+          />
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/15">
             <FolderKanbanIcon className="size-6 text-primary" />
           </div>
           <h2 className="text-base font-medium">Henüz bir workspace&apos;iniz yok</h2>

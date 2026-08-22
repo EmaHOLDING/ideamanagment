@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
-import { GripVerticalIcon, Trash2Icon } from "lucide-react";
+import { GripVerticalIcon, LayoutGridIcon, LoaderCircleIcon, SaveIcon, Trash2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,22 +143,29 @@ export function ColumnsSettingsSection({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3 rounded-xl border bg-card p-5">
-        <div>
-          <h2 className="text-sm font-semibold">Kolonlar</h2>
-          <p className="text-sm text-muted-foreground">
+      <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+        <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <LayoutGridIcon className="size-4" />
+            </span>
+            <div>
+              <h2 className="font-semibold">Kolonlar</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
             Kolonları sürükleyerek sıralayın veya adlarını düzenleyin.
-          </p>
+              </p>
+            </div>
+          </div>
+          <span className="shrink-0 rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+            {columns.length} kolon
+          </span>
         </div>
 
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="settings-columns">
-            {(provided) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className="flex flex-col gap-1.5"
-              >
+        <div className="p-4 sm:p-5">
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="settings-columns">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2">
                 {columns.map((column, index) => {
                   const draft = titleDrafts[column.id] ?? column.title;
                   const isDirty = draft.trim().length > 0 && draft.trim() !== column.title;
@@ -169,13 +176,14 @@ export function ColumnsSettingsSection({
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
                           className={cn(
-                            "flex items-center gap-2 rounded-md border bg-background p-2",
-                            snapshot.isDragging && "shadow-md"
+                            "group flex flex-col gap-2 rounded-lg border bg-background p-2.5 transition-colors hover:border-border/80 hover:bg-accent/20 sm:flex-row sm:items-center",
+                            snapshot.isDragging && "shadow-lg ring-1 ring-primary/20"
                           )}
                         >
                           <span
                             {...dragProvided.dragHandleProps}
-                            className="flex size-6 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+                            className="flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent active:cursor-grabbing"
+                            aria-label={`${column.title} kolonunu sürükle`}
                           >
                             <GripVerticalIcon className="size-4" />
                           </span>
@@ -190,7 +198,7 @@ export function ColumnsSettingsSection({
                             onKeyDown={(e) => {
                               if (e.key === "Enter") onSaveTitle(column);
                             }}
-                            className="h-8 flex-1"
+                            className="h-9 min-w-0 flex-1"
                             maxLength={100}
                           />
                           <Button
@@ -200,6 +208,11 @@ export function ColumnsSettingsSection({
                             disabled={!isDirty || savingId === column.id}
                             onClick={() => onSaveTitle(column)}
                           >
+                            {savingId === column.id ? (
+                              <LoaderCircleIcon className="animate-spin" />
+                            ) : (
+                              <SaveIcon />
+                            )}
                             Kaydet
                           </Button>
                           <Button
@@ -221,25 +234,28 @@ export function ColumnsSettingsSection({
                 {columns.length === 0 && (
                   <p className="text-sm text-muted-foreground">Henüz kolon yok.</p>
                 )}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-        {isReordering && (
-          <p className="text-xs text-muted-foreground">Sıralama kaydediliyor…</p>
-        )}
-      </div>
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+          {isReordering && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <LoaderCircleIcon className="size-3.5 animate-spin" /> Sıralama kaydediliyor…
+            </p>
+          )}
+        </div>
+      </section>
 
-      <div className="flex flex-col gap-3 rounded-xl border bg-card p-5">
-        <div>
-          <h2 className="text-sm font-semibold">Şablon Olarak Kaydet</h2>
-          <p className="text-sm text-muted-foreground">
+      <section className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="max-w-xl">
+          <h2 className="font-semibold">Şablon olarak kaydet</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Bu workspace&apos;in mevcut kolon yapısını, ileride yeni workspace&apos;ler
             kurarken kullanılabilecek bir şablon olarak kaydedin.
           </p>
         </div>
         <SaveAsTemplateDialog workspaceId={workspaceId} />
-      </div>
+      </section>
 
       <AlertDialog
         open={deleteTargetId !== null}
