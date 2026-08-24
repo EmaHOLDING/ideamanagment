@@ -29,10 +29,13 @@ type ColumnRow = Database["public"]["Tables"]["kanban_columns"]["Row"];
 type IdeaVersion = Database["public"]["Tables"]["idea_versions"]["Row"];
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
 type Tag = Database["public"]["Tables"]["tags"]["Row"];
+type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 const ALL_TAGS = "all";
 const ALL_ASSIGNEES = "all";
 const UNASSIGNED = "unassigned";
+const ALL_PROJECTS = "all";
+const INDEPENDENT = "independent";
 
 export function Board(props: {
   workspaceId: string;
@@ -40,6 +43,8 @@ export function Board(props: {
   versionsByColumn: Record<string, IdeaVersion[]>;
   assigneeByIdea: Record<string, string | null>;
   tagsByIdea: Record<string, Tag[]>;
+  projectByIdea: Record<string, string | null>;
+  projects: Project[];
   voteCountByIdea: Record<string, number>;
   hasVotedByIdea: Record<string, boolean>;
   createdByIdea: Record<string, string>;
@@ -72,6 +77,8 @@ function BoardInner({
   versionsByColumn,
   assigneeByIdea,
   tagsByIdea,
+  projectByIdea,
+  projects,
   voteCountByIdea,
   hasVotedByIdea,
   createdByIdea,
@@ -89,6 +96,8 @@ function BoardInner({
   versionsByColumn: Record<string, IdeaVersion[]>;
   assigneeByIdea: Record<string, string | null>;
   tagsByIdea: Record<string, Tag[]>;
+  projectByIdea: Record<string, string | null>;
+  projects: Project[];
   voteCountByIdea: Record<string, number>;
   hasVotedByIdea: Record<string, boolean>;
   createdByIdea: Record<string, string>;
@@ -112,6 +121,7 @@ function BoardInner({
   const [searchQuery, setSearchQuery] = useState("");
   const [tagFilter, setTagFilter] = useState(ALL_TAGS);
   const [assigneeFilter, setAssigneeFilter] = useState(ALL_ASSIGNEES);
+  const [projectFilter, setProjectFilter] = useState(ALL_PROJECTS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hiddenIdeaIds, setHiddenIdeaIds] = useState<Set<string>>(new Set());
   const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
@@ -146,6 +156,7 @@ function BoardInner({
     searchQuery.trim() !== "",
     tagFilter !== ALL_TAGS,
     assigneeFilter !== ALL_ASSIGNEES,
+    projectFilter !== ALL_PROJECTS,
   ].filter(Boolean).length;
   const hasActiveFilters = activeFilterCount > 0;
 
@@ -205,11 +216,29 @@ function BoardInner({
             return false;
           }
         }
+        if (projectFilter !== ALL_PROJECTS) {
+          const projectId = projectByIdea[v.idea_id] ?? null;
+          if (projectFilter === INDEPENDENT) {
+            if (projectId !== null) return false;
+          } else if (projectId !== projectFilter) {
+            return false;
+          }
+        }
         return true;
       });
     }
     return result;
-  }, [effectiveVersionsByColumn, tagsByIdea, assigneeByIdea, searchQuery, tagFilter, assigneeFilter, hiddenIdeaIds]);
+  }, [
+    effectiveVersionsByColumn,
+    tagsByIdea,
+    assigneeByIdea,
+    projectByIdea,
+    searchQuery,
+    tagFilter,
+    assigneeFilter,
+    projectFilter,
+    hiddenIdeaIds,
+  ]);
 
   function moveCard(ideaId: string, targetColumnId: string, cancellationReason?: string) {
     setColumnOverrides((prev) => ({ ...prev, [ideaId]: targetColumnId }));
@@ -344,6 +373,28 @@ function BoardInner({
               ))}
             </SelectContent>
           </Select>
+          <Select value={projectFilter} onValueChange={(v) => v && setProjectFilter(v)}>
+            <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Projeye göre filtrele">
+              <SelectValue>
+                {() =>
+                  projectFilter === ALL_PROJECTS
+                    ? "Tüm Fikirler"
+                    : projectFilter === INDEPENDENT
+                      ? "Sadece Bağımsız"
+                      : projects.find((p) => p.id === projectFilter)?.name
+                }
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_PROJECTS}>Tüm Fikirler</SelectItem>
+              <SelectItem value={INDEPENDENT}>Sadece Bağımsız</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {hasActiveFilters && (
             <Button
               type="button"
@@ -354,6 +405,7 @@ function BoardInner({
                 setSearchQuery("");
                 setTagFilter(ALL_TAGS);
                 setAssigneeFilter(ALL_ASSIGNEES);
+                setProjectFilter(ALL_PROJECTS);
               }}
             >
               <XIcon /> Temizle
@@ -372,6 +424,8 @@ function BoardInner({
               emptyMessage={hasActiveFilters ? "Bu filtrelerle eşleşen fikir yok" : "Bu kolonda fikir yok"}
               assigneeByIdea={assigneeByIdea}
               tagsByIdea={tagsByIdea}
+              projectByIdea={projectByIdea}
+              projects={projects}
               voteCountByIdea={voteCountByIdea}
               hasVotedByIdea={hasVotedByIdea}
               createdByIdea={createdByIdea}

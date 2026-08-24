@@ -9,6 +9,7 @@ import {
   UsersIcon,
   LayoutGridIcon,
   TagIcon,
+  FolderKanbanIcon,
   LinkIcon,
   TriangleAlertIcon,
 } from "lucide-react";
@@ -17,14 +18,17 @@ import { GeneralSettingsSection } from "./general-settings-section";
 import { MembersSettingsSection } from "./members-settings-section";
 import { ColumnsSettingsSection } from "./columns-settings-section";
 import { TagsSettingsSection } from "./tags-settings-section";
+import { ProjectsSettingsSection } from "./projects-settings-section";
 import { InviteSettingsSection } from "./invite-settings-section";
 import { DangerZoneSection } from "./danger-zone-section";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { getWorkspaceTags } from "@/app/actions/tagActions";
+import type { getWorkspaceProjects } from "@/app/actions/projectActions";
 import type { Database } from "@/lib/types/database.types";
 
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
 type Tag = Awaited<ReturnType<typeof getWorkspaceTags>>[number];
+type Project = Awaited<ReturnType<typeof getWorkspaceProjects>>[number];
 type ColumnRow = Database["public"]["Tables"]["kanban_columns"]["Row"];
 type WorkspaceRole = Database["public"]["Enums"]["workspace_role"];
 
@@ -33,6 +37,7 @@ const SETTINGS_SECTIONS = [
   { id: "members", label: "Üyeler", icon: UsersIcon },
   { id: "columns", label: "Kolonlar", icon: LayoutGridIcon },
   { id: "tags", label: "Etiketler", icon: TagIcon },
+  { id: "projects", label: "Projeler", icon: FolderKanbanIcon },
   { id: "invite", label: "Davet", icon: LinkIcon },
   { id: "danger", label: "Tehlikeli Alan", icon: TriangleAlertIcon },
 ] as const;
@@ -50,6 +55,7 @@ export function WorkspaceSettingsView({
   currentMembers,
   currentColumns,
   currentTags,
+  currentProjects,
 }: {
   workspaceId: string;
   title: string;
@@ -61,6 +67,7 @@ export function WorkspaceSettingsView({
   currentMembers: Member[];
   currentColumns: ColumnRow[];
   currentTags: Tag[];
+  currentProjects: Project[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -140,6 +147,9 @@ export function WorkspaceSettingsView({
           )}
           {section === "tags" && (
             <TagsSettingsSection workspaceId={workspaceId} initialTags={currentTags} />
+          )}
+          {section === "projects" && (
+            <ProjectsSettingsSection workspaceId={workspaceId} initialProjects={currentProjects} />
           )}
           {section === "invite" && (
             <InviteSettingsSection

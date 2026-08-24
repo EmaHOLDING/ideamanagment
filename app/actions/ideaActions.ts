@@ -311,6 +311,12 @@ export async function getIdeasForWorkspace(workspaceId: string) {
   return withAuthRetry(async () => {
     const { data, error } = await supabase
       .from("ideas")
+      // NOT: projects tablosu buraya embed EDİLMEZ. projects.origin_idea_id
+      // eklendiğinden beri ideas<->projects arasında iki ilişki var
+      // (ideas.project_id ve projects.origin_idea_id); embed etmek PostgREST'te
+      // "more than one relationship" hatası verir. Zaten sadece scalar
+      // project_id kullanılıyor, proje listesi ayrıca getWorkspaceProjects ile
+      // çekiliyor.
       .select(
         "*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id), comments(id, deleted_at)"
       )

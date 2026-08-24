@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowBigUpIcon, LoaderCircleIcon, MoveIcon, PencilIcon } from "lucide-react";
+import { ArrowBigUpIcon, FolderKanbanIcon, LightbulbIcon, LoaderCircleIcon, MoveIcon, PencilIcon, SproutIcon } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,11 +20,15 @@ import type { Database } from "@/lib/types/database.types";
 type IdeaVersion = Database["public"]["Tables"]["idea_versions"]["Row"];
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
 type Tag = Database["public"]["Tables"]["tags"]["Row"];
+type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 export function IdeaCard({
+  workspaceId,
   version,
   assigneeId,
   ideaTags,
+  projectId,
+  projects,
   voteCount,
   hasVoted,
   createdBy,
@@ -38,9 +42,12 @@ export function IdeaCard({
   hideIdea,
   showIdea,
 }: {
+  workspaceId: string;
   version: IdeaVersion;
   assigneeId: string | null;
   ideaTags: Tag[];
+  projectId: string | null;
+  projects: Project[];
   voteCount: number;
   hasVoted: boolean;
   createdBy: string;
@@ -57,6 +64,8 @@ export function IdeaCard({
   const router = useRouter();
   const [isVotePending, startVoteTransition] = useTransition();
   const assignee = members.find((m) => m.user_id === assigneeId);
+  const project = projects.find((p) => p.id === projectId) ?? null;
+  const isOriginIdea = project?.origin_idea_id === version.idea_id;
   const visibleTags = ideaTags.slice(0, 3);
   const hiddenTagCount = Math.max(ideaTags.length - visibleTags.length, 0);
   const displayedVoteCount = isVotePending
@@ -126,8 +135,33 @@ export function IdeaCard({
             />
           </div>
         )}
-        {ideaTags.length > 0 && (
-          <div className="flex min-w-0 flex-wrap gap-1" aria-label={`${ideaTags.length} etiket`}>
+        <div className="flex min-w-0 flex-wrap gap-1" aria-label={`${ideaTags.length} etiket`}>
+            {project ? (
+              <Badge
+                variant="secondary"
+                className="h-5 gap-1 rounded-md border-0 bg-primary/10 px-2 text-[0.66rem] font-medium text-primary"
+                title={
+                  isOriginIdea
+                    ? `${project.name} projesinin çıkış fikri`
+                    : `${project.name} projesine bağlı`
+                }
+              >
+                {isOriginIdea ? (
+                  <SproutIcon className="size-3" />
+                ) : (
+                  <FolderKanbanIcon className="size-3" />
+                )}
+                <span className="max-w-28 truncate">{project.name}</span>
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className="h-5 gap-1 rounded-md px-2 text-[0.66rem] font-medium text-muted-foreground"
+              >
+                <LightbulbIcon className="size-3" />
+                Proje Fikri
+              </Badge>
+            )}
             {visibleTags.map((tag) => (
               <Badge
                 key={tag.id}
@@ -147,8 +181,7 @@ export function IdeaCard({
                 +{hiddenTagCount}
               </Badge>
             )}
-          </div>
-        )}
+        </div>
         <div className="-mx-3 -mb-3 mt-0.5 flex items-center justify-between gap-2 border-t border-border/60 bg-muted/20 px-3 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex flex-col">
@@ -211,6 +244,7 @@ export function IdeaCard({
 
   return (
     <IdeaDetailDialog
+      workspaceId={workspaceId}
       ideaId={version.idea_id}
       data={{
         title: version.title,
@@ -222,6 +256,8 @@ export function IdeaCard({
       }}
       assigneeId={assigneeId}
       ideaTags={ideaTags}
+      projectId={projectId}
+      projects={projects}
       createdBy={createdBy}
       initialCommentCount={commentCount}
       currentUserId={currentUserId}

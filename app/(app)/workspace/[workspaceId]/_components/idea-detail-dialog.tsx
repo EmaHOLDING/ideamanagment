@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition, type ReactElement } from "react";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -10,6 +11,8 @@ import {
   TargetIcon,
   MessageSquareIcon,
   UserIcon,
+  FolderKanbanIcon,
+  SproutIcon,
   LinkIcon,
   ChevronDownIcon,
 } from "lucide-react";
@@ -50,6 +53,7 @@ import {
   type IdeaVersionData,
 } from "@/app/actions/ideaActions";
 import { setIdeaTags } from "@/app/actions/tagActions";
+import { convertIdeaToProject } from "@/app/actions/projectActions";
 import { IMPACT_EFFORT_LABELS } from "@/lib/status";
 import { useIdeaPresence, useIdeaPresenceActions } from "@/lib/hooks/use-idea-presence";
 import { IdeaDialog } from "./idea-dialog";
@@ -62,14 +66,18 @@ import type { Database } from "@/lib/types/database.types";
 
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
 type Tag = Database["public"]["Tables"]["tags"]["Row"];
+type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 const UNASSIGNED = "unassigned";
 
 export function IdeaDetailDialog({
+  workspaceId,
   ideaId,
   data,
   assigneeId,
   ideaTags,
+  projectId,
+  projects,
   createdBy,
   initialCommentCount,
   currentUserId,
@@ -82,10 +90,13 @@ export function IdeaDetailDialog({
   hideIdea,
   showIdea,
 }: {
+  workspaceId: string;
   ideaId: string;
   data: IdeaVersionData;
   assigneeId: string | null;
   ideaTags: Tag[];
+  projectId: string | null;
+  projects: Project[];
   createdBy: string;
   initialCommentCount: number;
   currentUserId: string;
@@ -102,6 +113,13 @@ export function IdeaDetailDialog({
   const pathname = usePathname();
   const canEditIdea = createdBy === currentUserId || canManageContent;
   const [open, setOpen] = useState(defaultOpen ?? false);
+  const [isConvertPending, startConvertTransition] = useTransition();
+  const project = projects.find((p) => p.id === projectId) ?? null;
+  const isOriginIdea = project?.origin_idea_id === ideaId;
+  const effectiveProblemStatement = data.problemStatement || project?.problem_statement || null;
+  const effectiveTargetAudience = data.targetAudience || project?.target_audience || null;
+  const usesProjectProblemStatement = !data.problemStatement && Boolean(project?.problem_statement);
+  const usesProjectTargetAudience = !data.targetAudience && Boolean(project?.target_audience);
   // Bildirim/direkt link tıklamaları client-side navigasyonla aynı sayfaya
   // sadece ?idea= query'sini değiştirerek gelir — board/column/card ağacı
   // yeniden mount olmadığı için useState'in ilk mount değeri güncellenmez.
@@ -167,6 +185,18 @@ export function IdeaDetailDialog({
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Atama güncellenemedi");
+      }
+    });
+  }
+
+  function onConvertToProject() {
+    startConvertTransition(async () => {
+      try {
+        const created = await convertIdeaToProject(ideaId);
+        toast.success(`'${created.name}' projesi oluşturuldu.`);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Fikir projeye dönüştürülemedi");
       }
     });
   }
@@ -239,6 +269,33 @@ export function IdeaDetailDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                {project ? (
+                  <Link
+                    href={`/workspace/${workspaceId}/project/${project.id}`}
+                    title={
+                      isOriginIdea
+                        ? `Bu fikirden doğan proje: ${project.name}`
+                        : `Bağlı olduğu proje: ${project.name}`
+                    }
+                  >
+                    <Badge
+                      variant="outline"
+                      className="gap-1 border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+                    >
+                      {isOriginIdea ? (
+                        <SproutIcon className="size-3" />
+                      ) : (
+                        <FolderKanbanIcon className="size-3" />
+                      )}
+                      {project.name}
+                    </Badge>
+                  </Link>
+                ) : (
+                  <Badge variant="outline" className="gap-1" title="Bu fikir bir projeye bağlı değil">
+                    <FolderKanbanIcon className="size-3" />
+                    Bağımsız
+                  </Badge>
+                )}
                 {canContribute ? (
                   <TagPicker
                     availableTags={availableTags}
@@ -277,6 +334,18 @@ export function IdeaDetailDialog({
                   </Button>
                 }
               />
+              {canContribute && !project && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={isConvertPending}
+                  onClick={onConvertToProject}
+                  title="Bu fikri, altına başka fikirlerin bağlanabileceği bir projeye dönüştür"
+                >
+                  <SproutIcon /> <span className="hidden sm:inline">Projeye Dönüştür</span>
+                </Button>
+              )}
               {canEditIdea && (
                 <Button
                   type="button"
@@ -353,24 +422,34 @@ export function IdeaDetailDialog({
 
             <ScrollArea className="min-h-0 min-w-0">
               <div className="flex min-w-0 flex-col gap-6 p-4 sm:p-6">
-                {data.problemStatement && (
+                {effectiveProblemStatement && (
                   <section className="flex flex-col gap-1.5">
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       Problem Tanımı
+                      {usesProjectProblemStatement && (
+                        <Badge variant="outline" className="h-4.5 px-1.5 text-[0.6rem] font-normal normal-case">
+                          {project?.name}&apos;den
+                        </Badge>
+                      )}
                     </h3>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
-                      {data.problemStatement}
+                      {effectiveProblemStatement}
                     </p>
                   </section>
                 )}
 
-                {data.targetAudience && (
+                {effectiveTargetAudience && (
                   <section className="flex flex-col gap-1.5">
                     <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       <TargetIcon className="size-3.5" /> Hedef Kitle
+                      {usesProjectTargetAudience && (
+                        <Badge variant="outline" className="h-4.5 px-1.5 text-[0.6rem] font-normal normal-case">
+                          {project?.name}&apos;den
+                        </Badge>
+                      )}
                     </h3>
                     <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
-                      {data.targetAudience}
+                      {effectiveTargetAudience}
                     </p>
                   </section>
                 )}
@@ -402,6 +481,8 @@ export function IdeaDetailDialog({
         initial={data}
         open={editOpen}
         onOpenChange={setEditOpen}
+        projects={projects}
+        initialProjectId={projectId}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -418,6 +499,13 @@ export function IdeaDetailDialog({
               <span>
                 Fikir panodan kaldırılacak. İşlemden sonra kısa bir süre boyunca geri alabilirsiniz.
               </span>
+              {isOriginIdea && (
+                <span>
+                  Bu fikir <strong className="text-foreground">{project?.name}</strong> projesinin
+                  çıkış fikri. Proje ve ona bağlı diğer fikirler silinmez, yalnızca bu fikir
+                  kaldırılır.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -336,6 +336,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          project_id: string | null
           updated_at: string
           workspace_id: string
         }
@@ -349,6 +350,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
+          project_id?: string | null
           updated_at?: string
           workspace_id: string
         }
@@ -362,6 +364,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
+          project_id?: string | null
           updated_at?: string
           workspace_id?: string
         }
@@ -371,6 +374,13 @@ export type Database = {
             columns: ["column_id"]
             isOneToOne: false
             referencedRelation: "kanban_columns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ideas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -488,6 +498,63 @@ export type Database = {
           },
           {
             foreignKeyName: "notifications_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          id: string
+          name: string
+          origin_idea_id: string | null
+          problem_statement: string | null
+          target_audience: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          origin_idea_id?: string | null
+          problem_statement?: string | null
+          target_audience?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          origin_idea_id?: string | null
+          problem_statement?: string | null
+          target_audience?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_origin_idea_id_fkey"
+            columns: ["origin_idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -668,6 +735,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          project_id: string | null
           updated_at: string
           workspace_id: string
         }
@@ -681,6 +749,28 @@ export type Database = {
       check_rate_limit: {
         Args: { _key: string; _max_count: number; _window_seconds: number }
         Returns: boolean
+      }
+      convert_idea_to_project: {
+        Args: { _idea_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          id: string
+          name: string
+          origin_idea_id: string | null
+          problem_statement: string | null
+          target_audience: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_idea: {
         Args: {
@@ -703,6 +793,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          project_id: string | null
           updated_at: string
           workspace_id: string
         }
@@ -806,6 +897,30 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          project_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_idea_project: {
+        Args: { _idea_id: string; _project_id?: string }
+        Returns: {
+          assignee_id: string | null
+          cancellation_reason: string | null
+          column_id: string
+          created_at: string
+          created_by: string
+          current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          project_id: string | null
           updated_at: string
           workspace_id: string
         }
@@ -888,6 +1003,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          project_id: string | null
           updated_at: string
           workspace_id: string
         }
@@ -898,6 +1014,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      soft_delete_project: { Args: { _project_id: string }; Returns: Json }
       soft_delete_tag: {
         Args: { _tag_id: string }
         Returns: {
@@ -1011,12 +1128,35 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          project_id: string | null
           updated_at: string
           workspace_id: string
         }
         SetofOptions: {
           from: "*"
           to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      undo_delete_project: {
+        Args: { _cascaded_idea_ids?: string[]; _project_id: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          id: string
+          name: string
+          origin_idea_id: string | null
+          problem_statement: string | null
+          target_audience: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "projects"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1099,6 +1239,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          project_id: string | null
           updated_at: string
           workspace_id: string
         }

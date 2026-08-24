@@ -12,7 +12,7 @@ Fikir Kuluçkası, bir ekibin girişim/ürün fikirlerini birlikte üretip olgun
 
 ## 2. Hesap ve Giriş
 
-- **Uygulamanın kendi e-posta/şifreli kayıt sistemi kaldırıldı.** Hesap oluşturma ve giriş artık sadece dış hesap sağlayıcılarıyla yapılıyor: **Google, Microsoft/Entra ID (Office 365), LinkedIn, GitHub, GitLab**. Giriş ekranında bu beş sağlayıcı için ayrı birer "... ile devam et" butonu var.
+- **Uygulamanın kendi e-posta/şifreli kayıt sistemi kaldırıldı.** Hesap oluşturma ve giriş artık dış hesap sağlayıcılarıyla yapılıyor. Altyapı beş sağlayıcıyı da (**Google, Microsoft/Entra ID, LinkedIn, GitHub, GitLab**) destekleyecek şekilde hazır olsa da, giriş ekranında şu an sadece **Google ile devam et** butonu kullanıcıya gösteriliyor — diğer dördü kod seviyesinde tanımlı ama arayüzde gizli tutuluyor.
 - İsim/soyisim ayrıca sorulmuyor — seçilen sağlayıcıdaki ad bilgisi otomatik olarak alınıp uygulamanın hiçbir yerinde çıplak e-posta adresleri değil, gerçek isimler görünecek şekilde kullanılıyor.
 - Giriş yapmamış bir kullanıcı hiçbir sayfaya erişemiyor, otomatik olarak giriş ekranına yönlendiriliyor.
 
@@ -83,14 +83,24 @@ Kurucu ve Yönetici'nin erişebildiği, sol menüde kategorilere ayrılmış ayr
 - Yeni bir bildirim geldiğinde zil **anında** (sayfa yenilenmeden) güncelleniyor.
 - Bir bildirime **tıklandığında**, kullanıcı otomatik olarak ilgili fikrin bulunduğu workspace'e ve o fikrin detay penceresine yönlendiriliyor — sayfa yenilemeye gerek kalmadan, bildirimi görüp ayrıca panoda o fikri aramaya gerek olmuyor.
 - Bildirimler tek tek veya "Tümünü okundu yap" ile toplu olarak okunmuş sayılabiliyor.
-- Uygulama içi bildirimlere ek olarak, belirli durumlarda **e-posta** de gönderiliyor — detayları Bölüm 12'de.
+- Uygulama içi bildirimlere ek olarak, belirli durumlarda ve kullanıcının tercihine göre **e-posta** de gönderiliyor — detayları Bölüm 13'te.
 
 ## 8. Aktivite Akışı
 
-- Her workspace'in yan panelden açılabilen bir **aktivite akışı** var: "Ayşe, 'X' fikrini oluşturdu", "Mehmet, 'Y' fikrine oy verdi" gibi, kim-ne-yaptı kaydı kronolojik olarak listeleniyor.
+- Her workspace'in yan panelden (sağdan açılan bir panel) açılabilen bir **aktivite akışı** var: "Ayşe, 'X' fikrini oluşturdu", "Mehmet, 'Y' fikrine oy verdi", "Kolon silindi", "Etiket oluşturuldu" gibi, kim-ne-yaptı kaydı kronolojik olarak listeleniyor. Panel, bildirim ziliyle aynı görsel dile sahip: her aktivite türünün kendine ait bir ikonu var (fikir, yorum, oy, atama, kolon, etiket, üye katılımı vb.), zaman bilgisi "Az önce / X dk önce / X sa önce / X gün önce" şeklinde göreli olarak gösteriliyor, akış boşsa açıklayıcı bir boş-durum ekranı çıkıyor.
 - Panel açıkken yeni bir aktivite olduğu an, listenin en üstüne **anında** ekleniyor.
+- Bir fikirle ilgili aktivite satırına **tıklandığında**, panel kapanıp kullanıcı otomatik olarak o fikrin detay penceresine yönlendiriliyor — bildirim zilindeki tıkla-git davranışıyla birebir aynı.
+- Liste sayfalanarak "Daha fazla aktivite yükle" ile geriye doğru genişletilebiliyor.
 
-## 9. Ekler ve Dosyalar
+## 9. Workspace Sağlığı (Genel Bakış Sayfası)
+
+Pano ekranındaki **"Genel Bakış"** butonuyla açılan, workspace'in o anki durumunu tek ekranda özetleyen ayrı bir sayfa:
+
+- Aktif fikir sayısı, "İncelemede/Değerlendirmede" durumundaki fikir sayısı, henüz kimseye **atanmamış** fikir sayısı gibi anlık toplamlar.
+- **7 gün ve üzeri** hiçbir kolon değişikliği görmemiş "takılı kalmış" fikirlerin ayrı bir liste olarak öne çıkarılması — ekip nerede tıkanma olduğunu tek bakışta görebiliyor.
+- Bu sayfa, tüm workspace üyelerine (rolden bağımsız) açık; amaç raporlama değil, ekibin kendi panosunun sağlığını hızlıca gözden geçirmesi.
+
+## 10. Ekler ve Dosyalar
 
 Fikirlere dosya eklenebiliyor — görseller, PDF, Word (DOCX), metin (TXT/MD) ve ZIP dosyaları destekleniyor, dosya başına en fazla 10 MB.
 
@@ -100,9 +110,9 @@ Fikirlere dosya eklenebiliyor — görseller, PDF, Word (DOCX), metin (TXT/MD) v
 - Bir dosyayı sadece onu yükleyen kişi veya Kurucu/Yönetici silebiliyor.
 - Dosya silme davranışı, aşağıda anlatılan **"Sil ve Geri Al" mekanizmasıyla** birebir aynı şekilde çalışıyor.
 
-## 10. "Sil ve Geri Al" Mekanizması (Undo Toast)
+## 11. "Sil ve Geri Al" Mekanizması (Undo Toast)
 
-Uygulamadaki **fikir, yorum ve dosya silme** işlemlerinin hepsi aynı, kullanıcı dostu deseni izliyor — amaç, yanlışlıkla silinen bir şeyin anında ve kolayca geri getirilebilmesi:
+Uygulamadaki neredeyse tüm silme işlemleri aynı, kullanıcı dostu deseni izliyor — amaç, yanlışlıkla silinen bir şeyin anında ve kolayca geri getirilebilmesi:
 
 1. Kullanıcı çöp kutusu ikonuna tıklayınca önce bir **onay penceresi** çıkıyor ("Bu içeriği silmek istediğinize emin misiniz?").
 2. "Evet, Sil" denildiği an, öğe ekrandan **anında** kayboluyor — herhangi bir bekleme yok, tepki anlık.
@@ -112,9 +122,9 @@ Uygulamadaki **fikir, yorum ve dosya silme** işlemlerinin hepsi aynı, kullanı
 
 Bunun arkasındaki mantık şöyle: bir şey "sil" denildiği anda veritabanından tamamen yok edilmiyor, önce sadece **"silinmiş" olarak işaretleniyor** (bu yüzden standart listelerde artık görünmüyor ama veri hâlâ duruyor). 30 saniyelik pencere kapanana kadar "Geri Al" bu işareti kaldırıp veriyi eski haline getirebiliyor. Süre dolduktan sonra ise sistem araya girip veriyi **gerçekten ve kalıcı olarak** temizliyor — dosyalarda bu, hem veritabanı kaydının hem de dosyanın kendisinin sunucudan tamamen silinmesi anlamına geliyor.
 
-Bu mekanizma şu an üç yerde birebir aynı şekilde çalışıyor: **fikir silme**, **yorum silme**, **dosya silme**.
+Bu mekanizma şu an yedi yerde birebir aynı şekilde çalışıyor: **fikir silme**, **yorum silme**, **dosya silme**, **kolon silme**, **etiket silme**, **workspace silme** ve **üye çıkarma**. Kolon/etiket/workspace/üye-çıkarma tarafında geri-al işlemi, veritabanı seviyesinde özel yetkilendirilmiş fonksiyonlarla çalışıyor — böylece "silinmiş" olarak işaretlenmiş bir kaydın geri getirilmesi, normal güvenlik kurallarına takılmadan güvenli şekilde gerçekleşiyor.
 
-## 11. Gerçek Zamanlı İşbirliği (Realtime)
+## 12. Gerçek Zamanlı İşbirliği (Realtime)
 
 Aynı workspace'i aynı anda birden fazla kişi açtığında, birinin yaptığı değişiklik **diğerlerinin ekranında sayfa yenilemeye gerek kalmadan anında** görünüyor. Şu an canlı olarak senkronize olan alanlar:
 
@@ -129,40 +139,52 @@ Aynı workspace'i aynı anda birden fazla kişi açtığında, birinin yaptığ�
 
 Henüz gerçek zamanlı **olmayan** tek şey: bir dosyayı kimin şu an incelediğini veya bir fikri kimin düzenlemekte olduğunu gösteren bir "eşzamanlı düzenleme" göstergesi (örn. "Ayşe şu an bunu düzenliyor" gibi bir ibare) — bu, ayrı bir teknik altyapı gerektirdiği için henüz eklenmedi.
 
-## 12. Akıllı E-Posta Bildirimleri
+## 13. Akıllı E-Posta Bildirimleri
 
 Uygulama içi bildirim zili, ancak kullanıcı uygulamayı **açık tutuyorsa** işe yarıyor. Uygulamayı kapatıp giden bir kullanıcıya bir şey ulaşması gerekiyorsa, sistem devreye girip **e-posta** gönderiyor — ama bunu her bildirimde değil, çok kontrollü bir şekilde yapıyor.
 
 **Ne zaman e-posta gider?**
 
-- Sadece iki durumda: biri sizi bir **yorumda `@` ile etiketlediğinde**, veya size bir **fikir atandığında**.
-- Kart taşıma, genel (etiketsiz) yorum, oylama gibi diğer olaylar için **hiçbir zaman** e-posta gitmiyor — bunlar sadece zil bildirimi olarak kalıyor.
+Sistem, her bildirim türünü ayrı ayrı ele alan merkezi bir **olay kaydı** üzerinden çalışıyor. Şu an e-posta gönderebilecek beş olay türü var:
+
+| Olay | Açıklama | Varsayılan durum |
+|---|---|---|
+| Yorumda etiketlenme | Bir yorumda `@` ile etiketlendiğinizde | Açık |
+| Fikir ataması | Size bir fikir atandığında | Açık |
+| Workspace katılımları | Workspace'inize yeni biri katıldığında | Kapalı |
+| Yorumlar | Oluşturduğunuz/daha önce yorum yaptığınız bir fikre yorum geldiğinde | Kapalı |
+| Kart taşıma | Oluşturduğunuz bir fikir başka bir duruma taşındığında | Kapalı |
+
+Her kullanıcı bu beş türü Ayarlar ekranından **birbirinden bağımsız** olarak açıp kapatabiliyor — artık tek bir genel "e-posta bildirimlerini aç/kapat" anahtarı yok, her olay türünün kendi anahtarı var. Oylama gibi bu tabloda yer almayan olaylar için hiçbir zaman e-posta gönderilmiyor, sadece zil bildirimi kalıyor.
 
 **"Çevrimiçi misiniz?" nasıl anlaşılıyor?**
 
-Uygulama arka planda, sekmeniz açıkken düzenli aralıklarla sessizce "hâlâ buradayım" sinyali gönderiyor. Bu sinyalin üzerinden birkaç dakikadan fazla geçmişse, sistem sizi "çevrimdışı" kabul ediyor. Mantık basit: **siz uygulamadaysanız e-posta atılmıyor** (zaten zili görüyorsunuzdur), **uygulamada değilseniz** ve olay mention/atama ise e-posta gidiyor.
+Uygulama arka planda, sekmeniz açıkken düzenli aralıklarla sessizce "hâlâ buradayım" sinyali gönderiyor. Bu sinyalin üzerinden birkaç dakikadan fazla geçmişse, sistem sizi "çevrimdışı" kabul ediyor. Mantık basit: **siz uygulamadaysanız e-posta atılmıyor** (zaten zili görüyorsunuzdur), **uygulamada değilseniz** ve olay türü için e-posta tercihiniz açıksa e-posta gidiyor.
 
 **Karar sırası tam olarak şöyle işliyor:**
 
-1. Kullanıcı, Ayarlar'dan e-posta bildirimlerini kapatmışsa → **hiçbir zaman** gönderilmiyor (diğer her şeyden önce bu kontrol ediliyor).
-2. Kullanıcı o an uygulamada aktifse → gönderilmiyor, sadece zil bildirimi kalıyor.
-3. Olay mention veya atama ise ve kullanıcı çevrimdışıysa → e-posta gönderiliyor.
-4. Bunların hiçbiri değilse → gönderilmiyor.
+1. Olay türü (yukarıdaki tablo) için kullanıcının tercihi kapalıysa → **hiçbir zaman** gönderilmiyor.
+2. Kullanıcı o an uygulamada aktifse → gönderilmiyor, sadece zil/aktivite bildirimi kalıyor.
+3. Tercih açık ve kullanıcı çevrimdışıysa → e-posta gönderiliyor.
 
-**Kullanıcı kontrolü:** Sağ üstteki kullanıcı menüsünden "Ayarlar" açılıp **"E-posta Bildirimlerini Aktif Et"** anahtarıyla bu özellik tamamen kapatılabiliyor (varsayılan olarak açık). Kapatıldığında, kullanıcı ne kadar süre çevrimdışı kalırsa kalsın hiçbir e-posta gönderilmiyor.
+**Kullanıcı kontrolü:** Sağ üstteki kullanıcı menüsünden "Ayarlar" açılıp, yukarıdaki beş olay türünün her biri için ayrı bir onay kutusuyla tercih belirlenebiliyor.
 
-**Gönderim altyapısı:** E-postalar [Resend](https://resend.com) servisi üzerinden, uygulamanın marka renklerine uygun sade bir HTML şablonla gidiyor; e-posta içindeki bağlantıya tıklanınca doğrudan ilgili fikrin detay penceresi açılıyor (Bölüm 5'teki "Link Kopyala" ile aynı adres yapısı). Aylık gönderim kotasının gereksiz yere tüketilmemesi için sistem, yukarıdaki üç kontrolü (tercih → çevrimiçilik → tetikleyici türü) geçmeyen hiçbir olayda e-posta göndermiyor.
+**Gönderim altyapısı:** E-postalar [Resend](https://resend.com) servisi üzerinden, uygulamanın marka renklerine uygun sade bir HTML şablonla gidiyor; e-posta içindeki bağlantıya tıklanınca doğrudan ilgili fikrin detay penceresi açılıyor (Bölüm 5'teki "Link Kopyala" ile aynı adres yapısı). Aylık gönderim kotasının gereksiz yere tüketilmemesi için sistem, yukarıdaki kontrolleri (tercih → çevrimiçilik) geçmeyen hiçbir olayda e-posta göndermiyor. Yeni bir bildirim türü eklemek istendiğinde, tek yapılması gereken merkezi olay kaydına (`lib/notification-registry.ts`) bir satır eklemek — hem tercihler ekranı hem gönderim mantığı otomatik olarak bunu devralıyor.
 
-## 13. Mobil ve Responsive Tasarım
+## 14. Mobil ve Responsive Tasarım
 
 - Workspace listesi, kanban panosu ve fikir detay penceresi mobil ekran genişliklerinde de düzgün çalışacak şekilde düzenlendi (workspace kartlarındaki metin dikey eksende ortalanması dahil).
 - Fikir detay penceresinde, asıl içeriğe (problem tanımı, hedef kitle, içerik) daha fazla yer açmak için **yorumlar paneli açılır/kapanır** hale getirildi — masaüstünde varsayılan olarak açık geliyor, mobilde varsayılan olarak kapalı geliyor ve dilenirse tıklanıp açılabiliyor.
 - Mobilde, fikir detayının üst kısmındaki aksiyon butonları (Link Kopyala, Geçmiş, Düzenle, Sil) daralıp ikona dönüşüyor; en fazla iki satır kaplayacak şekilde düzenlendi.
+- Panodaki **arama ve filtre çubuğu** mobilde artık açılır/kapanır: varsayılan olarak kapalı geliyor, üstteki "Ara ve Filtrele" satırına dokunulunca açılıyor; aktif bir filtre varsa (arama metni, etiket veya atanan kişi seçili) satırda kaç filtrenin aktif olduğunu gösteren küçük bir rozet beliriyor. Masaüstünde bu çubuk her zaman açık kalmaya devam ediyor.
+- Pano üstündeki **"Genel Bakış"** ve **"Ayarlar"** butonları mobilde sadece ikon olarak, metin etiketleri olmadan gösteriliyor; masaüstünde ikon + yazı birlikte görünüyor.
+- Panoyu yatayda kaydırırken önceden var olan "en yakın kolona zıplama" (scroll-snap) davranışı hem masaüstünde hem mobilde tamamen kaldırıldı — pano artık serbestçe, istenilen noktada bırakılabilecek şekilde kayıyor.
+- Önceden var olan alt mobil gezinme çubuğu ve panonun altındaki numaralı kolon-atlama pilleri kaldırıldı; gezinme artık üstteki başlık çubuğundaki butonlarla yapılıyor.
 
 ---
 
 ## Özet: Şu An Neler Var, Neler Yok?
 
-**Var olanlar:** hesap/rol yönetimi, kategorilere ayrılmış Workspace Ayarları sayfası (Genel/Üyeler/Kolonlar/Etiketler/Davet/Tehlikeli Alan), açıklama alanı olan ve e-posta ile davet + kabul/reddet onayıyla katılınan workspace'ler, şablonlu workspace kurulumu, tam donanımlı Kanban panosu (ayarlardan sürükle-sırala kolonlar dahil), versiyonlu fikir yazımı (Markdown içe aktarma dahil), oylama ("X/Y" gösterimi), merkezi etiket yönetimi, atama, doğrudan link paylaşımı, mention'lı yorumlar, bildirimler (uygulama içi zil + tek tıkla ilgili fikre gitme + akıllı e-posta), aktivite akışı, dosya ekleme, uçtan uca "sil → 30 saniye geri al → kalıcı sil" deseni, geniş kapsamlı gerçek zamanlı senkronizasyon ve mobil uyumlu tasarım.
+**Var olanlar:** hesap/rol yönetimi, kategorilere ayrılmış Workspace Ayarları sayfası (Genel/Üyeler/Kolonlar/Etiketler/Davet/Tehlikeli Alan), açıklama alanı olan ve e-posta ile davet + kabul/reddet onayıyla katılınan workspace'ler, şablonlu workspace kurulumu, tam donanımlı Kanban panosu (ayarlardan sürükle-sırala kolonlar dahil, serbest yatay kaydırma), versiyonlu fikir yazımı (Markdown içe aktarma dahil), oylama ("X/Y" gösterimi), merkezi etiket yönetimi, atama, doğrudan link paylaşımı, mention'lı yorumlar, bildirimler (uygulama içi zil + tek tıkla ilgili fikre gitme + olay-türü başına ayarlanabilen akıllı e-posta), bildirim ziliyle görsel bütünlüğü olan ve tıkla-git özellikli aktivite akışı, "Workspace Sağlığı" genel bakış sayfası, dosya ekleme, yedi farklı içerik türünü (fikir/yorum/dosya/kolon/etiket/workspace/üye) kapsayan uçtan uca "sil → 30 saniye geri al → kalıcı sil" deseni, geniş kapsamlı gerçek zamanlı senkronizasyon ve açılır-kapanır filtre çubuğu/ikon-only butonlarla iyileştirilmiş mobil uyumlu tasarım.
 
 **Henüz olmayanlar (ileride düşünülebilir):** eşzamanlı düzenleme/kimin-baktığı göstergesi (presence göstergesi kullanıcıya görünür değil, sadece e-posta kararı için arka planda kullanılıyor), mobil uygulama, dosya önizleme (şu an sadece indirme var), gelişmiş raporlama/analitik panosu.

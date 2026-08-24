@@ -26,22 +26,30 @@ import {
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
 import { createIdea, updateIdea, type IdeaVersionData } from "@/app/actions/ideaActions";
 import { uploadAttachment } from "@/app/actions/attachmentActions";
+import { setIdeaProject } from "@/app/actions/projectActions";
 import { IMPACT_EFFORT_LABELS, type ImpactEffortLevel } from "@/lib/status";
 import { MAX_ATTACHMENT_SIZE, formatFileSize } from "@/lib/attachment-client";
+import type { Database } from "@/lib/types/database.types";
+
+type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 const IMPACT_EFFORT_OPTIONS: ImpactEffortLevel[] = ["LOW", "MEDIUM", "HIGH"];
+const INDEPENDENT = "independent";
 
 type IdeaDialogProps =
   | {
       mode: "create";
       workspaceId: string;
       columnId: string;
+      projects: Project[];
       trigger: ReactElement;
     }
   | {
       mode: "edit";
       ideaId: string;
       initial: IdeaVersionData;
+      projects: Project[];
+      initialProjectId?: string | null;
       /** Provide a trigger for uncontrolled usage, or omit and drive via open/onOpenChange. */
       trigger?: ReactElement;
       open?: boolean;
@@ -72,6 +80,9 @@ export function IdeaDialog(props: IdeaDialogProps) {
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const initialProjectId = props.mode === "edit" ? (props.initialProjectId ?? null) : null;
+  const [projectId, setProjectId] = useState<string | null>(initialProjectId);
+  const selectedProject = props.projects.find((p) => p.id === projectId) ?? null;
 
   function resetForm() {
     const fresh = props.mode === "edit" ? props.initial : undefined;
@@ -82,6 +93,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
     setImpactScore(fresh?.impactScore ?? "MEDIUM");
     setEffortScore(fresh?.effortScore ?? "MEDIUM");
     setStagedFiles([]);
+    setProjectId(initialProjectId);
   }
 
   function addStagedFiles(files: FileList | null) {
@@ -135,6 +147,14 @@ export function IdeaDialog(props: IdeaDialogProps) {
           const created = await createIdea(props.workspaceId, props.columnId, versionData);
           toast.success("Fikir oluşturuldu");
 
+          if (projectId) {
+            try {
+              await setIdeaProject(created.id, projectId);
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Proje ataması yapılamadı");
+            }
+          }
+
           if (stagedFiles.length > 0) {
             setSubmitStage("uploading");
             let failedCount = 0;
@@ -153,6 +173,13 @@ export function IdeaDialog(props: IdeaDialogProps) {
           }
         } else {
           await updateIdea(props.ideaId, versionData);
+          if (projectId !== initialProjectId) {
+            try {
+              await setIdeaProject(props.ideaId, projectId);
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Proje güncellenemedi");
+            }
+          }
           toast.success("Fikir güncellendi (yeni versiyon oluşturuldu)");
         }
         onOpenChange(false);
@@ -224,6 +251,27 @@ export function IdeaDialog(props: IdeaDialogProps) {
                   Problemi ve bu fikirden etkilenecek kitleyi netleştirin.
                 </p>
               </div>
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <Label>Proje</Label>
+                <Select
+                  value={projectId ?? INDEPENDENT}
+                  onValueChange={(v) => setProjectId(!v || v === INDEPENDENT ? null : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue>
+                      {() => (projectId ? selectedProject?.name : "Bağımsız (Proje Yok)")}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={INDEPENDENT}>Bağımsız (Proje Yok)</SelectItem>
+                    {props.projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex min-w-0 flex-col gap-1.5">
               <Label htmlFor={`${fieldId}-problem`}>Problem Tanımı</Label>
@@ -231,8 +279,18 @@ export function IdeaDialog(props: IdeaDialogProps) {
                 id={`${fieldId}-problem`}
                 value={problemStatement}
                 onChange={(e) => setProblemStatement(e.target.value)}
+                placeholder={
+                  selectedProject?.problem_statement
+                    ? `Proje varsayılanı (${selectedProject.name}): ${selectedProject.problem_statement}`
+                    : undefined
+                }
                 className="min-h-14 resize-none"
               />
+              {selectedProject?.problem_statement && !problemStatement && (
+                <p className="text-[0.7rem] text-muted-foreground">
+                  Boş bırakırsanız &apos;{selectedProject.name}&apos; projesinin tanımı kullanılır.
+                </p>
+              )}
             </div>
             <div className="flex min-w-0 flex-col gap-1.5">
               <Label htmlFor={`${fieldId}-audience`}>Hedef Kitle</Label>
@@ -240,8 +298,18 @@ export function IdeaDialog(props: IdeaDialogProps) {
                 id={`${fieldId}-audience`}
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
+                placeholder={
+                  selectedProject?.target_audience
+                    ? `Proje varsayılanı (${selectedProject.name}): ${selectedProject.target_audience}`
+                    : undefined
+                }
                 className="min-h-14 resize-none"
               />
+              {selectedProject?.target_audience && !targetAudience && (
+                <p className="text-[0.7rem] text-muted-foreground">
+                  Boş bırakırsanız &apos;{selectedProject.name}&apos; projesinin tanımı kullanılır.
+                </p>
+              )}
             </div>
               </div>
             </section>

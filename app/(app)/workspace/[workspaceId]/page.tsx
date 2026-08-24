@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowLeftIcon, ChartNoAxesCombinedIcon, SettingsIcon } from "lucide-react";
+import { ArrowLeftIcon, ChartNoAxesCombinedIcon, FolderKanbanIcon, SettingsIcon } from "lucide-react";
 import { getWorkspaceForUser, getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import { getIdeasForWorkspace } from "@/app/actions/ideaActions";
 import { getWorkspaceTags } from "@/app/actions/tagActions";
+import { getWorkspaceProjects } from "@/app/actions/projectActions";
 import { Button } from "@/components/ui/button";
 import { Board } from "./_components/board";
 import { ActivityPanel } from "./_components/activity-panel";
@@ -30,12 +31,14 @@ export default async function WorkspaceBoardPage({
     ideas,
     members,
     tags,
+    projects,
   ] = await Promise.all([
     supabase.auth.getUser(),
     getWorkspaceForUser(workspaceId),
     getIdeasForWorkspace(workspaceId),
     getWorkspaceMembers(workspaceId),
     getWorkspaceTags(workspaceId),
+    getWorkspaceProjects(workspaceId),
   ]);
 
   const isAdmin = workspace.role === "ADMIN";
@@ -46,6 +49,7 @@ export default async function WorkspaceBoardPage({
   const versionsByColumn: Record<string, IdeaVersion[]> = {};
   const assigneeByIdea: Record<string, string | null> = {};
   const tagsByIdea: Record<string, Database["public"]["Tables"]["tags"]["Row"][]> = {};
+  const projectByIdea: Record<string, string | null> = {};
   const voteCountByIdea: Record<string, number> = {};
   const hasVotedByIdea: Record<string, boolean> = {};
   const createdByIdea: Record<string, string> = {};
@@ -58,6 +62,7 @@ export default async function WorkspaceBoardPage({
     (versionsByColumn[idea.column_id] ??= []).push(currentVersion);
     assigneeByIdea[idea.id] = idea.assignee_id;
     tagsByIdea[idea.id] = idea.idea_tags.map((it) => it.tag).filter((t) => t !== null);
+    projectByIdea[idea.id] = idea.project_id;
     voteCountByIdea[idea.id] = idea.idea_votes.length;
     hasVotedByIdea[idea.id] = idea.idea_votes.some((v) => v.user_id === user!.id);
     createdByIdea[idea.id] = idea.created_by;
@@ -95,6 +100,16 @@ export default async function WorkspaceBoardPage({
               </Link>
             }
           />
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={
+              <Link href={`/workspace/${workspaceId}/projects`} aria-label="Projeler">
+                <FolderKanbanIcon /> <span className="hidden sm:inline">Projeler</span>
+              </Link>
+            }
+          />
           <ActivityPanel workspaceId={workspaceId} />
           {canManageContent && (
             <Button
@@ -116,6 +131,8 @@ export default async function WorkspaceBoardPage({
         versionsByColumn={versionsByColumn}
         assigneeByIdea={assigneeByIdea}
         tagsByIdea={tagsByIdea}
+        projectByIdea={projectByIdea}
+        projects={projects}
         voteCountByIdea={voteCountByIdea}
         hasVotedByIdea={hasVotedByIdea}
         createdByIdea={createdByIdea}

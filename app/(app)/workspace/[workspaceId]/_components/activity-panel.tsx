@@ -6,11 +6,13 @@ import { toast } from "sonner";
 import {
   ActivityIcon,
   ArrowLeftRightIcon,
+  FolderKanbanIcon,
   LayoutGridIcon,
   LightbulbIcon,
   LoaderCircleIcon,
   MessageCircleIcon,
   PencilIcon,
+  SproutIcon,
   TagIcon,
   TagsIcon,
   ThumbsUpIcon,
@@ -38,6 +40,10 @@ const ACTIVITY_ICONS = {
   tag_deleted: Trash2Icon,
   idea_tags_updated: TagsIcon,
   member_joined: UsersIcon,
+  project_created: FolderKanbanIcon,
+  project_deleted: Trash2Icon,
+  idea_project_updated: FolderKanbanIcon,
+  idea_converted_to_project: SproutIcon,
 } as const;
 
 function formatActivityTime(value: string) {

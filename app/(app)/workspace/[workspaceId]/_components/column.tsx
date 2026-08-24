@@ -16,6 +16,7 @@ type ColumnRow = Database["public"]["Tables"]["kanban_columns"]["Row"];
 type IdeaVersion = Database["public"]["Tables"]["idea_versions"]["Row"];
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
 type Tag = Database["public"]["Tables"]["tags"]["Row"];
+type Project = Database["public"]["Tables"]["projects"]["Row"];
 
 export function Column({
   workspaceId,
@@ -24,6 +25,8 @@ export function Column({
   emptyMessage,
   assigneeByIdea,
   tagsByIdea,
+  projectByIdea,
+  projects,
   voteCountByIdea,
   hasVotedByIdea,
   createdByIdea,
@@ -45,6 +48,8 @@ export function Column({
   emptyMessage: string;
   assigneeByIdea: Record<string, string | null>;
   tagsByIdea: Record<string, Tag[]>;
+  projectByIdea: Record<string, string | null>;
+  projects: Project[];
   voteCountByIdea: Record<string, number>;
   hasVotedByIdea: Record<string, boolean>;
   createdByIdea: Record<string, string>;
@@ -117,9 +122,12 @@ export function Column({
                       )}
                     >
                       <IdeaCard
+                        workspaceId={workspaceId}
                         version={v}
                         assigneeId={assigneeByIdea[v.idea_id] ?? null}
                         ideaTags={tagsByIdea[v.idea_id] ?? []}
+                        projectId={projectByIdea[v.idea_id] ?? null}
+                        projects={projects}
                         voteCount={voteCountByIdea[v.idea_id] ?? 0}
                         hasVoted={hasVotedByIdea[v.idea_id] ?? false}
                         createdBy={createdByIdea[v.idea_id]}
@@ -161,6 +169,7 @@ export function Column({
               mode="create"
               workspaceId={workspaceId}
               columnId={column.id}
+              projects={projects}
               trigger={
                 <Button
                   variant="ghost"

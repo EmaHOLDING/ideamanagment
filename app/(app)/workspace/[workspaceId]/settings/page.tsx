@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getWorkspaceForUser, getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import { getWorkspaceTags } from "@/app/actions/tagActions";
+import { getWorkspaceProjects } from "@/app/actions/projectActions";
 import { WorkspaceSettingsView } from "../_components/workspace-settings-view";
 
 export default async function WorkspaceSettingsPage({
@@ -17,9 +18,10 @@ export default async function WorkspaceSettingsPage({
     redirect(`/workspace/${workspaceId}`);
   }
 
-  const [members, tags] = await Promise.all([
+  const [members, tags, projects] = await Promise.all([
     getWorkspaceMembers(workspaceId),
     getWorkspaceTags(workspaceId),
+    getWorkspaceProjects(workspaceId),
   ]);
 
   return (
@@ -34,6 +36,7 @@ export default async function WorkspaceSettingsPage({
       currentMembers={members}
       currentColumns={workspace.kanban_columns}
       currentTags={tags}
+      currentProjects={projects}
     />
   );
 }
