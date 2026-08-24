@@ -100,7 +100,9 @@ Pano ekranındaki **"Genel Bakış"** butonuyla açılan, workspace'in o anki du
 - **7 gün ve üzeri** hiçbir kolon değişikliği görmemiş "takılı kalmış" fikirlerin ayrı bir liste olarak öne çıkarılması — ekip nerede tıkanma olduğunu tek bakışta görebiliyor.
 - Bu sayfa, tüm workspace üyelerine (rolden bağımsız) açık; amaç raporlama değil, ekibin kendi panosunun sağlığını hızlıca gözden geçirmesi.
 
-## 10. Ekler ve Dosyalar
+## 10. Ekler ve Dosyalar *(şu an kapalı)*
+
+> **Not:** Bu özellik geçici olarak **devre dışı**. Arayüzde dosya yükleme alanı ve ek listesi görünmüyor; sunucu tarafı da bu isteklerin hiçbirini kabul etmiyor. Kod ve mevcut veriler olduğu gibi duruyor — daha önce yüklenmiş dosyalar silinmedi ve özellik yeniden açıldığında aynen geri geliyor. Açma/kapama tek bir ayardan (`lib/features.ts` → `attachments`) yapılıyor. Aşağıdaki açıklama, özellik açıkken geçerli olan davranışı anlatıyor.
 
 Fikirlere dosya eklenebiliyor — görseller, PDF, Word (DOCX), metin (TXT/MD) ve ZIP dosyaları destekleniyor, dosya başına en fazla 10 MB.
 
@@ -120,7 +122,8 @@ Uygulamadaki neredeyse tüm silme işlemleri aynı, kullanıcı dostu deseni izl
 4. Bu 30 saniye içinde **"Geri Al"a** basılırsa, silinen öğe olduğu yere, olduğu sırayla geri geliyor — sanki hiç silinmemiş gibi.
 5. 30 saniye dolup bildirim kendiliğinden kapanırsa, o zaman silme işlemi **kalıcı** hale geliyor.
 
-Bunun arkasındaki mantık şöyle: bir şey "sil" denildiği anda veritabanından tamamen yok edilmiyor, önce sadece **"silinmiş" olarak işaretleniyor** (bu yüzden standart listelerde artık görünmüyor ama veri hâlâ duruyor). 30 saniyelik pencere kapanana kadar "Geri Al" bu işareti kaldırıp veriyi eski haline getirebiliyor. Süre dolduktan sonra ise sistem araya girip veriyi **gerçekten ve kalıcı olarak** temizliyor — dosyalarda bu, hem veritabanı kaydının hem de dosyanın kendisinin sunucudan tamamen silinmesi anlamına geliyor.
+Bunun arkasındaki mantık şöyle: bir şey "sil" denildiği anda veritabanından tamamen yok edilmiyor, önce sadece **"silinmiş" olarak işaretleniyor** (bu yüzden standart listelerde artık görünmüyor ama veri hâlâ duruyor). 30 saniyelik pencere kapanana kadar "Geri Al" bu işareti kaldırıp veriyi eski haline getirebiliyor.
+
 
 Bu mekanizma şu an yedi yerde birebir aynı şekilde çalışıyor: **fikir silme**, **yorum silme**, **dosya silme**, **kolon silme**, **etiket silme**, **workspace silme** ve **üye çıkarma**. Kolon/etiket/workspace/üye-çıkarma tarafında geri-al işlemi, veritabanı seviyesinde özel yetkilendirilmiş fonksiyonlarla çalışıyor — böylece "silinmiş" olarak işaretlenmiş bir kaydın geri getirilmesi, normal güvenlik kurallarına takılmadan güvenli şekilde gerçekleşiyor.
 

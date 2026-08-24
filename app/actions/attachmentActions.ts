@@ -3,6 +3,16 @@
 import { z } from "zod";
 import { requireUser, resolveAuthorProfiles } from "./_shared";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { FEATURES } from "@/lib/features";
+
+/** Ek/dosya özelliği kapalıyken hiçbir action isteği işlemez. Arayüzü
+ * gizlemek tek başına yeterli değil: server action'lar istemciden
+ * doğrudan çağrılabilir, bu yüzden kapı burada tutuluyor. */
+function assertAttachmentsEnabled() {
+  if (!FEATURES.attachments) {
+    throw new Error("Dosya ekleme özelliği şu anda kullanım dışı.");
+  }
+}
 
 const BUCKET = "workspace-media";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -40,6 +50,7 @@ function sanitizeFileName(name: string) {
 }
 
 export async function uploadAttachment(ideaId: string, formData: FormData) {
+  assertAttachmentsEnabled();
   const id = ideaIdSchema.parse(ideaId);
   const { supabase, user } = await requireUser();
   await enforceRateLimit(supabase, `uploadAttachment:${user.id}`, 30, 300);
@@ -94,6 +105,7 @@ export async function uploadAttachment(ideaId: string, formData: FormData) {
 }
 
 export async function getAttachmentsForIdea(ideaId: string) {
+  assertAttachmentsEnabled();
   const id = ideaIdSchema.parse(ideaId);
   const { supabase } = await requireUser();
 
@@ -123,6 +135,7 @@ export async function getAttachmentsForIdea(ideaId: string) {
 }
 
 export async function softDeleteAttachment(attachmentId: string) {
+  assertAttachmentsEnabled();
   const id = attachmentIdSchema.parse(attachmentId);
   const { supabase } = await requireUser();
 
@@ -139,6 +152,7 @@ export async function softDeleteAttachment(attachmentId: string) {
 }
 
 export async function undoDeleteAttachment(attachmentId: string) {
+  assertAttachmentsEnabled();
   const id = attachmentIdSchema.parse(attachmentId);
   const { supabase } = await requireUser();
 
@@ -155,6 +169,7 @@ export async function undoDeleteAttachment(attachmentId: string) {
 }
 
 export async function hardDeleteAttachment(attachmentId: string) {
+  assertAttachmentsEnabled();
   const id = attachmentIdSchema.parse(attachmentId);
   const { supabase } = await requireUser();
 

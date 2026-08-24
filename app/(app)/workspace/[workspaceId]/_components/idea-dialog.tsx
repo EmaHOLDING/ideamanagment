@@ -29,6 +29,7 @@ import { uploadAttachment } from "@/app/actions/attachmentActions";
 import { setIdeaProject } from "@/app/actions/projectActions";
 import { IMPACT_EFFORT_LABELS, type ImpactEffortLevel } from "@/lib/status";
 import { MAX_ATTACHMENT_SIZE, formatFileSize } from "@/lib/attachment-client";
+import { FEATURES } from "@/lib/features";
 import type { Database } from "@/lib/types/database.types";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
@@ -155,7 +156,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
             }
           }
 
-          if (stagedFiles.length > 0) {
+          if (FEATURES.attachments && stagedFiles.length > 0) {
             setSubmitStage("uploading");
             let failedCount = 0;
             for (const file of stagedFiles) {
@@ -357,7 +358,7 @@ export function IdeaDialog(props: IdeaDialogProps) {
             </div>
             </section>
 
-            {props.mode === "create" && (
+            {props.mode === "create" && FEATURES.attachments && (
               <section className="flex flex-col gap-1.5 rounded-xl border border-border/60 bg-muted/10 p-2.5">
                 <Label>Ekler ve Dosyalar</Label>
                 <div

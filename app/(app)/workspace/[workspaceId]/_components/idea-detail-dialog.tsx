@@ -55,6 +55,7 @@ import {
 import { setIdeaTags } from "@/app/actions/tagActions";
 import { convertIdeaToProject } from "@/app/actions/projectActions";
 import { IMPACT_EFFORT_LABELS } from "@/lib/status";
+import { FEATURES } from "@/lib/features";
 import { useIdeaPresence, useIdeaPresenceActions } from "@/lib/hooks/use-idea-presence";
 import { IdeaDialog } from "./idea-dialog";
 import { VersionHistoryDialog } from "./version-history-dialog";
@@ -463,12 +464,14 @@ export function IdeaDetailDialog({
                   </div>
                 </section>
 
-                <IdeaAttachmentsSection
-                  ideaId={ideaId}
-                  currentUserId={currentUserId}
-                  canContribute={canContribute}
-                  canManageContent={canManageContent}
-                />
+                {FEATURES.attachments && (
+                  <IdeaAttachmentsSection
+                    ideaId={ideaId}
+                    currentUserId={currentUserId}
+                    canContribute={canContribute}
+                    canManageContent={canManageContent}
+                  />
+                )}
               </div>
             </ScrollArea>
           </div>
