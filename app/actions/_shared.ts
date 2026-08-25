@@ -27,20 +27,25 @@ function isTransientAuthError(err: unknown): boolean {
 }
 
 /** Google OAuth'tan hemen sonra mint edilen JWT'nin "iat" (issued-at)
- * değeri, PostgREST'in sunucu saatine göre birkaç milisaniye "gelecekte"
- * kalabiliyor — bu da girişten hemen sonraki ilk sorguda nadiren
- * "JWT issued at future" (PGRST303) hatasına yol açıyor. Bu, auth
- * callback'inden sonra ilk render'da (workspace listesi/bildirimler gibi)
- * çalışan sorgular için kısa bir bekleme + tek seferlik retry ile çözülür;
- * gerçek yetki hataları (giriş yapılmamış vb.) olduğu gibi fırlatılmaya
- * devam eder. */
+ * değeri, PostgREST'in sunucu saatine göre "gelecekte" kalabiliyor — bu da
+ * girişten hemen sonraki ilk sorguda "JWT issued at future" (PGRST303)
+ * hatasına yol açıyor. Üretimde bu birkaç milisaniyelik ağ/saat toleransı
+ * meselesi, ama yerel geliştirmede Docker Desktop'ın VM saati (özellikle
+ * uyku/yeniden başlatma sonrası) saniyeler mertebesinde kayabiliyor — tek
+ * seferlik sabit bir bekleme bunu kapatamayabiliyor ve kullanıcı elle
+ * yenilemek zorunda kalıyordu. Bu yüzden artan gecikmeyle birkaç kez
+ * deneniyor; gerçek yetki hataları (giriş yapılmamış vb.) olduğu gibi
+ * fırlatılmaya devam ediyor. */
+const RETRY_DELAYS_MS = [400, 1000, 2000];
+
 export async function withAuthRetry<T>(fn: () => Promise<T>): Promise<T> {
-  try {
-    return await fn();
-  } catch (err) {
-    if (!isTransientAuthError(err)) throw err;
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    return await fn();
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (!isTransientAuthError(err) || attempt >= RETRY_DELAYS_MS.length) throw err;
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+    }
   }
 }
 

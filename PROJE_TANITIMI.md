@@ -124,6 +124,7 @@ Uygulamadaki neredeyse tüm silme işlemleri aynı, kullanıcı dostu deseni izl
 
 Bunun arkasındaki mantık şöyle: bir şey "sil" denildiği anda veritabanından tamamen yok edilmiyor, önce sadece **"silinmiş" olarak işaretleniyor** (bu yüzden standart listelerde artık görünmüyor ama veri hâlâ duruyor). 30 saniyelik pencere kapanana kadar "Geri Al" bu işareti kaldırıp veriyi eski haline getirebiliyor.
 
+**Kalıcı silme** ise sunucuda saatlik çalışan bir temizlik işiyle yapılıyor: silinme işaretinin üzerinden **24 saat** geçen kayıtlar veritabanından gerçekten ve geri dönüşsüz olarak siliniyor. Arayüzdeki geri alma penceresi 30 saniyeyle sınırlı olduğu için kullanıcı açısından değişen bir şey yok; 24 saatlik pay, yanlışlıkla yapılan toplu bir silmede yöneticinin veriyi kurtarabilmesi için bilinçli bırakılmış bir güvenlik marjı. Temizlik istemciye bağlı değil — kullanıcı sekmeyi kapatsa da çalışıyor. (Dosya eklerinde silme, veritabanı kaydıyla birlikte dosyanın kendisini de sunucudan kaldırıyor.)
 
 Bu mekanizma şu an yedi yerde birebir aynı şekilde çalışıyor: **fikir silme**, **yorum silme**, **dosya silme**, **kolon silme**, **etiket silme**, **workspace silme** ve **üye çıkarma**. Kolon/etiket/workspace/üye-çıkarma tarafında geri-al işlemi, veritabanı seviyesinde özel yetkilendirilmiş fonksiyonlarla çalışıyor — böylece "silinmiş" olarak işaretlenmiş bir kaydın geri getirilmesi, normal güvenlik kurallarına takılmadan güvenli şekilde gerçekleşiyor.
 
