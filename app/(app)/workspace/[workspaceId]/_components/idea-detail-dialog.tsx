@@ -15,6 +15,7 @@ import {
   SproutIcon,
   LinkIcon,
   ChevronDownIcon,
+  ArchiveIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ import {
   assignIdea,
   softDeleteIdea,
   undoDeleteIdea,
+  archiveIdea,
   type IdeaVersionData,
 } from "@/app/actions/ideaActions";
 import { setIdeaTags } from "@/app/actions/tagActions";
@@ -134,6 +136,8 @@ export function IdeaDetailDialog({
   }
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(() =>
     typeof window === "undefined" ? true : window.innerWidth >= 640
   );
@@ -191,6 +195,7 @@ export function IdeaDetailDialog({
   }
 
   function onConvertToProject() {
+    setConvertOpen(false);
     startConvertTransition(async () => {
       try {
         const created = await convertIdeaToProject(ideaId);
@@ -200,6 +205,21 @@ export function IdeaDetailDialog({
         toast.error(err instanceof Error ? err.message : "Fikir projeye dönüştürülemedi");
       }
     });
+  }
+
+  function onConfirmArchive() {
+    setArchiveOpen(false);
+    onOpenChange(false);
+    hideIdea(ideaId);
+    archiveIdea(ideaId)
+      .then(() => {
+        toast.success("Fikir arşivlendi");
+        router.refresh();
+      })
+      .catch((err) => {
+        showIdea(ideaId);
+        toast.error(err instanceof Error ? err.message : "Fikir arşivlenemedi");
+      });
   }
 
   function onTagsChange(tagIds: string[]) {
@@ -341,10 +361,20 @@ export function IdeaDetailDialog({
                   variant="ghost"
                   size="sm"
                   disabled={isConvertPending}
-                  onClick={onConvertToProject}
+                  onClick={() => setConvertOpen(true)}
                   title="Bu fikri, altına başka fikirlerin bağlanabileceği bir projeye dönüştür"
                 >
                   <SproutIcon /> <span className="hidden sm:inline">Projeye Dönüştür</span>
+                </Button>
+              )}
+              {canEditIdea && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setArchiveOpen(true)}
+                >
+                  <ArchiveIcon /> <span className="hidden sm:inline">Arşivle</span>
                 </Button>
               )}
               {canEditIdea && (
@@ -520,6 +550,50 @@ export function IdeaDetailDialog({
             >
               <Trash2Icon /> Fikri Sil
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={convertOpen} onOpenChange={setConvertOpen}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="rounded-full bg-primary/10 text-primary ring-1 ring-primary/15">
+              <SproutIcon className="size-5" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Bu fikri projeye dönüştürelim mi?</AlertDialogTitle>
+            <AlertDialogDescription className="flex flex-col gap-2 text-left">
+              <span className="line-clamp-2 rounded-lg border bg-muted/50 px-3 py-2 font-medium text-foreground">
+                {data.title}
+              </span>
+              <span>
+                Fikrin başlığı ve açıklamasıyla yeni bir proje oluşturulacak. Fikir panoda kalacak
+                ve yeni projenin ilk fikri olarak bağlanacak.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+            <AlertDialogAction disabled={isConvertPending} onClick={onConvertToProject}>
+              <SproutIcon /> Projeye Dönüştür
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="rounded-full bg-muted text-muted-foreground">
+              <ArchiveIcon className="size-5" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Fikri arşivleyelim mi?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Fikir Kanban panosundan kaldırılır; Arşiv ekranından daha sonra geri yüklenebilir.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+            <AlertDialogAction onClick={onConfirmArchive}>Arşivle</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

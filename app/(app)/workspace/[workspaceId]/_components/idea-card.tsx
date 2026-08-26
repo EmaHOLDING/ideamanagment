@@ -16,6 +16,7 @@ import { getInitials } from "@/lib/user-display";
 import { useIdeaPresence } from "@/lib/hooks/use-idea-presence";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { Database } from "@/lib/types/database.types";
+import { projectColorHex } from "@/lib/project-colors";
 
 type IdeaVersion = Database["public"]["Tables"]["idea_versions"]["Row"];
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
@@ -65,6 +66,7 @@ export function IdeaCard({
   const [isVotePending, startVoteTransition] = useTransition();
   const assignee = members.find((m) => m.user_id === assigneeId);
   const project = projects.find((p) => p.id === projectId) ?? null;
+  const projectColor = projectColorHex(project?.color);
   const isOriginIdea = project?.origin_idea_id === version.idea_id;
   const visibleTags = ideaTags.slice(0, 3);
   const hiddenTagCount = Math.max(ideaTags.length - visibleTags.length, 0);
@@ -92,6 +94,7 @@ export function IdeaCard({
     <Card
       size="sm"
       className="relative isolate cursor-pointer bg-gradient-to-br from-card via-card to-primary/[0.035] shadow-[0_1px_0_rgb(255_255_255/0.025)_inset] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/15 hover:ring-primary/35"
+      style={project ? { borderLeft: `4px solid ${projectColor}`, backgroundImage: `linear-gradient(135deg, color-mix(in srgb, ${projectColor} 8%, var(--card)), var(--card) 55%)` } : undefined}
     >
       <span
         aria-hidden
@@ -130,6 +133,7 @@ export function IdeaCard({
           <div className="rounded-lg border border-border/50 bg-background/35 px-2.5 py-2 shadow-[0_1px_0_rgb(255_255_255/0.02)_inset]">
             <TiptapContentView
               content={version.content}
+              compact
               clamp
               className="text-xs leading-relaxed text-muted-foreground"
             />
@@ -139,18 +143,20 @@ export function IdeaCard({
             {project ? (
               <Badge
                 variant="secondary"
-                className="h-5 gap-1 rounded-md border-0 bg-primary/10 px-2 text-[0.66rem] font-medium text-primary"
+                className="h-5 gap-1.5 rounded-md border px-2 text-[0.66rem] font-medium shadow-[0_0_0_1px_rgb(255_255_255/0.025)_inset]"
+                style={{
+                  backgroundColor: `color-mix(in srgb, ${projectColor} 14%, transparent)`,
+                  borderColor: `color-mix(in srgb, ${projectColor} 28%, transparent)`,
+                  color: projectColor,
+                }}
                 title={
                   isOriginIdea
                     ? `${project.name} projesinin çıkış fikri`
                     : `${project.name} projesine bağlı`
                 }
               >
-                {isOriginIdea ? (
-                  <SproutIcon className="size-3" />
-                ) : (
-                  <FolderKanbanIcon className="size-3" />
-                )}
+                <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: projectColor }} />
+                {isOriginIdea ? <SproutIcon className="size-3" /> : <FolderKanbanIcon className="size-3" />}
                 <span className="max-w-28 truncate">{project.name}</span>
               </Badge>
             ) : (

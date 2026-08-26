@@ -14,6 +14,7 @@ export async function getWorkspaceProjects(workspaceId: string) {
       .from("projects")
       .select("*")
       .eq("workspace_id", id)
+      .is("archived_at", null)
       .order("name", { ascending: true });
     if (error) throw error;
     return data;
@@ -30,12 +31,13 @@ export async function getWorkspaceProjectsWithCounts(workspaceId: string) {
 
   return withAuthRetry(async () => {
     const [projectsResult, ideaRowsResult] = await Promise.all([
-      supabase.from("projects").select("*").eq("workspace_id", id).order("name", { ascending: true }),
+      supabase.from("projects").select("*").eq("workspace_id", id).is("archived_at", null).order("name", { ascending: true }),
       supabase
         .from("ideas")
         .select("project_id")
         .eq("workspace_id", id)
         .is("deleted_at", null)
+        .is("archived_at", null)
         .not("project_id", "is", null),
     ]);
 
@@ -62,6 +64,7 @@ const createProjectSchema = z.object({
   description: z.string().optional().nullable(),
   problemStatement: z.string().trim().optional().nullable(),
   targetAudience: z.string().trim().optional().nullable(),
+  color: z.string().trim().min(1).max(20).default("indigo"),
 });
 
 export type ProjectFormData = {
@@ -69,6 +72,7 @@ export type ProjectFormData = {
   description?: string | null;
   problemStatement?: string | null;
   targetAudience?: string | null;
+  color: string;
 };
 
 export async function createProject(workspaceId: string, data: ProjectFormData) {
@@ -83,6 +87,7 @@ export async function createProject(workspaceId: string, data: ProjectFormData) 
       description: input.description || null,
       problem_statement: input.problemStatement || null,
       target_audience: input.targetAudience || null,
+      color: input.color,
       created_by: user.id,
     })
     .select()
@@ -111,6 +116,7 @@ const updateProjectSchema = z.object({
   description: z.string().optional().nullable(),
   problemStatement: z.string().trim().optional().nullable(),
   targetAudience: z.string().trim().optional().nullable(),
+  color: z.string().trim().min(1).max(20),
 });
 
 export async function updateProject(projectId: string, data: ProjectFormData) {
@@ -124,6 +130,7 @@ export async function updateProject(projectId: string, data: ProjectFormData) {
       description: input.description || null,
       problem_statement: input.problemStatement || null,
       target_audience: input.targetAudience || null,
+      color: input.color,
     })
     .eq("id", input.projectId)
     .select()
@@ -217,6 +224,41 @@ export async function undoDeleteProject(projectId: string, cascadedIdeaIds: stri
     throw error;
   }
 
+  return { success: true as const };
+}
+
+export async function archiveProject(projectId: string) {
+  const id = projectIdSchema.parse(projectId);
+  const { supabase, user } = await requireUser();
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("workspace_id, name")
+    .eq("id", id)
+    .single();
+  if (projectError) throw projectError;
+
+  const { error } = await supabase.rpc("archive_project", { _project_id: id });
+  if (error) {
+    if (error.message.includes("permission_denied")) throw new Error("Bu projeyi arşivleme yetkiniz yok.");
+    throw error;
+  }
+  await logActivity(supabase, {
+    workspaceId: project.workspace_id,
+    actorId: user.id,
+    type: "project_archived",
+    message: `${getDisplayName(user)}, '${project.name}' projesini arşivledi.`,
+  });
+  return { success: true as const };
+}
+
+export async function restoreArchivedProject(projectId: string) {
+  const id = projectIdSchema.parse(projectId);
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("restore_archived_project", { _project_id: id });
+  if (error) {
+    if (error.message.includes("permission_denied")) throw new Error("Bu projeyi geri yükleme yetkiniz yok.");
+    throw error;
+  }
   return { success: true as const };
 }
 
@@ -317,6 +359,7 @@ export async function getProjectContext(projectId: string) {
     .from("projects")
     .select("*")
     .eq("id", id)
+    .is("archived_at", null)
     .single();
 
   if (projectError) throw projectError;

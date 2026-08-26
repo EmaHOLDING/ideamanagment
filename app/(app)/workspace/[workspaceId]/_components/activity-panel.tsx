@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
   ActivityIcon,
+  ArchiveIcon,
   ArrowLeftRightIcon,
   FolderKanbanIcon,
   LayoutGridIcon,
@@ -44,6 +45,8 @@ const ACTIVITY_ICONS = {
   project_deleted: Trash2Icon,
   idea_project_updated: FolderKanbanIcon,
   idea_converted_to_project: SproutIcon,
+  idea_archived: ArchiveIcon,
+  project_archived: ArchiveIcon,
 } as const;
 
 function formatActivityTime(value: string) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftIcon, ChartNoAxesCombinedIcon, FolderKanbanIcon, SettingsIcon } from "lucide-react";
+import { ArchiveIcon, ArrowLeftIcon, ChartNoAxesCombinedIcon, FolderKanbanIcon, SettingsIcon } from "lucide-react";
 import { getWorkspaceForUser, getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import { getIdeasForWorkspace } from "@/app/actions/ideaActions";
 import { getWorkspaceTags } from "@/app/actions/tagActions";
@@ -107,6 +107,16 @@ export default async function WorkspaceBoardPage({
             render={
               <Link href={`/workspace/${workspaceId}/projects`} aria-label="Projeler">
                 <FolderKanbanIcon /> <span className="hidden sm:inline">Projeler</span>
+              </Link>
+            }
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={
+              <Link href={`/workspace/${workspaceId}/archive`} aria-label="Arşiv">
+                <ArchiveIcon /> <span className="hidden sm:inline">Arşiv</span>
               </Link>
             }
           />

@@ -327,6 +327,9 @@ export type Database = {
       }
       ideas: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
           assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
@@ -341,6 +344,9 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_via_project_id?: string | null
           assignee_id?: string | null
           cancellation_reason?: string | null
           column_id: string
@@ -355,6 +361,9 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_via_project_id?: string | null
           assignee_id?: string | null
           cancellation_reason?: string | null
           column_id?: string
@@ -369,6 +378,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ideas_archived_via_project_id_fkey"
+            columns: ["archived_via_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ideas_column_id_fkey"
             columns: ["column_id"]
@@ -507,6 +523,9 @@ export type Database = {
       }
       projects: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
+          color: string
           created_at: string
           created_by: string
           deleted_at: string | null
@@ -520,6 +539,9 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          color?: string
           created_at?: string
           created_by: string
           deleted_at?: string | null
@@ -533,6 +555,9 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          color?: string
           created_at?: string
           created_by?: string
           deleted_at?: string | null
@@ -706,6 +731,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_idea: { Args: { _idea_id: string }; Returns: Database["public"]["Tables"]["ideas"]["Row"] }
+      archive_project: { Args: { _project_id: string }; Returns: Database["public"]["Tables"]["projects"]["Row"] }
       accept_workspace_invite: {
         Args: { _workspace_id: string }
         Returns: {
@@ -1015,6 +1042,8 @@ export type Database = {
         }
       }
       soft_delete_project: { Args: { _project_id: string }; Returns: Json }
+      restore_archived_idea: { Args: { _idea_id: string }; Returns: Database["public"]["Tables"]["ideas"]["Row"] }
+      restore_archived_project: { Args: { _project_id: string }; Returns: Database["public"]["Tables"]["projects"]["Row"] }
       soft_delete_tag: {
         Args: { _tag_id: string }
         Returns: {

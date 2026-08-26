@@ -13,10 +13,12 @@ export function TiptapContentView({
   content,
   className,
   clamp,
+  compact = false,
 }: {
   content: string | null | undefined;
   className?: string;
   clamp?: boolean;
+  compact?: boolean;
 }) {
   const editor = useEditor({
     extensions: EXTENSIONS,
@@ -54,8 +56,9 @@ export function TiptapContentView({
   return (
     <div
       className={cn(
-        "min-w-0 max-w-none overflow-hidden text-sm text-foreground [overflow-wrap:anywhere] [&_.ProseMirror]:min-w-0 [&_.ProseMirror]:max-w-full [&_pre]:max-w-full",
+        "min-w-0 max-w-none overflow-hidden font-sans text-sm text-foreground [overflow-wrap:anywhere] [&_.ProseMirror]:min-w-0 [&_.ProseMirror]:max-w-full [&_pre]:max-w-full",
         clamp && "line-clamp-2 [&_.ProseMirror]:line-clamp-2",
+        compact && "[&_.ProseMirror]:text-sm [&_h1]:!text-sm [&_h2]:!text-sm [&_h3]:!text-sm [&_h4]:!text-sm [&_h5]:!text-sm [&_h6]:!text-sm [&_h1]:!leading-relaxed [&_h2]:!leading-relaxed [&_h3]:!leading-relaxed",
         className
       )}
     >

@@ -5,6 +5,7 @@ import { refresh } from "next/cache";
 import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName, withAuthRetry } from "./_shared";
 import { notifyEvent } from "./_notifications";
 import { assignmentEmailHtml, ideaMovedEmailHtml } from "@/lib/email-templates";
+import { normalizeIdeaMarkdown } from "@/lib/markdown";
 
 const impactEffortSchema = z.enum(["LOW", "MEDIUM", "HIGH"]).optional();
 
@@ -31,13 +32,14 @@ export async function createIdea(
   versionData: IdeaVersionData
 ) {
   const input = createIdeaSchema.parse({ workspaceId, columnId, versionData });
+  const normalizedContent = normalizeIdeaMarkdown(input.versionData.content);
   const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase.rpc("create_idea", {
     _workspace_id: input.workspaceId,
     _column_id: input.columnId,
     _title: input.versionData.title,
-    _content: input.versionData.content,
+    _content: normalizedContent,
     _problem_statement: input.versionData.problemStatement ?? undefined,
     _target_audience: input.versionData.targetAudience ?? undefined,
     _impact_score: input.versionData.impactScore ?? "MEDIUM",
@@ -66,12 +68,13 @@ const updateIdeaSchema = z.object({
 
 export async function updateIdea(ideaId: string, versionData: IdeaVersionData) {
   const input = updateIdeaSchema.parse({ ideaId, versionData });
+  const normalizedContent = normalizeIdeaMarkdown(input.versionData.content);
   const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase.rpc("update_idea", {
     _idea_id: input.ideaId,
     _title: input.versionData.title,
-    _content: input.versionData.content,
+    _content: normalizedContent,
     _problem_statement: input.versionData.problemStatement ?? undefined,
     _target_audience: input.versionData.targetAudience ?? undefined,
     _impact_score: input.versionData.impactScore ?? "MEDIUM",
@@ -239,6 +242,46 @@ export async function undoDeleteIdea(ideaId: string) {
   return { success: true as const };
 }
 
+export async function archiveIdea(ideaId: string) {
+  const id = ideaIdSchema.parse(ideaId);
+  const { supabase, user } = await requireUser();
+  const { data: idea, error: ideaError } = await supabase
+    .from("ideas")
+    .select("workspace_id, idea_versions(title, version_number)")
+    .eq("id", id)
+    .single();
+  if (ideaError) throw ideaError;
+
+  const { error } = await supabase.rpc("archive_idea", { _idea_id: id });
+  if (error) {
+    if (error.message.includes("permission_denied")) throw new Error("Bu fikri arşivleme yetkiniz yok.");
+    throw error;
+  }
+
+  const latest = idea.idea_versions.slice().sort((a, b) => b.version_number - a.version_number)[0];
+  await logActivity(supabase, {
+    workspaceId: idea.workspace_id,
+    actorId: user.id,
+    ideaId: id,
+    type: "idea_archived",
+    message: `${getDisplayName(user)}, '${latest?.title ?? ""}' fikrini arşivledi.`,
+  });
+  refresh();
+  return { success: true as const };
+}
+
+export async function restoreArchivedIdea(ideaId: string) {
+  const id = ideaIdSchema.parse(ideaId);
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("restore_archived_idea", { _idea_id: id });
+  if (error) {
+    if (error.message.includes("permission_denied")) throw new Error("Bu fikri geri yükleme yetkiniz yok.");
+    throw error;
+  }
+  refresh();
+  return { success: true as const };
+}
+
 const assignIdeaSchema = z.object({
   ideaId: z.string().uuid(),
   assigneeUserId: z.string().uuid().nullable(),
@@ -321,7 +364,8 @@ export async function getIdeasForWorkspace(workspaceId: string) {
         "*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id), comments(id, deleted_at)"
       )
       .eq("workspace_id", id)
-      .is("deleted_at", null);
+      .is("deleted_at", null)
+      .is("archived_at", null);
     if (error) throw error;
     return data;
   });

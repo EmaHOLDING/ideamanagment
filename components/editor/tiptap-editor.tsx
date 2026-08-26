@@ -33,7 +33,7 @@ export function TiptapEditor({
     editorProps: {
       attributes: {
         class:
-          `${compact ? "min-h-20" : "min-h-32"} min-w-0 max-w-full overflow-hidden rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none [overflow-wrap:anywhere] focus-visible:ring-3 focus-visible:ring-ring/50 [&_*]:max-w-full [&_p]:my-1 [&_pre]:overflow-x-auto [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5`,
+          `${compact ? "min-h-20" : "min-h-32"} min-w-0 max-w-full overflow-hidden rounded-md border border-input bg-transparent px-3 py-2 font-sans text-sm outline-none [overflow-wrap:anywhere] focus-visible:ring-3 focus-visible:ring-ring/50 [&_*]:max-w-full [&_p]:my-1 [&_pre]:overflow-x-auto [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5`,
       },
     },
     onUpdate: ({ editor }) => {

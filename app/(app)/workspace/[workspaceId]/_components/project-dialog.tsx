@@ -19,6 +19,7 @@ import {
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
 import { createProject, updateProject, type ProjectFormData } from "@/app/actions/projectActions";
 import type { Database } from "@/lib/types/database.types";
+import { PROJECT_COLORS } from "@/lib/project-colors";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 
@@ -47,6 +48,7 @@ export function ProjectDialog(props: ProjectDialogProps) {
   const [description, setDescription] = useState(initial?.description ?? "");
   const [problemStatement, setProblemStatement] = useState(initial?.problem_statement ?? "");
   const [targetAudience, setTargetAudience] = useState(initial?.target_audience ?? "");
+  const [color, setColor] = useState(initial?.color ?? "indigo");
   const [isPending, startTransition] = useTransition();
 
   function resetForm() {
@@ -55,6 +57,7 @@ export function ProjectDialog(props: ProjectDialogProps) {
     setDescription(fresh?.description ?? "");
     setProblemStatement(fresh?.problem_statement ?? "");
     setTargetAudience(fresh?.target_audience ?? "");
+    setColor(fresh?.color ?? "indigo");
   }
 
   function onOpenChange(next: boolean) {
@@ -73,6 +76,7 @@ export function ProjectDialog(props: ProjectDialogProps) {
       description: description || null,
       problemStatement: problemStatement || null,
       targetAudience: targetAudience || null,
+      color,
     };
 
     startTransition(async () => {
@@ -85,6 +89,7 @@ export function ProjectDialog(props: ProjectDialogProps) {
           setDescription("");
           setProblemStatement("");
           setTargetAudience("");
+          setColor("indigo");
         } else {
           const updated = await updateProject(props.project.id, data);
           toast.success("Proje güncellendi");
@@ -152,6 +157,26 @@ export function ProjectDialog(props: ProjectDialogProps) {
                 className="min-h-16 resize-none"
               />
             </div>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-sm font-medium">Proje Rengi</legend>
+              <div className="flex flex-wrap gap-2">
+                {PROJECT_COLORS.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    aria-label={item.label}
+                    aria-pressed={color === item.value}
+                    title={item.label}
+                    onClick={() => setColor(item.value)}
+                    className="size-8 rounded-full border-2 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    style={{
+                      backgroundColor: item.hex,
+                      borderColor: color === item.value ? "var(--foreground)" : "transparent",
+                    }}
+                  />
+                ))}
+              </div>
+            </fieldset>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isPending} aria-busy={isPending}>

@@ -5,6 +5,7 @@ import {
   FolderKanbanIcon,
   InboxIcon,
   LightbulbIcon,
+  ArchiveIcon,
 } from "lucide-react";
 import { getWorkspaceForUser } from "@/app/actions/workspaceActions";
 import { getWorkspaceProjectsWithCounts } from "@/app/actions/projectActions";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TiptapContentView } from "@/components/editor/tiptap-content-view";
 import { ProjectCreateButton } from "../_components/project-create-button";
+import { projectColorHex } from "@/lib/project-colors";
 
 export default async function WorkspaceProjectsPage({
   params,
@@ -57,7 +59,12 @@ export default async function WorkspaceProjectsPage({
               </p>
             </div>
           </div>
-          {canContribute && <ProjectCreateButton workspaceId={workspaceId} />}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" nativeButton={false} render={
+              <Link href={`/workspace/${workspaceId}/archive`}><ArchiveIcon /> Arşiv</Link>
+            } />
+            {canContribute && <ProjectCreateButton workspaceId={workspaceId} />}
+          </div>
         </header>
 
         {projects.length === 0 ? (
@@ -77,7 +84,7 @@ export default async function WorkspaceProjectsPage({
                 href={`/workspace/${workspaceId}/project/${project.id}`}
                 className="group focus-visible:outline-none"
               >
-                <Card className="h-full border-0 bg-card/80 backdrop-blur-sm transition-[transform,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg group-hover:shadow-black/10 group-focus-visible:ring-2 group-focus-visible:ring-ring">
+                <Card className="h-full overflow-hidden border-0 bg-card/80 backdrop-blur-sm transition-[transform,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg group-hover:shadow-black/10 group-focus-visible:ring-2 group-focus-visible:ring-ring" style={{ borderTop: `4px solid ${projectColorHex(project.color)}` }}>
                   <CardHeader className="flex-row items-start justify-between gap-2">
                     <CardTitle className="min-w-0 [overflow-wrap:anywhere] line-clamp-2 text-base">
                       {project.name}
@@ -89,6 +96,7 @@ export default async function WorkspaceProjectsPage({
                       <TiptapContentView
                         content={project.description}
                         clamp
+                        compact
                         className="text-sm text-muted-foreground"
                       />
                     ) : (

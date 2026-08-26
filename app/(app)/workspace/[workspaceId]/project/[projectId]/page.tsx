@@ -15,6 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TiptapContentView } from "@/components/editor/tiptap-content-view";
 import { ProjectEditButton } from "../../_components/project-edit-button";
+import { getWorkspaceForUser } from "@/app/actions/workspaceActions";
+import { ProjectArchiveButton } from "../../_components/project-archive-button";
+import { projectColorHex } from "@/lib/project-colors";
 
 export default async function ProjectDetailPage({
   params,
@@ -22,7 +25,11 @@ export default async function ProjectDetailPage({
   params: Promise<{ workspaceId: string; projectId: string }>;
 }) {
   const { workspaceId, projectId } = await params;
-  const { project, ideas } = await getProjectContext(projectId);
+  const [{ project, ideas }, workspace] = await Promise.all([
+    getProjectContext(projectId),
+    getWorkspaceForUser(workspaceId),
+  ]);
+  const canManageContent = workspace.isOwner || workspace.role === "ADMIN";
 
   // Erişim zaten RLS ile korunuyor; bu yalnızca yanlış workspace URL'ine karşı.
   if (project.workspace_id !== workspaceId) notFound();
@@ -67,6 +74,7 @@ export default async function ProjectDetailPage({
                 Projeler
               </Link>
               <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+                <span className="mr-2 inline-block size-3 rounded-full align-middle" style={{ backgroundColor: projectColorHex(project.color) }} />
                 {project.name}
               </h1>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
@@ -77,6 +85,7 @@ export default async function ProjectDetailPage({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <ProjectEditButton project={project} />
+            {canManageContent && <ProjectArchiveButton workspaceId={workspaceId} projectId={project.id} projectName={project.name} ideaCount={ideaSummaries.length} />}
             <Button
               variant="outline"
               nativeButton={false}
