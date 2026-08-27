@@ -120,6 +120,7 @@ export default async function WorkspaceBoardPage({
               </Link>
             }
           />
+          <div id="workspace-export-slot" className="contents" />
           <ActivityPanel workspaceId={workspaceId} />
           {canManageContent && (
             <Button
@@ -137,6 +138,7 @@ export default async function WorkspaceBoardPage({
       </div>
       <Board
         workspaceId={workspaceId}
+        workspaceTitle={workspace.title}
         initialColumns={workspace.kanban_columns}
         versionsByColumn={versionsByColumn}
         assigneeByIdea={assigneeByIdea}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ChevronDownIcon, SearchIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
@@ -22,6 +23,7 @@ import {
 import { Column } from "./column";
 import { CreateColumnDialog } from "./create-column-dialog";
 import { CancellationReasonDialog } from "./cancellation-reason-dialog";
+import { WorkspaceExportDialog } from "./workspace-export-dialog";
 import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import type { Database } from "@/lib/types/database.types";
 
@@ -39,6 +41,7 @@ const INDEPENDENT = "independent";
 
 export function Board(props: {
   workspaceId: string;
+  workspaceTitle: string;
   initialColumns: ColumnRow[];
   versionsByColumn: Record<string, IdeaVersion[]>;
   assigneeByIdea: Record<string, string | null>;
@@ -73,6 +76,7 @@ export function Board(props: {
 
 function BoardInner({
   workspaceId,
+  workspaceTitle,
   initialColumns,
   versionsByColumn,
   assigneeByIdea,
@@ -92,6 +96,7 @@ function BoardInner({
   autoOpenIdeaId,
 }: {
   workspaceId: string;
+  workspaceTitle: string;
   initialColumns: ColumnRow[];
   versionsByColumn: Record<string, IdeaVersion[]>;
   assigneeByIdea: Record<string, string | null>;
@@ -296,6 +301,20 @@ function BoardInner({
 
   return (
     <>
+      {typeof document !== "undefined" && document.getElementById("workspace-export-slot") && createPortal(
+        <WorkspaceExportDialog
+          data={{
+            workspaceTitle,
+            columns: initialColumns,
+            visibleVersionsByColumn: filteredVersionsByColumn,
+            allVersionsByColumn: effectiveVersionsByColumn,
+            tagsByIdea,
+            projectByIdea,
+            projects,
+          }}
+        />,
+        document.getElementById("workspace-export-slot")!
+      )}
       <div className="border-b bg-muted/15">
         <button
           type="button"
