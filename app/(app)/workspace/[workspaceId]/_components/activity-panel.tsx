@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -20,13 +20,29 @@ import {
   Trash2Icon,
   UserRoundPlusIcon,
   UsersIcon,
+  XIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { getActivityLog } from "@/app/actions/activityActions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getActivityLog, type ActivityActionGroup } from "@/app/actions/activityActions";
+import type { getWorkspaceMembers } from "@/app/actions/workspaceActions";
 import { useRealtimeSubscription } from "@/lib/hooks/use-realtime-subscription";
 
 type ActivityRow = Awaited<ReturnType<typeof getActivityLog>>["items"][number];
+type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
+
+const ALL_ACTORS = "all";
+const ALL_ACTIONS = "all";
+const ACTION_GROUPS: { value: ActivityActionGroup; label: string; types: string[] }[] = [
+  { value: "ideas", label: "Fikir işlemleri", types: ["idea_created", "idea_updated", "idea_moved", "idea_assigned", "idea_voted", "idea_project_updated", "idea_converted_to_project"] },
+  { value: "projects", label: "Proje işlemleri", types: ["project_created", "project_deleted", "idea_project_updated", "idea_converted_to_project"] },
+  { value: "comments", label: "Yorumlar", types: ["comment_added"] },
+  { value: "tags", label: "Etiket işlemleri", types: ["tag_created", "tag_deleted", "idea_tags_updated"] },
+  { value: "columns", label: "Kolon işlemleri", types: ["column_created", "column_deleted"] },
+  { value: "members", label: "Üye işlemleri", types: ["member_joined"] },
+  { value: "archives", label: "Arşiv işlemleri", types: ["idea_archived", "project_archived"] },
+];
 
 const ACTIVITY_ICONS = {
   column_created: LayoutGridIcon,
@@ -66,14 +82,21 @@ function formatActivityTime(value: string) {
   });
 }
 
-export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
+export function ActivityPanel({ workspaceId, members }: { workspaceId: string; members: Member[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<ActivityRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [actorId, setActorId] = useState(ALL_ACTORS);
+  const [actionGroup, setActionGroup] = useState<string>(ALL_ACTIONS);
   const [isLoadingMore, startLoadMoreTransition] = useTransition();
+  const filters = useMemo(() => ({
+    actorId: actorId === ALL_ACTORS ? undefined : actorId,
+    actionGroup: actionGroup === ALL_ACTIONS ? undefined : actionGroup as ActivityActionGroup,
+  }), [actorId, actionGroup]);
+  const hasFilters = actorId !== ALL_ACTORS || actionGroup !== ALL_ACTIONS;
 
   useRealtimeSubscription(
     `activity-${workspaceId}`,
@@ -81,6 +104,8 @@ export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
     (payload) => {
       if (payload.eventType !== "INSERT") return;
       const row = payload.new as ActivityRow;
+      if (filters.actorId && row.actor_id !== filters.actorId) return;
+      if (filters.actionGroup && !ACTION_GROUPS.find((group) => group.value === filters.actionGroup)?.types.includes(row.type)) return;
       setItems((prev) => (prev.some((i) => i.id === row.id) ? prev : [row, ...prev]));
     },
     { enabled: open }
@@ -88,22 +113,42 @@ export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
 
   useEffect(() => {
     if (!open) return;
-    getActivityLog(workspaceId)
+    let cancelled = false;
+    getActivityLog(workspaceId, undefined, filters)
       .then((res) => {
+        if (cancelled) return;
         setItems(res.items);
         setNextCursor(res.nextCursor);
         setLoaded(true);
       })
       .catch((err) => {
+        if (cancelled) return;
         toast.error(err instanceof Error ? err.message : "Aktivite akışı yüklenemedi");
       });
-  }, [open, workspaceId]);
+    return () => { cancelled = true; };
+  }, [open, workspaceId, filters]);
+
+  function changeActor(value: string | null) {
+    setLoaded(false);
+    setActorId(value ?? ALL_ACTORS);
+  }
+
+  function changeActionGroup(value: string | null) {
+    setLoaded(false);
+    setActionGroup(value ?? ALL_ACTIONS);
+  }
+
+  function clearFilters() {
+    setLoaded(false);
+    setActorId(ALL_ACTORS);
+    setActionGroup(ALL_ACTIONS);
+  }
 
   function onLoadMore() {
     if (!nextCursor) return;
     startLoadMoreTransition(async () => {
       try {
-        const res = await getActivityLog(workspaceId, nextCursor);
+        const res = await getActivityLog(workspaceId, nextCursor, filters);
         setItems((prev) => [...prev, ...res.items]);
         setNextCursor(res.nextCursor);
       } catch (err) {
@@ -185,6 +230,23 @@ export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
             </span>
           </div>
         </div>
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 border-b bg-muted/15 px-3 py-2.5">
+          <Select value={actorId} onValueChange={changeActor}>
+            <SelectTrigger size="sm" aria-label="Aktiviteleri kişiye göre filtrele"><SelectValue>{actorId === ALL_ACTORS ? "Tüm kişiler" : members.find((member) => member.user_id === actorId)?.fullName ?? "Kişi"}</SelectValue></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ACTORS}>Tüm kişiler</SelectItem>
+              {members.map((member) => <SelectItem key={member.user_id} value={member.user_id}>{member.fullName}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={actionGroup} onValueChange={changeActionGroup}>
+            <SelectTrigger size="sm" aria-label="Aktiviteleri eyleme göre filtrele"><SelectValue>{actionGroup === ALL_ACTIONS ? "Tüm eylemler" : ACTION_GROUPS.find((group) => group.value === actionGroup)?.label}</SelectValue></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_ACTIONS}>Tüm eylemler</SelectItem>
+              {ACTION_GROUPS.map((group) => <SelectItem key={group.value} value={group.value}>{group.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button type="button" variant="ghost" size="icon-sm" disabled={!hasFilters} aria-label="Aktivite filtrelerini temizle" onClick={clearFilters}><XIcon /></Button>
+        </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {!loaded && (
             <div className="flex items-center justify-center gap-2 py-9 text-sm text-muted-foreground">
@@ -196,14 +258,14 @@ export function ActivityPanel({ workspaceId }: { workspaceId: string }) {
               <span className="flex size-10 items-center justify-center rounded-xl bg-muted/40 text-muted-foreground ring-1 ring-border/60">
                 <ActivityIcon className="size-4" />
               </span>
-              <p className="text-sm font-medium">Henüz aktivite yok</p>
+              <p className="text-sm font-medium">{hasFilters ? "Eşleşen aktivite yok" : "Henüz aktivite yok"}</p>
               <p className="max-w-52 text-xs leading-relaxed text-muted-foreground">
-                Workspace&apos;teki hareketler burada görünecek.
+                {hasFilters ? "Filtreleri değiştirerek diğer hareketleri görüntüleyebilirsiniz." : "Workspace'teki hareketler burada görünecek."}
               </p>
             </div>
           )}
-          {items.length > 0 && <div className="space-y-1">{items.map(renderActivityItem)}</div>}
-          {nextCursor && (
+          {loaded && items.length > 0 && <div className="space-y-1">{items.map(renderActivityItem)}</div>}
+          {loaded && nextCursor && (
             <Button
               type="button"
               variant="ghost"

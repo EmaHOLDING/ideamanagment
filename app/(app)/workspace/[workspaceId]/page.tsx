@@ -121,7 +121,7 @@ export default async function WorkspaceBoardPage({
             }
           />
           <div id="workspace-export-slot" className="contents" />
-          <ActivityPanel workspaceId={workspaceId} />
+          <ActivityPanel workspaceId={workspaceId} members={members} />
           {canManageContent && (
             <Button
               variant="outline"
