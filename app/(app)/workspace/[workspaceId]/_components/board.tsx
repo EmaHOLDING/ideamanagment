@@ -311,6 +311,7 @@ function BoardInner({
             tagsByIdea,
             projectByIdea,
             projects,
+            voteCountByIdea,
           }}
         />,
         document.getElementById("workspace-export-slot")!
