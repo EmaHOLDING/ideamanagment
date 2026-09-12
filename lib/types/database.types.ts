@@ -731,8 +731,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      archive_idea: { Args: { _idea_id: string }; Returns: Database["public"]["Tables"]["ideas"]["Row"] }
-      archive_project: { Args: { _project_id: string }; Returns: Database["public"]["Tables"]["projects"]["Row"] }
       accept_workspace_invite: {
         Args: { _workspace_id: string }
         Returns: {
@@ -750,9 +748,63 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      archive_idea: {
+        Args: { _idea_id: string }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
+          assignee_id: string | null
+          cancellation_reason: string | null
+          column_id: string
+          created_at: string
+          created_by: string
+          current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          project_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      archive_project: {
+        Args: { _project_id: string }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          color: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          id: string
+          name: string
+          origin_idea_id: string | null
+          problem_statement: string | null
+          target_audience: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       assign_idea: {
         Args: { _assignee_user_id?: string; _idea_id: string }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
           assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
@@ -780,6 +832,9 @@ export type Database = {
       convert_idea_to_project: {
         Args: { _idea_id: string }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          color: string
           created_at: string
           created_by: string
           deleted_at: string | null
@@ -811,6 +866,9 @@ export type Database = {
           _workspace_id: string
         }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
           assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
@@ -915,6 +973,9 @@ export type Database = {
           _target_column_id: string
         }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
           assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
@@ -935,9 +996,64 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      purge_expired_deletions: { Args: { _retention?: string }; Returns: Json }
+      restore_archived_idea: {
+        Args: { _idea_id: string }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
+          assignee_id: string | null
+          cancellation_reason: string | null
+          column_id: string
+          created_at: string
+          created_by: string
+          current_version: number
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          project_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ideas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      restore_archived_project: {
+        Args: { _project_id: string }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          color: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          id: string
+          name: string
+          origin_idea_id: string | null
+          problem_statement: string | null
+          target_audience: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_idea_project: {
         Args: { _idea_id: string; _project_id?: string }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
           assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
@@ -1021,6 +1137,9 @@ export type Database = {
       soft_delete_idea: {
         Args: { _idea_id: string }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
           assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
@@ -1042,8 +1161,6 @@ export type Database = {
         }
       }
       soft_delete_project: { Args: { _project_id: string }; Returns: Json }
-      restore_archived_idea: { Args: { _idea_id: string }; Returns: Database["public"]["Tables"]["ideas"]["Row"] }
-      restore_archived_project: { Args: { _project_id: string }; Returns: Database["public"]["Tables"]["projects"]["Row"] }
       soft_delete_tag: {
         Args: { _tag_id: string }
         Returns: {
@@ -1148,6 +1265,9 @@ export type Database = {
       undo_delete_idea: {
         Args: { _idea_id: string }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
           assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
@@ -1171,6 +1291,9 @@ export type Database = {
       undo_delete_project: {
         Args: { _cascaded_idea_ids?: string[]; _project_id: string }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          color: string
           created_at: string
           created_by: string
           deleted_at: string | null
@@ -1259,6 +1382,9 @@ export type Database = {
           _title: string
         }
         Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_via_project_id: string | null
           assignee_id: string | null
           cancellation_reason: string | null
           column_id: string
@@ -1300,12 +1426,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1329,11 +1455,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1354,11 +1480,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1379,11 +1505,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1396,11 +1522,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
