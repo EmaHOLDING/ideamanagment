@@ -336,6 +336,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          current_version_id: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -353,6 +354,7 @@ export type Database = {
           created_at?: string
           created_by: string
           current_version?: number
+          current_version_id?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
@@ -370,6 +372,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           current_version?: number
+          current_version_id?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
@@ -390,6 +393,13 @@ export type Database = {
             columns: ["column_id"]
             isOneToOne: false
             referencedRelation: "kanban_columns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ideas_current_version_id_fkey"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "idea_versions"
             referencedColumns: ["id"]
           },
           {
@@ -781,6 +791,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          current_version_id: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -832,6 +843,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          current_version_id: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -846,6 +858,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      authored_in_my_workspace: { Args: { _user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: { _key: string; _max_count: number; _window_seconds: number }
         Returns: boolean
@@ -875,41 +888,79 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      create_idea: {
-        Args: {
-          _column_id: string
-          _content: string
-          _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
-          _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-          _problem_statement?: string
-          _target_audience?: string
-          _title: string
-          _workspace_id: string
-        }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      create_idea:
+        | {
+            Args: {
+              _column_id: string
+              _content: Json
+              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _problem_statement?: string
+              _target_audience?: string
+              _title: string
+              _workspace_id: string
+            }
+            Returns: {
+              archived_at: string | null
+              archived_by: string | null
+              archived_via_project_id: string | null
+              assignee_id: string | null
+              cancellation_reason: string | null
+              column_id: string
+              created_at: string
+              created_by: string
+              current_version: number
+              current_version_id: string | null
+              deleted_at: string | null
+              deleted_by: string | null
+              id: string
+              project_id: string | null
+              updated_at: string
+              workspace_id: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "ideas"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _column_id: string
+              _content: string
+              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _problem_statement?: string
+              _target_audience?: string
+              _title: string
+              _workspace_id: string
+            }
+            Returns: {
+              archived_at: string | null
+              archived_by: string | null
+              archived_via_project_id: string | null
+              assignee_id: string | null
+              cancellation_reason: string | null
+              column_id: string
+              created_at: string
+              created_by: string
+              current_version: number
+              current_version_id: string | null
+              deleted_at: string | null
+              deleted_by: string | null
+              id: string
+              project_id: string | null
+              updated_at: string
+              workspace_id: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "ideas"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       create_workspace: {
         Args: { _description?: string; _template_id?: string; _title: string }
         Returns: {
@@ -1003,6 +1054,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          current_version_id: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -1030,6 +1082,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          current_version_id: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -1081,6 +1134,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          current_version_id: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -1168,6 +1222,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          current_version_id: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -1296,6 +1351,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_version: number
+          current_version_id: string | null
           deleted_at: string | null
           deleted_by: string | null
           id: string
@@ -1393,40 +1449,77 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      update_idea: {
-        Args: {
-          _content: string
-          _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
-          _idea_id: string
-          _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-          _problem_statement?: string
-          _target_audience?: string
-          _title: string
-        }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      update_idea:
+        | {
+            Args: {
+              _content: Json
+              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _idea_id: string
+              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _problem_statement?: string
+              _target_audience?: string
+              _title: string
+            }
+            Returns: {
+              archived_at: string | null
+              archived_by: string | null
+              archived_via_project_id: string | null
+              assignee_id: string | null
+              cancellation_reason: string | null
+              column_id: string
+              created_at: string
+              created_by: string
+              current_version: number
+              current_version_id: string | null
+              deleted_at: string | null
+              deleted_by: string | null
+              id: string
+              project_id: string | null
+              updated_at: string
+              workspace_id: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "ideas"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _content: string
+              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _idea_id: string
+              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
+              _problem_statement?: string
+              _target_audience?: string
+              _title: string
+            }
+            Returns: {
+              archived_at: string | null
+              archived_by: string | null
+              archived_via_project_id: string | null
+              assignee_id: string | null
+              cancellation_reason: string | null
+              column_id: string
+              created_at: string
+              created_by: string
+              current_version: number
+              current_version_id: string | null
+              deleted_at: string | null
+              deleted_by: string | null
+              id: string
+              project_id: string | null
+              updated_at: string
+              workspace_id: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "ideas"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
     }
     Enums: {
       impact_effort_level: "LOW" | "MEDIUM" | "HIGH"

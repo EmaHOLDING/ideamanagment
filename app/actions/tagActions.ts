@@ -166,14 +166,12 @@ export async function setIdeaTags(ideaId: string, tagIds: string[]) {
 
   const { data: idea } = await supabase
     .from("ideas")
-    .select("workspace_id, idea_versions(title, version_number)")
+    .select("workspace_id, currentVersion:idea_versions!ideas_current_version_id_fkey(title)")
     .eq("id", input.ideaId)
     .single();
 
   if (idea) {
-    const latestVersion = idea.idea_versions
-      .slice()
-      .sort((a, b) => b.version_number - a.version_number)[0];
+    const latestVersion = idea.currentVersion;
     await logActivity(supabase, {
       workspaceId: idea.workspace_id,
       actorId: user.id,

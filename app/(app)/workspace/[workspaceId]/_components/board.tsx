@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -32,6 +32,11 @@ type IdeaVersion = Database["public"]["Tables"]["idea_versions"]["Row"];
 type Member = Awaited<ReturnType<typeof getWorkspaceMembers>>[number];
 type Tag = Database["public"]["Tables"]["tags"]["Row"];
 type Project = Database["public"]["Tables"]["projects"]["Row"];
+
+/** Portal hedefi hiç değişmediği için abonelik bir no-op; modül
+ * seviyesinde sabit tutuluyor ki her render'da yeni bir referans üretip
+ * useSyncExternalStore'u gereksiz yere yeniden abone etmesin. */
+const EXPORT_SLOT_SUBSCRIBE = () => () => {};
 
 const ALL_TAGS = "all";
 const ALL_ASSIGNEES = "all";
@@ -131,6 +136,18 @@ function BoardInner({
   const [hiddenIdeaIds, setHiddenIdeaIds] = useState<Set<string>>(new Set());
   const [columnOverrides, setColumnOverrides] = useState<Record<string, string>>({});
   const [pendingMoveIdeaId, setPendingMoveIdeaId] = useState<string | null>(null);
+  // "Dışarı Aktar" butonu, başlık çubuğundaki bir slot'a portal'lanıyor.
+  // Hedef eleman yalnızca tarayıcıda var; bunu `typeof document !==
+  // "undefined"` ile render sırasında kontrol etmek sunucu ve istemcinin
+  // İLK render'ını farklılaştırıp hydration uyuşmazlığına yol açıyordu.
+  // useSyncExternalStore tam olarak bu iş için: sunucu anlık görüntüsü
+  // null, istemci anlık görüntüsü gerçek düğüm — ilk render iki tarafta
+  // da aynı, portal hydration'dan sonra bağlanıyor.
+  const exportSlot = useSyncExternalStore(
+    EXPORT_SLOT_SUBSCRIBE,
+    () => document.getElementById("workspace-export-slot"),
+    () => null
+  );
 
   // Sunucudan gelen versionsByColumn artık taşımayı yansıtınca override gereksizleşir;
   // bunu setState ile effect içinde temizlemek yerine render sırasında türetiyoruz.
@@ -301,7 +318,7 @@ function BoardInner({
 
   return (
     <>
-      {typeof document !== "undefined" && document.getElementById("workspace-export-slot") && createPortal(
+      {exportSlot && createPortal(
         <WorkspaceExportDialog
           data={{
             workspaceTitle,
@@ -314,7 +331,7 @@ function BoardInner({
             voteCountByIdea,
           }}
         />,
-        document.getElementById("workspace-export-slot")!
+        exportSlot
       )}
       <div className="border-b bg-muted/15">
         <button

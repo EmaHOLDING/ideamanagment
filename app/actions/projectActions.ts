@@ -325,7 +325,7 @@ export async function setIdeaProject(ideaId: string, projectId: string | null) {
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
-    .select("id, workspace_id, idea_versions(title, version_number)")
+    .select("id, workspace_id, currentVersion:idea_versions!ideas_current_version_id_fkey(title)")
     .eq("id", input.ideaId)
     .single();
 
@@ -343,9 +343,7 @@ export async function setIdeaProject(ideaId: string, projectId: string | null) {
     throw updateError;
   }
 
-  const latestVersion = idea.idea_versions
-    .slice()
-    .sort((a, b) => b.version_number - a.version_number)[0];
+  const latestVersion = idea.currentVersion;
   const ideaTitle = latestVersion?.title ?? "";
 
   await logActivity(supabase, {
@@ -380,7 +378,7 @@ export async function getProjectContext(projectId: string) {
 
     const { data: ideas, error: ideasError } = await supabase
       .from("ideas")
-      .select("*, idea_versions(*)")
+      .select("*, currentVersion:idea_versions!ideas_current_version_id_fkey(*)")
       .eq("project_id", id)
       .is("deleted_at", null);
 

@@ -53,7 +53,7 @@ export default async function WorkspaceOverviewPage({
 
   const columnById = new Map(workspace.kanban_columns.map((column) => [column.id, column]));
   const ideaSummaries = ideas.flatMap((idea) => {
-    const version = idea.idea_versions.find((item) => item.version_number === idea.current_version);
+    const version = idea.currentVersion;
     const column = columnById.get(idea.column_id);
     if (!version || !column) return [];
     return [{

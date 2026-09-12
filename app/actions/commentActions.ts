@@ -19,7 +19,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
-    .select("workspace_id, created_by, idea_versions(title, version_number)")
+    .select("workspace_id, created_by, currentVersion:idea_versions!ideas_current_version_id_fkey(title)")
     .eq("id", input.ideaId)
     .single();
 
@@ -95,9 +95,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
     for (const row of activeRecipients) recipientIds.add(row.user_id);
   }
 
-  const latestVersion = idea.idea_versions
-    .slice()
-    .sort((a, b) => b.version_number - a.version_number)[0];
+  const latestVersion = idea.currentVersion;
   const ideaTitle = latestVersion?.title ?? "";
 
   const actorName = getDisplayName(user);

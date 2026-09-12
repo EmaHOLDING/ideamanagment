@@ -134,15 +134,13 @@ export async function moveIdea(
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
-    .select("id, workspace_id, created_by, idea_versions(title, version_number)")
+    .select("id, workspace_id, created_by, currentVersion:idea_versions!ideas_current_version_id_fkey(title)")
     .eq("id", input.ideaId)
     .single();
 
   if (ideaError) throw ideaError;
 
-  const latestVersion = idea.idea_versions
-    .slice()
-    .sort((a, b) => b.version_number - a.version_number)[0];
+  const latestVersion = idea.currentVersion;
   const ideaTitle = latestVersion?.title ?? "";
 
   const { data: updatedIdea, error: updateError } = await supabase.rpc("move_idea", {
@@ -257,7 +255,7 @@ export async function archiveIdea(ideaId: string) {
   await enforceWriteLimit(supabase, user.id);
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
-    .select("workspace_id, idea_versions(title, version_number)")
+    .select("workspace_id, currentVersion:idea_versions!ideas_current_version_id_fkey(title)")
     .eq("id", id)
     .single();
   if (ideaError) throw ideaError;
@@ -268,7 +266,7 @@ export async function archiveIdea(ideaId: string) {
     throw error;
   }
 
-  const latest = idea.idea_versions.slice().sort((a, b) => b.version_number - a.version_number)[0];
+  const latest = idea.currentVersion;
   await logActivity(supabase, {
     workspaceId: idea.workspace_id,
     actorId: user.id,
@@ -305,7 +303,7 @@ export async function assignIdea(ideaId: string, assigneeUserId: string | null) 
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
-    .select("id, workspace_id, idea_versions(title, version_number)")
+    .select("id, workspace_id, currentVersion:idea_versions!ideas_current_version_id_fkey(title)")
     .eq("id", input.ideaId)
     .single();
 
@@ -323,9 +321,7 @@ export async function assignIdea(ideaId: string, assigneeUserId: string | null) 
     throw updateError;
   }
 
-  const latestVersion = idea.idea_versions
-    .slice()
-    .sort((a, b) => b.version_number - a.version_number)[0];
+  const latestVersion = idea.currentVersion;
   const ideaTitle = latestVersion?.title ?? "";
 
   if (input.assigneeUserId && input.assigneeUserId !== user.id) {
@@ -373,7 +369,7 @@ export async function getIdeasForWorkspace(workspaceId: string) {
       // project_id kullanılıyor, proje listesi ayrıca getWorkspaceProjects ile
       // çekiliyor.
       .select(
-        "*, idea_versions(*), idea_tags(tag:tags(*)), idea_votes(user_id), comments(id, deleted_at)"
+        "*, currentVersion:idea_versions!ideas_current_version_id_fkey(*), idea_tags(tag:tags(*)), idea_votes(user_id), comments(id, deleted_at)"
       )
       .eq("workspace_id", id)
       .is("deleted_at", null)
@@ -411,13 +407,11 @@ export async function toggleIdeaVote(ideaId: string) {
 
     const { data: idea } = await supabase
       .from("ideas")
-      .select("workspace_id, idea_versions(title, version_number)")
+      .select("workspace_id, currentVersion:idea_versions!ideas_current_version_id_fkey(title)")
       .eq("id", id)
       .single();
     if (idea) {
-      const latestVersion = idea.idea_versions
-        .slice()
-        .sort((a, b) => b.version_number - a.version_number)[0];
+      const latestVersion = idea.currentVersion;
       await logActivity(supabase, {
         workspaceId: idea.workspace_id,
         actorId: user.id,

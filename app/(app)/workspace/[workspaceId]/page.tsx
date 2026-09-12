@@ -56,9 +56,7 @@ export default async function WorkspaceBoardPage({
   const createdByIdea: Record<string, string> = {};
   const commentCountByIdea: Record<string, number> = {};
   for (const idea of ideas) {
-    const currentVersion = idea.idea_versions.find(
-      (v) => v.version_number === idea.current_version
-    );
+    const currentVersion = idea.currentVersion;
     if (!currentVersion) continue;
     (versionsByColumn[idea.column_id] ??= []).push(currentVersion);
     assigneeByIdea[idea.id] = idea.assignee_id;

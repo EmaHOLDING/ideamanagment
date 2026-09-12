@@ -36,7 +36,7 @@ export default async function ProjectDetailPage({
 
   const ideaSummaries = ideas
     .flatMap((idea) => {
-      const version = idea.idea_versions.find((v) => v.version_number === idea.current_version);
+      const version = idea.currentVersion;
       if (!version) return [];
       return [
         {
