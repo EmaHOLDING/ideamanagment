@@ -16,7 +16,7 @@ function supabaseOrigins(): string[] {
   }
 }
 
-function buildCsp(nonce: string, isDev: boolean): string {
+export function buildCsp(nonce: string, isDev: boolean): string {
   return [
     "default-src 'self'",
     // Asıl XSS savunması burada: script'ler yalnızca nonce'ı taşıyorsa

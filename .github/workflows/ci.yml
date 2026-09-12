@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Ayni dal icin ust uste push yapilirsa eski kosuyu iptal et.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Veritabani gerektirmeyen kontroller: hizli ve her zaman calisir.
+  kod:
+    name: Tip, lint, birim testi, derleme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tip kontrolu
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Birim testleri
+        run: npm test
+
+      - name: Derleme
+        run: npm run build
+        env:
+          # Derleme sirasinda sayfalar analiz edilirken bu degiskenler
+          # okunuyor; gercek bir projeye baglanilmiyor, yer tutucu yeterli.
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+
+  # Yetki modelinin regresyon testleri. Bu proje icin en kritik is:
+  # yetki siniri RLS oldugu icin bir politikanin sessizce gevsemesi
+  # dogrudan guvenlik acigi demek.
+  veritabani:
+    name: RLS yetki testleri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Supabase'i baslat
+        run: supabase start
+
+      - name: RLS testleri (pgTAP)
+        run: supabase test db
+
+      - name: Migration zinciri sifirdan kuruluyor mu
+        run: supabase db reset

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
  * göreli bir yola izin verilir. "//evil.com" (protocol-relative) veya
  * mutlak bir URL gibi open-redirect denemeleri reddedilip güvenli bir
  * varsayılana düşülür. */
-function sanitizeReturnUrl(raw: string | null): string {
+export function sanitizeReturnUrl(raw: string | null): string {
   if (!raw) return "/workspaces";
   if (!raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) {
     return "/workspaces";
