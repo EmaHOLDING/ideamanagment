@@ -16,7 +16,15 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           // Clickjacking: sayfa başka bir sitenin iframe'ine gömülemesin.
+          // (Modern karşılığı olan frame-ancestors, proxy.ts'teki CSP'de.)
           { key: "X-Frame-Options", value: "DENY" },
+          // Tarayıcı bu siteye bir daha asla http ile bağlanmasın — oturum
+          // çerezinin düz metin bir istekte sızmasını engeller. http
+          // üzerinden (yerel geliştirme) tarayıcılar bu başlığı yok sayar.
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
           // Tarayıcının Content-Type'ı "tahmin ederek" MIME sniffing yapmasını engelle.
           { key: "X-Content-Type-Options", value: "nosniff" },
           // Dış linklere tıklanınca tam URL (query string dahil) sızdırılmasın.
