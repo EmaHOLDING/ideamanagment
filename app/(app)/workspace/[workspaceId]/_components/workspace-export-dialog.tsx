@@ -122,8 +122,11 @@ export function WorkspaceExportDialog({ data }: { data: WorkspaceExportData }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" size="sm" />} nativeButton>
-        <ImageIcon /> <span className="hidden sm:inline">Dışarı Aktar</span>
+      <DialogTrigger
+        render={<Button id="workspace-export-trigger" variant="outline" size="sm" className="hidden sm:inline-flex" />}
+        nativeButton
+      >
+        <ImageIcon /> Dışarı Aktar
       </DialogTrigger>
       <DialogContent className="max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto sm:max-w-5xl">
         <DialogHeader>

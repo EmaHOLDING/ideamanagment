@@ -7,6 +7,7 @@ import { getWorkspaceProjects } from "@/app/actions/projectActions";
 import { Button } from "@/components/ui/button";
 import { Board } from "./_components/board";
 import { ActivityPanel } from "./_components/activity-panel";
+import { WorkspaceNavMenu } from "./_components/workspace-nav-menu";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/types/database.types";
 
@@ -94,9 +95,10 @@ export default async function WorkspaceBoardPage({
             variant="outline"
             size="sm"
             nativeButton={false}
+            className="hidden sm:inline-flex"
             render={
               <Link href={`/workspace/${workspaceId}/overview`}>
-                <ChartNoAxesCombinedIcon /> <span className="hidden sm:inline">Genel Bakış</span>
+                <ChartNoAxesCombinedIcon /> Genel Bakış
               </Link>
             }
           />
@@ -104,9 +106,10 @@ export default async function WorkspaceBoardPage({
             variant="outline"
             size="sm"
             nativeButton={false}
+            className="hidden sm:inline-flex"
             render={
               <Link href={`/workspace/${workspaceId}/projects`} aria-label="Projeler">
-                <FolderKanbanIcon /> <span className="hidden sm:inline">Projeler</span>
+                <FolderKanbanIcon /> Projeler
               </Link>
             }
           />
@@ -114,26 +117,29 @@ export default async function WorkspaceBoardPage({
             variant="outline"
             size="sm"
             nativeButton={false}
+            className="hidden sm:inline-flex"
             render={
               <Link href={`/workspace/${workspaceId}/archive`} aria-label="Arşiv">
-                <ArchiveIcon /> <span className="hidden sm:inline">Arşiv</span>
+                <ArchiveIcon /> Arşiv
               </Link>
             }
           />
-          <div id="workspace-export-slot" className="contents" />
-          <ActivityPanel workspaceId={workspaceId} members={members} />
           {canManageContent && (
             <Button
               variant="outline"
               size="sm"
               nativeButton={false}
+              className="hidden sm:inline-flex"
               render={
                 <Link href={`/workspace/${workspaceId}/settings`} aria-label="Ayarlar">
-                  <SettingsIcon /> <span className="hidden sm:inline">Ayarlar</span>
+                  <SettingsIcon /> Ayarlar
                 </Link>
               }
             />
           )}
+          <WorkspaceNavMenu workspaceId={workspaceId} canManageContent={canManageContent} className="sm:hidden" />
+          <div id="workspace-export-slot" className="contents" />
+          <ActivityPanel workspaceId={workspaceId} members={members} />
         </div>
       </div>
       <Board

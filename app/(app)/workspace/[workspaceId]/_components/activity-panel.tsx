@@ -210,7 +210,7 @@ export function ActivityPanel({ workspaceId, members }: { workspaceId: string; m
       <SheetTrigger
         render={
           <Button variant="outline" size="sm" aria-label="Aktivite">
-            <ActivityIcon /> <span className="hidden sm:inline">Aktivite</span>
+            <ActivityIcon /> Aktivite
           </Button>
         }
       />
