@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDisplayName } from "@/lib/user-display";
@@ -55,10 +56,29 @@ export function encodeCursor(cursor: Cursor): string {
   return Buffer.from(JSON.stringify(cursor)).toString("base64url");
 }
 
+/** Cursor'ın içeriği base64'ten çözülüp doğrudan PostgREST'in `or=(...)`
+ * filtre ifadesine string olarak gömülüyor (bkz. getComments /
+ * getActivityLog / getNotifications). Cursor client'tan geldiği için
+ * doğrulanmadan kullanılırsa, `,` `(` `)` gibi karakterlerle filtrenin
+ * sözdiziminden çıkılabilir — RLS ve idea_id/user_id eşitlikleri sorguyu
+ * hâlâ sınırlasa da bu bir injection yüzeyi. Bu yüzden şekil burada
+ * katı biçimde doğrulanıyor: id gerçek bir UUID, createdAt ise yalnızca
+ * ISO-8601 zaman damgasında geçen karakterlerden oluşuyor
+ * (örn. "2026-09-12T13:12:56.983454+00:00"). Uymayan cursor, hata
+ * fırlatmak yerine "cursor yok" sayılıp ilk sayfaya düşüyor. */
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d{1,9})?([+-]\d{2}:?\d{2}|Z)?$/;
+
+const cursorSchema = z.object({
+  createdAt: z.string().regex(ISO_TIMESTAMP),
+  id: z.string().uuid(),
+});
+
 export function decodeCursor(cursor: string | undefined | null): Cursor | null {
   if (!cursor) return null;
   try {
-    return JSON.parse(Buffer.from(cursor, "base64url").toString("utf-8")) as Cursor;
+    const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf-8"));
+    const result = cursorSchema.safeParse(parsed);
+    return result.success ? result.data : null;
   } catch {
     return null;
   }

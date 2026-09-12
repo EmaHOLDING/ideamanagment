@@ -29,7 +29,10 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/zip",
   "application/x-zip-compressed",
 ]);
-const ALLOWED_EXTENSIONS = new Set(["md"]); // bazı tarayıcılar .md'yi octet-stream olarak yollar
+// Bazı tarayıcılar .md'yi octet-stream olarak yollar; uzantıdan kabul edip
+// depoya yazarken doğru MIME tipine çeviriyoruz (bkz. uploadAttachment).
+const EXTENSION_MIME_TYPES: Record<string, string> = { md: "text/markdown" };
+const ALLOWED_EXTENSIONS = new Set(Object.keys(EXTENSION_MIME_TYPES));
 
 const SIGNED_URL_TTL_SECONDS = 3600;
 
@@ -77,9 +80,18 @@ export async function uploadAttachment(ideaId: string, formData: FormData) {
   const safeName = sanitizeFileName(file.name);
   const path = `${idea.workspace_id}/${id}/${crypto.randomUUID()}-${safeName}`;
 
+  // Bazı tarayıcılar .md'yi application/octet-stream olarak yolluyor.
+  // Bunu olduğu gibi depoya yazmak, bucket'taki MIME allowlist'ine
+  // octet-stream eklemeyi zorunlu kılardı — yani allowlist'i anlamsızlaştırırdı.
+  // Bunun yerine uzantıdan gerçek tipi çözüyoruz; yukarıdaki doğrulamadan
+  // geçen her dosya bu noktada allowlist'teki bir tipe sahip oluyor.
+  const contentType = ALLOWED_MIME_TYPES.has(file.type)
+    ? file.type
+    : EXTENSION_MIME_TYPES[extension] ?? file.type;
+
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)
-    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+    .upload(path, file, { contentType });
   if (uploadError) throw uploadError;
 
   const { data: attachment, error: insertError } = await supabase

@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { randomBytes } from "crypto";
+import { redirect } from "next/navigation";
 import { requireUser, resolveAuthorProfiles, getDisplayName, logActivity, withAuthRetry } from "./_shared";
 import { notifyEvent } from "./_notifications";
 import { getResendClient } from "@/lib/resend";
@@ -101,12 +102,23 @@ export async function getWorkspaceForUser(workspaceId: string) {
       .from("workspaces")
       .select("*, kanban_columns(*), workspace_members!inner(role)")
       .eq("id", id)
+      // workspaces SELECT politikası bilerek any-status (bekleyen davetin
+      // başlığı davet kartında gösterilebilsin diye). Bu yüzden burada
+      // ACTIVE filtresi açıkça gerekiyor: aksi halde daveti henüz kabul
+      // etmemiş bir kullanıcı /workspace/<id> adresine doğrudan giderek
+      // panoyu açabiliyor ve (içerik RLS'i onu görmediği için) bomboş bir
+      // pano görüyordu.
+      .eq("workspace_members.status", "ACTIVE")
       .eq("workspace_members.user_id", user.id)
       .order("order", { referencedTable: "kanban_columns", ascending: true })
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   });
+
+  // Erişim yok ya da davet hâlâ bekliyor: workspace listesine dön — bekleyen
+  // davet kartı ("Kabul Et / Reddet") orada.
+  if (!data) redirect("/workspaces");
 
   const { workspace_members, ...workspace } = data;
   const role = workspace_members[0]?.role ?? "MEMBER";

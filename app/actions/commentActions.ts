@@ -68,12 +68,31 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
 
   // Bölüm 6.D: fikre daha önce yorum yapmış kullanıcılar + fikri
   // oluşturan kişi, yorumu yapan actor hariç bildirim alır.
-  const recipientIds = new Set<string>();
+  //
+  // Aday liste, workspace'ten ÇIKARILMIŞ kişileri de içerebiliyor (eski
+  // yorumları ve oluşturdukları fikirler duruyor). Bu kişilere bildirim
+  // göndermek, artık erişemedikleri bir workspace'in fikir başlığını
+  // e-postayla dışarı taşır; bu yüzden alıcılar mention akışındaki aynı
+  // desenle ACTIVE üyeliğe göre süzülüyor.
+  const candidateIds = new Set<string>();
   for (const row of priorCommenters) {
-    if (row.user_id !== user.id) recipientIds.add(row.user_id);
+    if (row.user_id !== user.id) candidateIds.add(row.user_id);
   }
   if (idea.created_by && idea.created_by !== user.id) {
-    recipientIds.add(idea.created_by);
+    candidateIds.add(idea.created_by);
+  }
+
+  const recipientIds = new Set<string>();
+  if (candidateIds.size > 0) {
+    const { data: activeRecipients, error: recipientsError } = await supabase
+      .from("workspace_members")
+      .select("user_id")
+      .eq("workspace_id", idea.workspace_id)
+      .eq("status", "ACTIVE")
+      .in("user_id", Array.from(candidateIds));
+
+    if (recipientsError) throw recipientsError;
+    for (const row of activeRecipients) recipientIds.add(row.user_id);
   }
 
   const latestVersion = idea.idea_versions
