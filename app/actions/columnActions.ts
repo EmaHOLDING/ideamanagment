@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { requireUser, logActivity, getDisplayName } from "./_shared";
+import { enforceWriteLimit, enforceCreateLimit } from "@/lib/rate-limit";
 
 const statusTypeSchema = z.enum(["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED", "DONE"]);
 
@@ -20,6 +21,8 @@ export async function createColumn(
 ) {
   const input = createColumnSchema.parse({ workspaceId, title, statusType, order });
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
+  await enforceCreateLimit(supabase, user.id, "createColumn");
 
   const { data, error } = await supabase
     .from("kanban_columns")
@@ -51,7 +54,8 @@ const updateColumnSchema = z.object({
 
 export async function updateColumn(columnId: string, title: string) {
   const input = updateColumnSchema.parse({ columnId, title });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data, error } = await supabase
     .from("kanban_columns")
@@ -74,7 +78,8 @@ const reorderColumnsSchema = z.object({
 
 export async function reorderColumns(workspaceId: string, orderedIds: string[]) {
   const input = reorderColumnsSchema.parse({ workspaceId, orderedIds });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   await Promise.all(
     input.orderedIds.map((id, index) =>
@@ -97,6 +102,7 @@ const deleteColumnSchema = z.string().uuid();
 export async function softDeleteColumn(columnId: string) {
   const id = deleteColumnSchema.parse(columnId);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data: column, error: columnError } = await supabase
     .from("kanban_columns")
@@ -135,7 +141,8 @@ export async function softDeleteColumn(columnId: string) {
 
 export async function undoDeleteColumn(columnId: string) {
   const id = deleteColumnSchema.parse(columnId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { error } = await supabase.rpc("undo_delete_column", { _column_id: id });
 

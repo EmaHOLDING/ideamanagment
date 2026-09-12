@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { requireUser, logActivity, getDisplayName, withAuthRetry } from "./_shared";
+import { enforceWriteLimit, enforceCreateLimit } from "@/lib/rate-limit";
 
 const workspaceIdSchema = z.string().uuid();
 
@@ -78,6 +79,8 @@ export type ProjectFormData = {
 export async function createProject(workspaceId: string, data: ProjectFormData) {
   const input = createProjectSchema.parse({ workspaceId, ...data });
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
+  await enforceCreateLimit(supabase, user.id, "createProject");
 
   const { data: project, error } = await supabase
     .from("projects")
@@ -121,7 +124,8 @@ const updateProjectSchema = z.object({
 
 export async function updateProject(projectId: string, data: ProjectFormData) {
   const input = updateProjectSchema.parse({ projectId, ...data });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data: project, error } = await supabase
     .from("projects")
@@ -156,19 +160,22 @@ export async function getProjectIdeaCount(projectId: string) {
   const id = projectIdSchema.parse(projectId);
   const { supabase } = await requireUser();
 
-  const { count, error } = await supabase
-    .from("ideas")
-    .select("id", { count: "exact", head: true })
-    .eq("project_id", id)
-    .is("deleted_at", null);
+  return withAuthRetry(async () => {
+    const { count, error } = await supabase
+      .from("ideas")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", id)
+      .is("deleted_at", null);
 
-  if (error) throw error;
-  return count ?? 0;
+    if (error) throw error;
+    return count ?? 0;
+  });
 }
 
 export async function softDeleteProject(projectId: string) {
   const id = projectIdSchema.parse(projectId);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data: project, error: projectError } = await supabase
     .from("projects")
@@ -210,7 +217,8 @@ const undoDeleteProjectSchema = z.object({
 
 export async function undoDeleteProject(projectId: string, cascadedIdeaIds: string[]) {
   const input = undoDeleteProjectSchema.parse({ projectId, cascadedIdeaIds });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { error } = await supabase.rpc("undo_delete_project", {
     _project_id: input.projectId,
@@ -230,6 +238,7 @@ export async function undoDeleteProject(projectId: string, cascadedIdeaIds: stri
 export async function archiveProject(projectId: string) {
   const id = projectIdSchema.parse(projectId);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .select("workspace_id, name")
@@ -253,7 +262,8 @@ export async function archiveProject(projectId: string) {
 
 export async function restoreArchivedProject(projectId: string) {
   const id = projectIdSchema.parse(projectId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
   const { error } = await supabase.rpc("restore_archived_project", { _project_id: id });
   if (error) {
     if (error.message.includes("permission_denied")) throw new Error("Bu projeyi geri yükleme yetkiniz yok.");
@@ -269,6 +279,8 @@ export async function restoreArchivedProject(projectId: string) {
 export async function convertIdeaToProject(ideaId: string) {
   const id = projectIdSchema.parse(ideaId);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
+  await enforceCreateLimit(supabase, user.id, "convertIdeaToProject");
 
   const { data: project, error } = await supabase.rpc("convert_idea_to_project", {
     _idea_id: id,
@@ -309,6 +321,7 @@ const setIdeaProjectSchema = z.object({
 export async function setIdeaProject(ideaId: string, projectId: string | null) {
   const input = setIdeaProjectSchema.parse({ ideaId, projectId });
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
@@ -355,22 +368,24 @@ export async function getProjectContext(projectId: string) {
   const id = projectIdSchema.parse(projectId);
   const { supabase } = await requireUser();
 
-  const { data: project, error: projectError } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", id)
-    .is("archived_at", null)
-    .single();
+  return withAuthRetry(async () => {
+    const { data: project, error: projectError } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", id)
+      .is("archived_at", null)
+      .single();
 
-  if (projectError) throw projectError;
+    if (projectError) throw projectError;
 
-  const { data: ideas, error: ideasError } = await supabase
-    .from("ideas")
-    .select("*, idea_versions(*)")
-    .eq("project_id", id)
-    .is("deleted_at", null);
+    const { data: ideas, error: ideasError } = await supabase
+      .from("ideas")
+      .select("*, idea_versions(*)")
+      .eq("project_id", id)
+      .is("deleted_at", null);
 
-  if (ideasError) throw ideasError;
+    if (ideasError) throw ideasError;
 
-  return { project, ideas };
+    return { project, ideas };
+  });
 }

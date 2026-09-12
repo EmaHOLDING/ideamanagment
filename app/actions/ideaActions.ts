@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { refresh } from "next/cache";
 import { requireUser, resolveAuthorProfiles, logActivity, getDisplayName, withAuthRetry } from "./_shared";
+import { enforceWriteLimit, enforceCreateLimit } from "@/lib/rate-limit";
 import { notifyEvent } from "./_notifications";
 import { assignmentEmailHtml, ideaMovedEmailHtml } from "@/lib/email-templates";
 import { normalizeIdeaMarkdown } from "@/lib/markdown";
@@ -34,6 +35,8 @@ export async function createIdea(
   const input = createIdeaSchema.parse({ workspaceId, columnId, versionData });
   const normalizedContent = normalizeIdeaMarkdown(input.versionData.content);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
+  await enforceCreateLimit(supabase, user.id, "createIdea");
 
   const { data, error } = await supabase.rpc("create_idea", {
     _workspace_id: input.workspaceId,
@@ -70,6 +73,7 @@ export async function updateIdea(ideaId: string, versionData: IdeaVersionData) {
   const input = updateIdeaSchema.parse({ ideaId, versionData });
   const normalizedContent = normalizeIdeaMarkdown(input.versionData.content);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data, error } = await supabase.rpc("update_idea", {
     _idea_id: input.ideaId,
@@ -114,6 +118,7 @@ export async function moveIdea(
 ) {
   const input = moveIdeaSchema.parse({ ideaId, targetColumnId, cancellationReason });
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data: targetColumn, error: columnError } = await supabase
     .from("kanban_columns")
@@ -193,13 +198,15 @@ export async function getIdeaVersionHistory(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase
-    .from("idea_versions")
-    .select("*")
-    .eq("idea_id", id)
-    .order("version_number", { ascending: false });
-
-  if (error) throw error;
+  const data = await withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("idea_versions")
+      .select("*")
+      .eq("idea_id", id)
+      .order("version_number", { ascending: false });
+    if (error) throw error;
+    return data;
+  });
 
   const profileById = await resolveAuthorProfiles(data.map((v) => v.created_by));
 
@@ -212,7 +219,8 @@ export async function getIdeaVersionHistory(ideaId: string) {
 
 export async function softDeleteIdea(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { error } = await supabase.rpc("soft_delete_idea", { _idea_id: id });
 
@@ -228,7 +236,8 @@ export async function softDeleteIdea(ideaId: string) {
 
 export async function undoDeleteIdea(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { error } = await supabase.rpc("undo_delete_idea", { _idea_id: id });
 
@@ -245,6 +254,7 @@ export async function undoDeleteIdea(ideaId: string) {
 export async function archiveIdea(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
     .select("workspace_id, idea_versions(title, version_number)")
@@ -272,7 +282,8 @@ export async function archiveIdea(ideaId: string) {
 
 export async function restoreArchivedIdea(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
   const { error } = await supabase.rpc("restore_archived_idea", { _idea_id: id });
   if (error) {
     if (error.message.includes("permission_denied")) throw new Error("Bu fikri geri yükleme yetkiniz yok.");
@@ -290,6 +301,7 @@ const assignIdeaSchema = z.object({
 export async function assignIdea(ideaId: string, assigneeUserId: string | null) {
   const input = assignIdeaSchema.parse({ ideaId, assigneeUserId });
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data: idea, error: ideaError } = await supabase
     .from("ideas")
@@ -374,6 +386,7 @@ export async function getIdeasForWorkspace(workspaceId: string) {
 export async function toggleIdeaVote(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data: existingVote, error: existingError } = await supabase
     .from("idea_votes")

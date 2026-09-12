@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles } from "./_shared";
+import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles, withAuthRetry } from "./_shared";
 
 const getActivityLogSchema = z.object({
   workspaceId: z.string().uuid(),
@@ -48,9 +48,11 @@ export async function getActivityLog(workspaceId: string, cursor?: string, filte
     );
   }
 
-  const { data, error } = await query;
-
-  if (error) throw error;
+  const data = await withAuthRetry(async () => {
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  });
 
   const profileById = await resolveAuthorProfiles(data.map((row) => row.actor_id));
   const items = data.map((row) => ({

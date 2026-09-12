@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { requireUser, withAuthRetry } from "./_shared";
+import { enforceWriteLimit, enforceCreateLimit } from "@/lib/rate-limit";
 
 export async function getTemplates() {
   const { supabase } = await requireUser();
@@ -25,6 +26,8 @@ const createTemplateFromBoardSchema = z.object({
 export async function createTemplateFromBoard(workspaceId: string, title: string) {
   const input = createTemplateFromBoardSchema.parse({ workspaceId, title });
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
+  await enforceCreateLimit(supabase, user.id, "createTemplateFromBoard");
 
   const { data: columns, error: columnsError } = await supabase
     .from("kanban_columns")

@@ -26,3 +26,23 @@ export async function enforceRateLimit(
   if (error) throw error;
   if (!data) throw new RateLimitError();
 }
+
+/** Tüm yazma action'ları için ortak, geniş kova: kullanıcı başına 5
+ * dakikada 300 yazma (~saniyede 1). Bir insan sürükle-bırak yaparken veya
+ * hızlı düzenlerken buraya asla çarpmaz; otomatik bir döngü çarpar. Amaç
+ * tek tek action'ları kısmak değil, kaçak bir script'in workspace'i
+ * doldurmasını durdurmak. */
+export async function enforceWriteLimit(supabase: SupabaseClient, userId: string) {
+  await enforceRateLimit(supabase, `write:${userId}`, 300, 300);
+}
+
+/** Kalıcı içerik üreten (fikir/proje/etiket/kolon/şablon) action'lar için
+ * ek ve daha dar sınır: action başına saatte 60. Ortak kovanın üstüne
+ * biniyor — kova ani patlamayı, bu ise uzun soluklu birikmeyi kesiyor. */
+export async function enforceCreateLimit(
+  supabase: SupabaseClient,
+  userId: string,
+  action: string
+) {
+  await enforceRateLimit(supabase, `create:${action}:${userId}`, 60, 3600);
+}

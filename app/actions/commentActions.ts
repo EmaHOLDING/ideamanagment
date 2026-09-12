@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles, logActivity, getDisplayName } from "./_shared";
+import { requireUser, encodeCursor, decodeCursor, resolveAuthorProfiles, logActivity, getDisplayName, withAuthRetry } from "./_shared";
 import { notifyEvent } from "./_notifications";
 import { mentionEmailHtml, commentEmailHtml } from "@/lib/email-templates";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -228,9 +228,11 @@ export async function getComments(ideaId: string, cursor?: string) {
     );
   }
 
-  const { data, error } = await query;
-
-  if (error) throw error;
+  const data = await withAuthRetry(async () => {
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  });
 
   const profileById = await resolveAuthorProfiles(data.map((c) => c.user_id));
   const items = data.map((c) => ({

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser, resolveAuthorProfiles } from "./_shared";
+import { requireUser, resolveAuthorProfiles, withAuthRetry } from "./_shared";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { FEATURES } from "@/lib/features";
 
@@ -121,12 +121,15 @@ export async function getAttachmentsForIdea(ideaId: string) {
   const id = ideaIdSchema.parse(ideaId);
   const { supabase } = await requireUser();
 
-  const { data, error } = await supabase
-    .from("attachments")
-    .select("*")
-    .eq("idea_id", id)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
+  const data = await withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("attachments")
+      .select("*")
+      .eq("idea_id", id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  });
 
   const profileById = await resolveAuthorProfiles(data.map((a) => a.uploaded_by));
 

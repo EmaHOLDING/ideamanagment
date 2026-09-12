@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { requireUser, logActivity, getDisplayName, withAuthRetry } from "./_shared";
+import { enforceWriteLimit, enforceCreateLimit } from "@/lib/rate-limit";
 
 const workspaceIdSchema = z.string().uuid();
 
@@ -29,6 +30,8 @@ const createTagSchema = z.object({
 export async function createTag(workspaceId: string, name: string, color: string) {
   const input = createTagSchema.parse({ workspaceId, name, color });
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
+  await enforceCreateLimit(supabase, user.id, "createTag");
 
   const { data, error } = await supabase
     .from("tags")
@@ -61,7 +64,8 @@ const updateTagSchema = z.object({
 
 export async function updateTag(tagId: string, name: string, color: string) {
   const input = updateTagSchema.parse({ tagId, name, color });
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data, error } = await supabase
     .from("tags")
@@ -89,6 +93,7 @@ const tagIdSchema = z.string().uuid();
 export async function softDeleteTag(tagId: string) {
   const id = tagIdSchema.parse(tagId);
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { data: tag, error: tagError } = await supabase
     .from("tags")
@@ -119,7 +124,8 @@ export async function softDeleteTag(tagId: string) {
 
 export async function undoDeleteTag(tagId: string) {
   const id = tagIdSchema.parse(tagId);
-  const { supabase } = await requireUser();
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { error } = await supabase.rpc("undo_delete_tag", { _tag_id: id });
 
@@ -141,6 +147,7 @@ const setIdeaTagsSchema = z.object({
 export async function setIdeaTags(ideaId: string, tagIds: string[]) {
   const input = setIdeaTagsSchema.parse({ ideaId, tagIds });
   const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
 
   const { error: deleteError } = await supabase
     .from("idea_tags")
