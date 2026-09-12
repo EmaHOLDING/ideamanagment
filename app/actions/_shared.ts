@@ -1,7 +1,6 @@
 import "server-only";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getDisplayName } from "@/lib/user-display";
 
 export { getDisplayName };
@@ -84,24 +83,33 @@ export function decodeCursor(cursor: string | undefined | null): Cursor | null {
   }
 }
 
-/** created_by/user_id UUID'lerini email + görünen isme çözer (profiles
- * tablosu yok, service-role ile auth.users'tan). */
+/** created_by/user_id UUID'lerini e-posta + görünen isme çözer.
+ *
+ * Eskiden her kullanıcı için ayrı bir `admin.auth.admin.getUserById()`
+ * HTTP çağrısı yapılıyordu (cache'siz, beş ayrı çağrı noktasından). Artık
+ * `profiles` tablosundan tek sorguyla çözülüyor — bu tablo auth.users'a
+ * trigger'la bağlı (bkz. 20260912120000_profiles.sql) ve RLS'i "yalnızca
+ * kendin + ortak workspace'teki kişiler" olduğu için service_role da
+ * gerekmiyor. */
 export async function resolveAuthorProfiles(userIds: string[]) {
-  const uniqueIds = [...new Set(userIds)];
-  const admin = createAdminClient();
+  const uniqueIds = [...new Set(userIds)].filter(Boolean);
   const profileById = new Map<string, { email: string | null; fullName: string }>();
+  if (uniqueIds.length === 0) return profileById;
 
-  await Promise.all(
-    uniqueIds.map(async (uid) => {
-      const { data } = await admin.auth.admin.getUserById(uid);
-      if (data?.user) {
-        profileById.set(uid, {
-          email: data.user.email ?? null,
-          fullName: getDisplayName(data.user),
-        });
-      }
-    })
-  );
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, email, full_name")
+    .in("id", uniqueIds);
+
+  if (error) throw error;
+
+  for (const row of data ?? []) {
+    profileById.set(row.id, {
+      email: row.email,
+      fullName: row.full_name ?? row.email ?? "Bir kullanıcı",
+    });
+  }
 
   return profileById;
 }

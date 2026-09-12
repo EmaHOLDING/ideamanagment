@@ -521,6 +521,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           archived_at: string | null
@@ -1074,6 +1095,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      shares_workspace_with: { Args: { _user_id: string }; Returns: boolean }
       soft_delete_attachment: {
         Args: { _attachment_id: string }
         Returns: {
