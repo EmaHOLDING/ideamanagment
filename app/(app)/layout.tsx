@@ -4,9 +4,11 @@ import { Header } from "@/components/layout/header";
 import { SideRail } from "@/components/layout/side-rail";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
+import { HelpButton } from "@/components/layout/help-button";
 import { getNotifications } from "@/app/actions/notificationActions";
-import { getMyNotificationPreferences } from "@/app/actions/userSettingsActions";
+import { getMyNotificationPreferences, getProductTourStatus } from "@/app/actions/userSettingsActions";
 import { getDisplayName } from "@/lib/user-display";
+import { PRODUCT_TOUR_VERSION } from "@/lib/tour-steps";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -18,9 +20,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/login");
   }
 
-  const [{ items, nextCursor }, notificationPreferences] = await Promise.all([
+  const [{ items, nextCursor }, notificationPreferences, tourStatus] = await Promise.all([
     getNotifications(),
     getMyNotificationPreferences(),
+    // Tur durumu okunamazsa bütün uygulama çökmesin: tur kendiliğinden
+    // açılmaz, "?" butonu yine çalışır.
+    getProductTourStatus().catch(() => ({ completedVersion: PRODUCT_TOUR_VERSION })),
   ]);
 
   return (
@@ -36,6 +41,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           initialItems={items}
           initialNextCursor={nextCursor}
         />
+        <HelpButton autoOpen={tourStatus.completedVersion < PRODUCT_TOUR_VERSION} />
       </Header>
       <div className="flex flex-1">
         <SideRail />

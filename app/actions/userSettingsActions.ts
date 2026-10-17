@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { requireUser, withAuthRetry } from "./_shared";
+import { enforceWriteLimit } from "@/lib/rate-limit";
 import {
   NOTIFICATION_EVENTS,
   EMAIL_ELIGIBLE_EVENT_TYPES,
@@ -55,6 +56,41 @@ export async function setNotificationPreference(eventType: NotificationEventType
       { onConflict: "user_id,event_type" }
     );
 
+  if (error) throw error;
+
+  return { success: true as const };
+}
+
+/** Kullanıcının tamamladığı en yüksek uygulama turu sürümü (hiç
+ * tamamlamadıysa 0). Layout bunu PRODUCT_TOUR_VERSION ile karşılaştırıp
+ * turun kendiliğinden açılıp açılmayacağına karar veriyor. */
+export async function getProductTourStatus(): Promise<{ completedVersion: number }> {
+  const { supabase, user } = await requireUser();
+
+  const row = await withAuthRetry(async () => {
+    const { data, error } = await supabase
+      .from("user_onboarding")
+      .select("completed_tour_version")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  });
+
+  return { completedVersion: row?.completed_tour_version ?? 0 };
+}
+
+const tourVersionSchema = z.number().int().min(1).max(1000);
+
+/** Tur kapatıldığında (bitirerek ya da atlayarak) çağrılır. Tabloya
+ * istemciden doğrudan yazma izni yok; tek yol bu RPC (bkz.
+ * 20261017100000_user_onboarding.sql). */
+export async function completeProductTour(version: number) {
+  const parsedVersion = tourVersionSchema.parse(version);
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
+
+  const { error } = await supabase.rpc("complete_product_tour", { _version: parsedVersion });
   if (error) throw error;
 
   return { success: true as const };

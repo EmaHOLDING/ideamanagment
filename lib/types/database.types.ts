@@ -1,1539 +1,1060 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  public: {
-    Tables: {
-      activity_log: {
-        Row: {
-          actor_id: string
-          created_at: string
-          id: string
-          idea_id: string | null
-          message: string
-          type: string
-          workspace_id: string
-        }
-        Insert: {
-          actor_id: string
-          created_at?: string
-          id?: string
-          idea_id?: string | null
-          message: string
-          type: string
-          workspace_id: string
-        }
-        Update: {
-          actor_id?: string
-          created_at?: string
-          id?: string
-          idea_id?: string | null
-          message?: string
-          type?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activity_log_idea_id_fkey"
-            columns: ["idea_id"]
-            isOneToOne: false
-            referencedRelation: "ideas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activity_log_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      attachments: {
-        Row: {
-          created_at: string
-          deleted_at: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          id: string
-          idea_id: string
-          mime_type: string
-          uploaded_by: string
-          workspace_id: string
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          id?: string
-          idea_id: string
-          mime_type: string
-          uploaded_by: string
-          workspace_id: string
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string | null
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          id?: string
-          idea_id?: string
-          mime_type?: string
-          uploaded_by?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "attachments_idea_id_fkey"
-            columns: ["idea_id"]
-            isOneToOne: false
-            referencedRelation: "ideas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attachments_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      board_templates: {
-        Row: {
-          columns_config: Json
-          created_at: string
-          id: string
-          is_system: boolean
-          title: string
-          user_id: string | null
-        }
-        Insert: {
-          columns_config: Json
-          created_at?: string
-          id?: string
-          is_system?: boolean
-          title: string
-          user_id?: string | null
-        }
-        Update: {
-          columns_config?: Json
-          created_at?: string
-          id?: string
-          is_system?: boolean
-          title?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      comments: {
-        Row: {
-          content: string
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          idea_id: string
-          mentioned_user_ids: string[] | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          idea_id: string
-          mentioned_user_ids?: string[] | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          idea_id?: string
-          mentioned_user_ids?: string[] | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comments_idea_id_fkey"
-            columns: ["idea_id"]
-            isOneToOne: false
-            referencedRelation: "ideas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      idea_tags: {
-        Row: {
-          idea_id: string
-          tag_id: string
-        }
-        Insert: {
-          idea_id: string
-          tag_id: string
-        }
-        Update: {
-          idea_id?: string
-          tag_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "idea_tags_idea_id_fkey"
-            columns: ["idea_id"]
-            isOneToOne: false
-            referencedRelation: "ideas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "idea_tags_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      idea_versions: {
-        Row: {
-          content: string
-          created_at: string
-          created_by: string
-          effort_score:
-            | Database["public"]["Enums"]["impact_effort_level"]
-            | null
-          id: string
-          idea_id: string
-          impact_score:
-            | Database["public"]["Enums"]["impact_effort_level"]
-            | null
-          problem_statement: string | null
-          target_audience: string | null
-          title: string
-          version_number: number
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          created_by: string
-          effort_score?:
-            | Database["public"]["Enums"]["impact_effort_level"]
-            | null
-          id?: string
-          idea_id: string
-          impact_score?:
-            | Database["public"]["Enums"]["impact_effort_level"]
-            | null
-          problem_statement?: string | null
-          target_audience?: string | null
-          title: string
-          version_number: number
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          created_by?: string
-          effort_score?:
-            | Database["public"]["Enums"]["impact_effort_level"]
-            | null
-          id?: string
-          idea_id?: string
-          impact_score?:
-            | Database["public"]["Enums"]["impact_effort_level"]
-            | null
-          problem_statement?: string | null
-          target_audience?: string | null
-          title?: string
-          version_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "idea_versions_idea_id_fkey"
-            columns: ["idea_id"]
-            isOneToOne: false
-            referencedRelation: "ideas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      idea_votes: {
-        Row: {
-          created_at: string
-          id: string
-          idea_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          idea_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          idea_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "idea_votes_idea_id_fkey"
-            columns: ["idea_id"]
-            isOneToOne: false
-            referencedRelation: "ideas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ideas: {
-        Row: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          current_version_id: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        Insert: {
-          archived_at?: string | null
-          archived_by?: string | null
-          archived_via_project_id?: string | null
-          assignee_id?: string | null
-          cancellation_reason?: string | null
-          column_id: string
-          created_at?: string
-          created_by: string
-          current_version?: number
-          current_version_id?: string | null
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          project_id?: string | null
-          updated_at?: string
-          workspace_id: string
-        }
-        Update: {
-          archived_at?: string | null
-          archived_by?: string | null
-          archived_via_project_id?: string | null
-          assignee_id?: string | null
-          cancellation_reason?: string | null
-          column_id?: string
-          created_at?: string
-          created_by?: string
-          current_version?: number
-          current_version_id?: string | null
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          project_id?: string | null
-          updated_at?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ideas_archived_via_project_id_fkey"
-            columns: ["archived_via_project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ideas_column_id_fkey"
-            columns: ["column_id"]
-            isOneToOne: false
-            referencedRelation: "kanban_columns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ideas_current_version_id_fkey"
-            columns: ["current_version_id"]
-            isOneToOne: false
-            referencedRelation: "idea_versions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ideas_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ideas_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      kanban_columns: {
-        Row: {
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          order: number
-          status_type: Database["public"]["Enums"]["status_type"]
-          title: string
-          workspace_id: string
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          order?: number
-          status_type?: Database["public"]["Enums"]["status_type"]
-          title: string
-          workspace_id: string
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          order?: number
-          status_type?: Database["public"]["Enums"]["status_type"]
-          title?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "kanban_columns_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notification_preferences: {
-        Row: {
-          email_enabled: boolean
-          event_type: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          email_enabled: boolean
-          event_type: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          email_enabled?: boolean
-          event_type?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      notifications: {
-        Row: {
-          actor_id: string
-          created_at: string
-          id: string
-          idea_id: string | null
-          is_read: boolean
-          message: string
-          type: string
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          actor_id: string
-          created_at?: string
-          id?: string
-          idea_id?: string | null
-          is_read?: boolean
-          message: string
-          type: string
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          actor_id?: string
-          created_at?: string
-          id?: string
-          idea_id?: string | null
-          is_read?: boolean
-          message?: string
-          type?: string
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_idea_id_fkey"
-            columns: ["idea_id"]
-            isOneToOne: false
-            referencedRelation: "ideas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          email: string | null
-          full_name: string | null
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          email?: string | null
-          full_name?: string | null
-          id: string
-          updated_at?: string
-        }
-        Update: {
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      projects: {
-        Row: {
-          archived_at: string | null
-          archived_by: string | null
-          color: string
-          created_at: string
-          created_by: string
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          name: string
-          origin_idea_id: string | null
-          problem_statement: string | null
-          target_audience: string | null
-          workspace_id: string
-        }
-        Insert: {
-          archived_at?: string | null
-          archived_by?: string | null
-          color?: string
-          created_at?: string
-          created_by: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          origin_idea_id?: string | null
-          problem_statement?: string | null
-          target_audience?: string | null
-          workspace_id: string
-        }
-        Update: {
-          archived_at?: string | null
-          archived_by?: string | null
-          color?: string
-          created_at?: string
-          created_by?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          origin_idea_id?: string | null
-          problem_statement?: string | null
-          target_audience?: string | null
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_origin_idea_id_fkey"
-            columns: ["origin_idea_id"]
-            isOneToOne: false
-            referencedRelation: "ideas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rate_limits: {
-        Row: {
-          count: number
-          key: string
-          window_start: string
-        }
-        Insert: {
-          count?: number
-          key: string
-          window_start?: string
-        }
-        Update: {
-          count?: number
-          key?: string
-          window_start?: string
-        }
-        Relationships: []
-      }
-      tags: {
-        Row: {
-          color: string
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          name: string
-          workspace_id: string
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          name: string
-          workspace_id: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          name?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tags_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_presence: {
-        Row: {
-          last_seen_at: string
-          user_id: string
-        }
-        Insert: {
-          last_seen_at?: string
-          user_id: string
-        }
-        Update: {
-          last_seen_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      workspace_members: {
-        Row: {
-          id: string
-          joined_at: string
-          role: Database["public"]["Enums"]["workspace_role"]
-          status: Database["public"]["Enums"]["workspace_member_status"]
-          user_id: string
-          workspace_id: string
-        }
-        Insert: {
-          id?: string
-          joined_at?: string
-          role?: Database["public"]["Enums"]["workspace_role"]
-          status?: Database["public"]["Enums"]["workspace_member_status"]
-          user_id: string
-          workspace_id: string
-        }
-        Update: {
-          id?: string
-          joined_at?: string
-          role?: Database["public"]["Enums"]["workspace_role"]
-          status?: Database["public"]["Enums"]["workspace_member_status"]
-          user_id?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workspace_members_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workspaces: {
-        Row: {
-          created_at: string
-          default_invite_role: Database["public"]["Enums"]["workspace_role"]
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          invite_code: string
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          default_invite_role?: Database["public"]["Enums"]["workspace_role"]
-          deleted_at?: string | null
-          deleted_by?: string | null
-          description?: string | null
-          id?: string
-          invite_code?: string
-          title: string
-        }
-        Update: {
-          created_at?: string
-          default_invite_role?: Database["public"]["Enums"]["workspace_role"]
-          deleted_at?: string | null
-          deleted_by?: string | null
-          description?: string | null
-          id?: string
-          invite_code?: string
-          title?: string
-        }
-        Relationships: []
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      accept_workspace_invite: {
-        Args: { _workspace_id: string }
-        Returns: {
-          id: string
-          joined_at: string
-          role: Database["public"]["Enums"]["workspace_role"]
-          status: Database["public"]["Enums"]["workspace_member_status"]
-          user_id: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "workspace_members"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      archive_idea: {
-        Args: { _idea_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          current_version_id: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      archive_project: {
-        Args: { _project_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          color: string
-          created_at: string
-          created_by: string
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          name: string
-          origin_idea_id: string | null
-          problem_statement: string | null
-          target_audience: string | null
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      assign_idea: {
-        Args: { _assignee_user_id?: string; _idea_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          current_version_id: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      authored_in_my_workspace: { Args: { _user_id: string }; Returns: boolean }
-      check_rate_limit: {
-        Args: { _key: string; _max_count: number; _window_seconds: number }
-        Returns: boolean
-      }
-      convert_idea_to_project: {
-        Args: { _idea_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          color: string
-          created_at: string
-          created_by: string
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          name: string
-          origin_idea_id: string | null
-          problem_statement: string | null
-          target_audience: string | null
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      create_idea:
-        | {
-            Args: {
-              _column_id: string
-              _content: Json
-              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _problem_statement?: string
-              _target_audience?: string
-              _title: string
-              _workspace_id: string
-            }
-            Returns: {
-              archived_at: string | null
-              archived_by: string | null
-              archived_via_project_id: string | null
-              assignee_id: string | null
-              cancellation_reason: string | null
-              column_id: string
-              created_at: string
-              created_by: string
-              current_version: number
-              current_version_id: string | null
-              deleted_at: string | null
-              deleted_by: string | null
-              id: string
-              project_id: string | null
-              updated_at: string
-              workspace_id: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "ideas"
-              isOneToOne: true
-              isSetofReturn: false
-            }
+  
+  "graphql_public": {
+          Tables: {
+            [_ in never]: never
           }
-        | {
-            Args: {
-              _column_id: string
-              _content: string
-              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _problem_statement?: string
-              _target_audience?: string
-              _title: string
-              _workspace_id: string
-            }
-            Returns: {
-              archived_at: string | null
-              archived_by: string | null
-              archived_via_project_id: string | null
-              assignee_id: string | null
-              cancellation_reason: string | null
-              column_id: string
-              created_at: string
-              created_by: string
-              current_version: number
-              current_version_id: string | null
-              deleted_at: string | null
-              deleted_by: string | null
-              id: string
-              project_id: string | null
-              updated_at: string
-              workspace_id: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "ideas"
-              isOneToOne: true
-              isSetofReturn: false
-            }
+          Views: {
+            [_ in never]: never
           }
-      create_workspace: {
-        Args: { _description?: string; _template_id?: string; _title: string }
-        Returns: {
-          created_at: string
-          default_invite_role: Database["public"]["Enums"]["workspace_role"]
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          invite_code: string
-          title: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "workspaces"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      get_workspace_member_count: {
-        Args: { _workspace_id: string }
-        Returns: number
-      }
-      hard_delete_attachment: {
-        Args: { _attachment_id: string }
-        Returns: {
-          created_at: string
-          deleted_at: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          id: string
-          idea_id: string
-          mime_type: string
-          uploaded_by: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "attachments"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      is_workspace_contributor: {
-        Args: { _workspace_id: string }
-        Returns: boolean
-      }
-      is_workspace_member: { Args: { _workspace_id: string }; Returns: boolean }
-      is_workspace_member_any_status: {
-        Args: { _workspace_id: string }
-        Returns: boolean
-      }
-      is_workspace_owner: { Args: { _workspace_id: string }; Returns: boolean }
-      is_workspace_owner_or_admin: {
-        Args: { _workspace_id: string }
-        Returns: boolean
-      }
-      join_workspace_by_invite_code: {
-        Args: { _invite_code: string }
-        Returns: {
-          created_at: string
-          default_invite_role: Database["public"]["Enums"]["workspace_role"]
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          invite_code: string
-          title: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "workspaces"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      move_idea: {
-        Args: {
-          _cancellation_reason?: string
-          _idea_id: string
-          _target_column_id: string
-        }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          current_version_id: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      purge_expired_deletions: { Args: { _retention?: string }; Returns: Json }
-      restore_archived_idea: {
-        Args: { _idea_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          current_version_id: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      restore_archived_project: {
-        Args: { _project_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          color: string
-          created_at: string
-          created_by: string
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          name: string
-          origin_idea_id: string | null
-          problem_statement: string | null
-          target_audience: string | null
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      set_idea_project: {
-        Args: { _idea_id: string; _project_id?: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          current_version_id: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      shares_workspace_with: { Args: { _user_id: string }; Returns: boolean }
-      soft_delete_attachment: {
-        Args: { _attachment_id: string }
-        Returns: {
-          created_at: string
-          deleted_at: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          id: string
-          idea_id: string
-          mime_type: string
-          uploaded_by: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "attachments"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      soft_delete_column: {
-        Args: { _column_id: string }
-        Returns: {
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          order: number
-          status_type: Database["public"]["Enums"]["status_type"]
-          title: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "kanban_columns"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      soft_delete_comment: {
-        Args: { _comment_id: string }
-        Returns: {
-          content: string
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          idea_id: string
-          mentioned_user_ids: string[] | null
-          updated_at: string | null
-          user_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "comments"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      soft_delete_idea: {
-        Args: { _idea_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          current_version_id: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      soft_delete_project: { Args: { _project_id: string }; Returns: Json }
-      soft_delete_tag: {
-        Args: { _tag_id: string }
-        Returns: {
-          color: string
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          name: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "tags"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      soft_delete_workspace: {
-        Args: { _workspace_id: string }
-        Returns: {
-          created_at: string
-          default_invite_role: Database["public"]["Enums"]["workspace_role"]
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          invite_code: string
-          title: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "workspaces"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      transfer_workspace_ownership: {
-        Args: { _new_owner_user_id: string; _workspace_id: string }
-        Returns: undefined
-      }
-      undo_delete_attachment: {
-        Args: { _attachment_id: string }
-        Returns: {
-          created_at: string
-          deleted_at: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          id: string
-          idea_id: string
-          mime_type: string
-          uploaded_by: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "attachments"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      undo_delete_column: {
-        Args: { _column_id: string }
-        Returns: {
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          order: number
-          status_type: Database["public"]["Enums"]["status_type"]
-          title: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "kanban_columns"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      undo_delete_comment: {
-        Args: { _comment_id: string }
-        Returns: {
-          content: string
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          idea_id: string
-          mentioned_user_ids: string[] | null
-          updated_at: string | null
-          user_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "comments"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      undo_delete_idea: {
-        Args: { _idea_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          archived_via_project_id: string | null
-          assignee_id: string | null
-          cancellation_reason: string | null
-          column_id: string
-          created_at: string
-          created_by: string
-          current_version: number
-          current_version_id: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          project_id: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ideas"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      undo_delete_project: {
-        Args: { _cascaded_idea_ids?: string[]; _project_id: string }
-        Returns: {
-          archived_at: string | null
-          archived_by: string | null
-          color: string
-          created_at: string
-          created_by: string
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          name: string
-          origin_idea_id: string | null
-          problem_statement: string | null
-          target_audience: string | null
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      undo_delete_tag: {
-        Args: { _tag_id: string }
-        Returns: {
-          color: string
-          created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          name: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "tags"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      undo_delete_workspace: {
-        Args: { _workspace_id: string }
-        Returns: {
-          created_at: string
-          default_invite_role: Database["public"]["Enums"]["workspace_role"]
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          id: string
-          invite_code: string
-          title: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "workspaces"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      undo_remove_member: {
-        Args: {
-          _role: Database["public"]["Enums"]["workspace_role"]
-          _user_id: string
-          _workspace_id: string
-        }
-        Returns: {
-          id: string
-          joined_at: string
-          role: Database["public"]["Enums"]["workspace_role"]
-          status: Database["public"]["Enums"]["workspace_member_status"]
-          user_id: string
-          workspace_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "workspace_members"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      update_idea:
-        | {
-            Args: {
-              _content: Json
-              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _idea_id: string
-              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _problem_statement?: string
-              _target_audience?: string
-              _title: string
-            }
-            Returns: {
-              archived_at: string | null
-              archived_by: string | null
-              archived_via_project_id: string | null
-              assignee_id: string | null
-              cancellation_reason: string | null
-              column_id: string
-              created_at: string
-              created_by: string
-              current_version: number
-              current_version_id: string | null
-              deleted_at: string | null
-              deleted_by: string | null
-              id: string
-              project_id: string | null
-              updated_at: string
-              workspace_id: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "ideas"
-              isOneToOne: true
-              isSetofReturn: false
-            }
+          Functions: {
+            "graphql":
+{ Args: { "extensions"?: Json,"operationName"?: string,"query"?: string,"variables"?: Json }; Returns: Json
+                           }
           }
-        | {
-            Args: {
-              _content: string
-              _effort_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _idea_id: string
-              _impact_score?: Database["public"]["Enums"]["impact_effort_level"]
-              _problem_statement?: string
-              _target_audience?: string
-              _title: string
-            }
-            Returns: {
-              archived_at: string | null
-              archived_by: string | null
-              archived_via_project_id: string | null
-              assignee_id: string | null
-              cancellation_reason: string | null
-              column_id: string
-              created_at: string
-              created_by: string
-              current_version: number
-              current_version_id: string | null
-              deleted_at: string | null
-              deleted_by: string | null
-              id: string
-              project_id: string | null
-              updated_at: string
-              workspace_id: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "ideas"
-              isOneToOne: true
-              isSetofReturn: false
-            }
+          Enums: {
+            [_ in never]: never
           }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        },"public": {
+          Tables: {
+            "activity_log": {
+                  Row: {
+                    "actor_id": string,"created_at": string,"id": string,"idea_id": string | null,"message": string,"type": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_id": string,"created_at"?: string,"id"?: string,"idea_id"?: string | null,"message": string,"type": string,"workspace_id": string
+                  }
+                  Update: {
+                    "actor_id"?: string,"created_at"?: string,"id"?: string,"idea_id"?: string | null,"message"?: string,"type"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "activity_log_idea_id_fkey"
+      columns: ["idea_id"]
+isOneToOne: false
+      referencedRelation: "ideas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "activity_log_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
     }
-    Enums: {
-      impact_effort_level: "LOW" | "MEDIUM" | "HIGH"
-      status_type: "DRAFT" | "IN_REVIEW" | "APPROVED" | "CANCELLED" | "DONE"
-      workspace_member_status: "PENDING" | "ACTIVE"
-      workspace_role: "OWNER" | "MEMBER" | "ADMIN" | "VIEWER"
+                  ]
+                },"attachments": {
+                  Row: {
+                    "created_at": string,"deleted_at": string | null,"file_name": string,"file_path": string,"file_size": number,"id": string,"idea_id": string,"mime_type": string,"uploaded_by": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"deleted_at"?: string | null,"file_name": string,"file_path": string,"file_size": number,"id"?: string,"idea_id": string,"mime_type": string,"uploaded_by": string,"workspace_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"deleted_at"?: string | null,"file_name"?: string,"file_path"?: string,"file_size"?: number,"id"?: string,"idea_id"?: string,"mime_type"?: string,"uploaded_by"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "attachments_idea_id_fkey"
+      columns: ["idea_id"]
+isOneToOne: false
+      referencedRelation: "ideas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "attachments_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
     }
-    CompositeTypes: {
-      [_ in never]: never
+                  ]
+                },"board_templates": {
+                  Row: {
+                    "columns_config": NonNullable<Json>,"created_at": string,"id": string,"is_system": boolean,"title": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "columns_config": NonNullable<Json>,"created_at"?: string,"id"?: string,"is_system"?: boolean,"title": string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "columns_config"?: NonNullable<Json>,"created_at"?: string,"id"?: string,"is_system"?: boolean,"title"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"comments": {
+                  Row: {
+                    "content": string,"created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"idea_id": string,"mentioned_user_ids": (string)[] | null,"updated_at": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "content": string,"created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"idea_id": string,"mentioned_user_ids"?: (string)[] | null,"updated_at"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "content"?: string,"created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"idea_id"?: string,"mentioned_user_ids"?: (string)[] | null,"updated_at"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "comments_idea_id_fkey"
+      columns: ["idea_id"]
+isOneToOne: false
+      referencedRelation: "ideas"
+      referencedColumns: ["id"]
     }
-  }
+                  ]
+                },"idea_tags": {
+                  Row: {
+                    "idea_id": string,"tag_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "idea_id": string,"tag_id": string
+                  }
+                  Update: {
+                    "idea_id"?: string,"tag_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "idea_tags_idea_id_fkey"
+      columns: ["idea_id"]
+isOneToOne: false
+      referencedRelation: "ideas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "idea_tags_tag_id_fkey"
+      columns: ["tag_id"]
+isOneToOne: false
+      referencedRelation: "tags"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"idea_versions": {
+                  Row: {
+                    "content": string,"created_at": string,"created_by": string,"effort_score": Database["public"]['Enums']["impact_effort_level"] | null,"id": string,"idea_id": string,"impact_score": Database["public"]['Enums']["impact_effort_level"] | null,"problem_statement": string | null,"target_audience": string | null,"title": string,"version_number": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "content": string,"created_at"?: string,"created_by": string,"effort_score"?: Database["public"]['Enums']["impact_effort_level"] | null,"id"?: string,"idea_id": string,"impact_score"?: Database["public"]['Enums']["impact_effort_level"] | null,"problem_statement"?: string | null,"target_audience"?: string | null,"title": string,"version_number": number
+                  }
+                  Update: {
+                    "content"?: string,"created_at"?: string,"created_by"?: string,"effort_score"?: Database["public"]['Enums']["impact_effort_level"] | null,"id"?: string,"idea_id"?: string,"impact_score"?: Database["public"]['Enums']["impact_effort_level"] | null,"problem_statement"?: string | null,"target_audience"?: string | null,"title"?: string,"version_number"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "idea_versions_idea_id_fkey"
+      columns: ["idea_id"]
+isOneToOne: false
+      referencedRelation: "ideas"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"idea_votes": {
+                  Row: {
+                    "created_at": string,"id": string,"idea_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"idea_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"idea_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "idea_votes_idea_id_fkey"
+      columns: ["idea_id"]
+isOneToOne: false
+      referencedRelation: "ideas"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ideas": {
+                  Row: {
+                    "archived_at": string | null,"archived_by": string | null,"archived_via_project_id": string | null,"assignee_id": string | null,"cancellation_reason": string | null,"column_id": string,"created_at": string,"created_by": string,"current_version": number,"current_version_id": string | null,"deleted_at": string | null,"deleted_by": string | null,"id": string,"project_id": string | null,"updated_at": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "archived_at"?: string | null,"archived_by"?: string | null,"archived_via_project_id"?: string | null,"assignee_id"?: string | null,"cancellation_reason"?: string | null,"column_id": string,"created_at"?: string,"created_by": string,"current_version"?: number,"current_version_id"?: string | null,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"project_id"?: string | null,"updated_at"?: string,"workspace_id": string
+                  }
+                  Update: {
+                    "archived_at"?: string | null,"archived_by"?: string | null,"archived_via_project_id"?: string | null,"assignee_id"?: string | null,"cancellation_reason"?: string | null,"column_id"?: string,"created_at"?: string,"created_by"?: string,"current_version"?: number,"current_version_id"?: string | null,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"project_id"?: string | null,"updated_at"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ideas_archived_via_project_id_fkey"
+      columns: ["archived_via_project_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ideas_column_id_fkey"
+      columns: ["column_id"]
+isOneToOne: false
+      referencedRelation: "kanban_columns"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ideas_current_version_id_fkey"
+      columns: ["current_version_id"]
+isOneToOne: false
+      referencedRelation: "idea_versions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ideas_project_id_fkey"
+      columns: ["project_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ideas_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"kanban_columns": {
+                  Row: {
+                    "created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"order": number,"status_type": Database["public"]['Enums']["status_type"],"title": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"order"?: number,"status_type"?: Database["public"]['Enums']["status_type"],"title": string,"workspace_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"order"?: number,"status_type"?: Database["public"]['Enums']["status_type"],"title"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "kanban_columns_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"notification_preferences": {
+                  Row: {
+                    "email_enabled": boolean,"event_type": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "email_enabled": boolean,"event_type": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "email_enabled"?: boolean,"event_type"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"notifications": {
+                  Row: {
+                    "actor_id": string,"created_at": string,"id": string,"idea_id": string | null,"is_read": boolean,"message": string,"type": string,"user_id": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_id": string,"created_at"?: string,"id"?: string,"idea_id"?: string | null,"is_read"?: boolean,"message": string,"type": string,"user_id": string,"workspace_id": string
+                  }
+                  Update: {
+                    "actor_id"?: string,"created_at"?: string,"id"?: string,"idea_id"?: string | null,"is_read"?: boolean,"message"?: string,"type"?: string,"user_id"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notifications_idea_id_fkey"
+      columns: ["idea_id"]
+isOneToOne: false
+      referencedRelation: "ideas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profiles": {
+                  Row: {
+                    "email": string | null,"full_name": string | null,"id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "email"?: string | null,"full_name"?: string | null,"id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "email"?: string | null,"full_name"?: string | null,"id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"projects": {
+                  Row: {
+                    "archived_at": string | null,"archived_by": string | null,"color": string,"created_at": string,"created_by": string,"deleted_at": string | null,"deleted_by": string | null,"description": string | null,"id": string,"name": string,"origin_idea_id": string | null,"problem_statement": string | null,"target_audience": string | null,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "archived_at"?: string | null,"archived_by"?: string | null,"color"?: string,"created_at"?: string,"created_by": string,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"id"?: string,"name": string,"origin_idea_id"?: string | null,"problem_statement"?: string | null,"target_audience"?: string | null,"workspace_id": string
+                  }
+                  Update: {
+                    "archived_at"?: string | null,"archived_by"?: string | null,"color"?: string,"created_at"?: string,"created_by"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"id"?: string,"name"?: string,"origin_idea_id"?: string | null,"problem_statement"?: string | null,"target_audience"?: string | null,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "projects_origin_idea_id_fkey"
+      columns: ["origin_idea_id"]
+isOneToOne: false
+      referencedRelation: "ideas"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "projects_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"rate_limits": {
+                  Row: {
+                    "count": number,"key": string,"window_start": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "count"?: number,"key": string,"window_start"?: string
+                  }
+                  Update: {
+                    "count"?: number,"key"?: string,"window_start"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"tags": {
+                  Row: {
+                    "color": string,"created_at": string,"deleted_at": string | null,"deleted_by": string | null,"id": string,"name": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "color"?: string,"created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"name": string,"workspace_id": string
+                  }
+                  Update: {
+                    "color"?: string,"created_at"?: string,"deleted_at"?: string | null,"deleted_by"?: string | null,"id"?: string,"name"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tags_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"user_onboarding": {
+                  Row: {
+                    "completed_tour_version": number,"tour_completed_at": string | null,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "completed_tour_version"?: number,"tour_completed_at"?: string | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "completed_tour_version"?: number,"tour_completed_at"?: string | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"user_presence": {
+                  Row: {
+                    "last_seen_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "last_seen_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "last_seen_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"workspace_members": {
+                  Row: {
+                    "id": string,"joined_at": string,"role": Database["public"]['Enums']["workspace_role"],"status": Database["public"]['Enums']["workspace_member_status"],"user_id": string,"workspace_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "id"?: string,"joined_at"?: string,"role"?: Database["public"]['Enums']["workspace_role"],"status"?: Database["public"]['Enums']["workspace_member_status"],"user_id": string,"workspace_id": string
+                  }
+                  Update: {
+                    "id"?: string,"joined_at"?: string,"role"?: Database["public"]['Enums']["workspace_role"],"status"?: Database["public"]['Enums']["workspace_member_status"],"user_id"?: string,"workspace_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "workspace_members_workspace_id_fkey"
+      columns: ["workspace_id"]
+isOneToOne: false
+      referencedRelation: "workspaces"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"workspaces": {
+                  Row: {
+                    "created_at": string,"default_invite_role": Database["public"]['Enums']["workspace_role"],"deleted_at": string | null,"deleted_by": string | null,"description": string | null,"id": string,"invite_code": string,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"default_invite_role"?: Database["public"]['Enums']["workspace_role"],"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"id"?: string,"invite_code"?: string,"title": string
+                  }
+                  Update: {
+                    "created_at"?: string,"default_invite_role"?: Database["public"]['Enums']["workspace_role"],"deleted_at"?: string | null,"deleted_by"?: string | null,"description"?: string | null,"id"?: string,"invite_code"?: string,"title"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                }
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "accept_workspace_invite":
+{ Args: { "_workspace_id": string }; Returns: {
+              "id": string,
+"joined_at": string,
+"role": Database["public"]['Enums']["workspace_role"],
+"status": Database["public"]['Enums']["workspace_member_status"],
+"user_id": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workspace_members"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"archive_idea":
+{ Args: { "_idea_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"archive_project":
+{ Args: { "_project_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"color": string,
+"created_at": string,
+"created_by": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"description": string | null,
+"id": string,
+"name": string,
+"origin_idea_id": string | null,
+"problem_statement": string | null,
+"target_audience": string | null,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "projects"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"assign_idea":
+{ Args: { "_assignee_user_id"?: string,"_idea_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"authored_in_my_workspace":
+{ Args: { "_user_id": string }; Returns: boolean
+                           },
+"check_rate_limit":
+{ Args: { "_key": string,"_max_count": number,"_window_seconds": number }; Returns: boolean
+                           },
+"complete_product_tour":
+{ Args: { "_version": number }; Returns: {
+              "completed_tour_version": number,
+"tour_completed_at": string | null,
+"updated_at": string,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "user_onboarding"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"convert_idea_to_project":
+{ Args: { "_idea_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"color": string,
+"created_at": string,
+"created_by": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"description": string | null,
+"id": string,
+"name": string,
+"origin_idea_id": string | null,
+"problem_statement": string | null,
+"target_audience": string | null,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "projects"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"create_idea":
+{ Args: { "_column_id": string,"_content": string,"_effort_score"?: Database["public"]['Enums']["impact_effort_level"],"_impact_score"?: Database["public"]['Enums']["impact_effort_level"],"_problem_statement"?: string,"_target_audience"?: string,"_title": string,"_workspace_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"create_workspace":
+{ Args: { "_description"?: string,"_template_id"?: string,"_title": string }; Returns: {
+              "created_at": string,
+"default_invite_role": Database["public"]['Enums']["workspace_role"],
+"deleted_at": string | null,
+"deleted_by": string | null,
+"description": string | null,
+"id": string,
+"invite_code": string,
+"title": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workspaces"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"get_workspace_member_count":
+{ Args: { "_workspace_id": string }; Returns: number
+                           },
+"hard_delete_attachment":
+{ Args: { "_attachment_id": string }; Returns: {
+              "created_at": string,
+"deleted_at": string | null,
+"file_name": string,
+"file_path": string,
+"file_size": number,
+"id": string,
+"idea_id": string,
+"mime_type": string,
+"uploaded_by": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "attachments"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"is_workspace_contributor":
+{ Args: { "_workspace_id": string }; Returns: boolean
+                           },
+"is_workspace_member":
+{ Args: { "_workspace_id": string }; Returns: boolean
+                           },
+"is_workspace_member_any_status":
+{ Args: { "_workspace_id": string }; Returns: boolean
+                           },
+"is_workspace_owner":
+{ Args: { "_workspace_id": string }; Returns: boolean
+                           },
+"is_workspace_owner_or_admin":
+{ Args: { "_workspace_id": string }; Returns: boolean
+                           },
+"join_workspace_by_invite_code":
+{ Args: { "_invite_code": string }; Returns: {
+              "created_at": string,
+"default_invite_role": Database["public"]['Enums']["workspace_role"],
+"deleted_at": string | null,
+"deleted_by": string | null,
+"description": string | null,
+"id": string,
+"invite_code": string,
+"title": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workspaces"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"move_idea":
+{ Args: { "_cancellation_reason"?: string,"_idea_id": string,"_target_column_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"purge_expired_deletions":
+{ Args: { "_retention"?: string }; Returns: Json
+                           },
+"restore_archived_idea":
+{ Args: { "_idea_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"restore_archived_project":
+{ Args: { "_project_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"color": string,
+"created_at": string,
+"created_by": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"description": string | null,
+"id": string,
+"name": string,
+"origin_idea_id": string | null,
+"problem_statement": string | null,
+"target_audience": string | null,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "projects"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"set_idea_project":
+{ Args: { "_idea_id": string,"_project_id"?: string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"shares_workspace_with":
+{ Args: { "_user_id": string }; Returns: boolean
+                           },
+"soft_delete_attachment":
+{ Args: { "_attachment_id": string }; Returns: {
+              "created_at": string,
+"deleted_at": string | null,
+"file_name": string,
+"file_path": string,
+"file_size": number,
+"id": string,
+"idea_id": string,
+"mime_type": string,
+"uploaded_by": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "attachments"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"soft_delete_column":
+{ Args: { "_column_id": string }; Returns: {
+              "created_at": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"order": number,
+"status_type": Database["public"]['Enums']["status_type"],
+"title": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "kanban_columns"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"soft_delete_comment":
+{ Args: { "_comment_id": string }; Returns: {
+              "content": string,
+"created_at": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"idea_id": string,
+"mentioned_user_ids": (string)[] | null,
+"updated_at": string | null,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "comments"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"soft_delete_idea":
+{ Args: { "_idea_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"soft_delete_project":
+{ Args: { "_project_id": string }; Returns: Json
+                           },
+"soft_delete_tag":
+{ Args: { "_tag_id": string }; Returns: {
+              "color": string,
+"created_at": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"name": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "tags"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"soft_delete_workspace":
+{ Args: { "_workspace_id": string }; Returns: {
+              "created_at": string,
+"default_invite_role": Database["public"]['Enums']["workspace_role"],
+"deleted_at": string | null,
+"deleted_by": string | null,
+"description": string | null,
+"id": string,
+"invite_code": string,
+"title": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workspaces"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"transfer_workspace_ownership":
+{ Args: { "_new_owner_user_id": string,"_workspace_id": string }; Returns: undefined
+                           },
+"undo_delete_attachment":
+{ Args: { "_attachment_id": string }; Returns: {
+              "created_at": string,
+"deleted_at": string | null,
+"file_name": string,
+"file_path": string,
+"file_size": number,
+"id": string,
+"idea_id": string,
+"mime_type": string,
+"uploaded_by": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "attachments"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"undo_delete_column":
+{ Args: { "_column_id": string }; Returns: {
+              "created_at": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"order": number,
+"status_type": Database["public"]['Enums']["status_type"],
+"title": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "kanban_columns"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"undo_delete_comment":
+{ Args: { "_comment_id": string }; Returns: {
+              "content": string,
+"created_at": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"idea_id": string,
+"mentioned_user_ids": (string)[] | null,
+"updated_at": string | null,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "comments"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"undo_delete_idea":
+{ Args: { "_idea_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"undo_delete_project":
+{ Args: { "_cascaded_idea_ids"?: (string)[],"_project_id": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"color": string,
+"created_at": string,
+"created_by": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"description": string | null,
+"id": string,
+"name": string,
+"origin_idea_id": string | null,
+"problem_statement": string | null,
+"target_audience": string | null,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "projects"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"undo_delete_tag":
+{ Args: { "_tag_id": string }; Returns: {
+              "color": string,
+"created_at": string,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"name": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "tags"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"undo_delete_workspace":
+{ Args: { "_workspace_id": string }; Returns: {
+              "created_at": string,
+"default_invite_role": Database["public"]['Enums']["workspace_role"],
+"deleted_at": string | null,
+"deleted_by": string | null,
+"description": string | null,
+"id": string,
+"invite_code": string,
+"title": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workspaces"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"undo_remove_member":
+{ Args: { "_role": Database["public"]['Enums']["workspace_role"],"_user_id": string,"_workspace_id": string }; Returns: {
+              "id": string,
+"joined_at": string,
+"role": Database["public"]['Enums']["workspace_role"],
+"status": Database["public"]['Enums']["workspace_member_status"],
+"user_id": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "workspace_members"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"update_idea":
+{ Args: { "_content": string,"_effort_score"?: Database["public"]['Enums']["impact_effort_level"],"_idea_id": string,"_impact_score"?: Database["public"]['Enums']["impact_effort_level"],"_problem_statement"?: string,"_target_audience"?: string,"_title": string }; Returns: {
+              "archived_at": string | null,
+"archived_by": string | null,
+"archived_via_project_id": string | null,
+"assignee_id": string | null,
+"cancellation_reason": string | null,
+"column_id": string,
+"created_at": string,
+"created_by": string,
+"current_version": number,
+"current_version_id": string | null,
+"deleted_at": string | null,
+"deleted_by": string | null,
+"id": string,
+"project_id": string | null,
+"updated_at": string,
+"workspace_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "ideas"
+        isOneToOne: true
+        isSetofReturn: false
+      } }
+          }
+          Enums: {
+            "impact_effort_level": "LOW"|"MEDIUM"|"HIGH","status_type": "DRAFT"|"IN_REVIEW"|"APPROVED"|"CANCELLED"|"DONE","workspace_member_status": "PENDING"|"ACTIVE","workspace_role": "OWNER"|"MEMBER"|"ADMIN"|"VIEWER"
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
@@ -1541,126 +1062,111 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
     : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
     : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
     : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+    : never = never
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+    : never = never
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
-  public: {
-    Enums: {
-      impact_effort_level: ["LOW", "MEDIUM", "HIGH"],
-      status_type: ["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED", "DONE"],
-      workspace_member_status: ["PENDING", "ACTIVE"],
-      workspace_role: ["OWNER", "MEMBER", "ADMIN", "VIEWER"],
-    },
-  },
+  "graphql_public": {
+          Enums: {
+            
+          }
+        },"public": {
+          Enums: {
+            "impact_effort_level": ["LOW", "MEDIUM", "HIGH"],"status_type": ["DRAFT", "IN_REVIEW", "APPROVED", "CANCELLED", "DONE"],"workspace_member_status": ["PENDING", "ACTIVE"],"workspace_role": ["OWNER", "MEMBER", "ADMIN", "VIEWER"]
+          }
+        }
 } as const
-
