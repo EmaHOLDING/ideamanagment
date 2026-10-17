@@ -36,12 +36,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         email={user.email ?? ""}
         initialNotificationPreferences={notificationPreferences}
       >
+        <HelpButton autoOpen={tourStatus.completedVersion < PRODUCT_TOUR_VERSION} />
         <NotificationBell
           currentUserId={user.id}
           initialItems={items}
           initialNextCursor={nextCursor}
         />
-        <HelpButton autoOpen={tourStatus.completedVersion < PRODUCT_TOUR_VERSION} />
       </Header>
       <div className="flex flex-1">
         <SideRail />
