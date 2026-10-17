@@ -333,7 +333,7 @@ function BoardInner({
         />,
         exportSlot
       )}
-      <div className="border-b bg-muted/15">
+      <div className="border-b bg-muted/15" data-tour="board-filters">
         <button
           type="button"
           onClick={() => setFiltersOpen((v) => !v)}

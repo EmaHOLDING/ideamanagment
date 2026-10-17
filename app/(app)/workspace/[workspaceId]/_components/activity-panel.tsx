@@ -209,7 +209,7 @@ export function ActivityPanel({ workspaceId, members }: { workspaceId: string; m
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
-          <Button variant="outline" size="sm" aria-label="Aktivite">
+          <Button variant="outline" size="sm" aria-label="Aktivite" data-tour="board-activity">
             <ActivityIcon /> Aktivite
           </Button>
         }

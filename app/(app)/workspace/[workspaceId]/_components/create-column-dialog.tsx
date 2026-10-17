@@ -63,6 +63,7 @@ export function CreateColumnDialog({
         render={
           <Button
             variant="outline"
+            data-tour="board-add-column"
             className="group relative ml-3 h-36 w-[min(20rem,calc(100vw-1.5rem))] shrink-0 snap-start flex-col gap-2.5 self-center overflow-hidden border-border/70 bg-gradient-to-br from-card via-card to-primary/[0.045] text-foreground shadow-[0_1px_0_rgb(255_255_255/0.025)_inset] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-accent/10 hover:text-foreground hover:shadow-lg hover:shadow-black/15 sm:w-72"
           >
             <span

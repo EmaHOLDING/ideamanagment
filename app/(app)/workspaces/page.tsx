@@ -27,7 +27,7 @@ export default async function WorkspacesPage() {
       </div>
 
       {pendingWithCounts.length > 0 && (
-        <div className="mb-8">
+        <div className="mb-8" data-tour="ws-pending">
           <h2 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Bekleyen Davetler
           </h2>
@@ -46,7 +46,7 @@ export default async function WorkspacesPage() {
       )}
 
       {active.length === 0 && pendingWithCounts.length === 0 ? (
-        <div className="relative isolate flex flex-col items-center gap-3 overflow-hidden rounded-2xl border bg-gradient-to-br from-card via-card to-primary/[0.045] px-5 py-16 text-center shadow-[0_1px_0_rgb(255_255_255/0.025)_inset] sm:py-20">
+        <div data-tour="ws-empty" className="relative isolate flex flex-col items-center gap-3 overflow-hidden rounded-2xl border bg-gradient-to-br from-card via-card to-primary/[0.045] px-5 py-16 text-center shadow-[0_1px_0_rgb(255_255_255/0.025)_inset] sm:py-20">
           <span
             aria-hidden
             className="pointer-events-none absolute inset-x-1/3 top-0 h-px bg-gradient-to-r from-transparent via-primary/80 to-transparent"
@@ -61,7 +61,7 @@ export default async function WorkspacesPage() {
         </div>
       ) : (
         active.length > 0 && (
-          <section>
+          <section data-tour="ws-list">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="flex items-center gap-2 text-sm font-semibold"><LayoutGridIcon className="size-4 text-muted-foreground" /> Aktif alanlar</h2>
               <span className="text-xs tabular-nums text-muted-foreground">{active.length} çalışma alanı</span>

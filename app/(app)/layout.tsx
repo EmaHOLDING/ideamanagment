@@ -25,7 +25,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     getMyNotificationPreferences(),
     // Tur durumu okunamazsa bütün uygulama çökmesin: tur kendiliğinden
     // açılmaz, "?" butonu yine çalışır.
-    getProductTourStatus().catch(() => ({ completedVersion: PRODUCT_TOUR_VERSION })),
+    getProductTourStatus().catch(() => ({
+      completedVersion: PRODUCT_TOUR_VERSION,
+      seenPageTourHints: [] as string[],
+    })),
   ]);
 
   return (
@@ -36,7 +39,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         email={user.email ?? ""}
         initialNotificationPreferences={notificationPreferences}
       >
-        <HelpButton autoOpen={tourStatus.completedVersion < PRODUCT_TOUR_VERSION} />
+        <HelpButton
+          autoOpen={tourStatus.completedVersion < PRODUCT_TOUR_VERSION}
+          seenPageTourHints={tourStatus.seenPageTourHints}
+        />
         <NotificationBell
           currentUserId={user.id}
           initialItems={items}

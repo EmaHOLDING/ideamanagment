@@ -355,14 +355,14 @@ isOneToOne: false
                   ]
                 },"user_onboarding": {
                   Row: {
-                    "completed_tour_version": number,"tour_completed_at": string | null,"updated_at": string,"user_id": string
+                    "completed_tour_version": number,"seen_page_tour_hints": (string)[],"tour_completed_at": string | null,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "completed_tour_version"?: number,"tour_completed_at"?: string | null,"updated_at"?: string,"user_id": string
+                    "completed_tour_version"?: number,"seen_page_tour_hints"?: (string)[],"tour_completed_at"?: string | null,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "completed_tour_version"?: number,"tour_completed_at"?: string | null,"updated_at"?: string,"user_id"?: string
+                    "completed_tour_version"?: number,"seen_page_tour_hints"?: (string)[],"tour_completed_at"?: string | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     
@@ -518,6 +518,7 @@ isOneToOne: false
 "complete_product_tour":
 { Args: { "_version": number }; Returns: {
               "completed_tour_version": number,
+"seen_page_tour_hints": (string)[],
 "tour_completed_at": string | null,
 "updated_at": string,
 "user_id": string
@@ -644,6 +645,20 @@ isOneToOne: false
                           SetofOptions: {
         from: "*"
         to: "workspaces"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
+"mark_page_tour_hint_seen":
+{ Args: { "_page": string }; Returns: {
+              "completed_tour_version": number,
+"seen_page_tour_hints": (string)[],
+"tour_completed_at": string | null,
+"updated_at": string,
+"user_id": string
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "user_onboarding"
         isOneToOne: true
         isSetofReturn: false
       } },

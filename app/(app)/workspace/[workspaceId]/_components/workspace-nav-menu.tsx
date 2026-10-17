@@ -26,7 +26,7 @@ export function WorkspaceNavMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline" size="sm" aria-label="Menü" className={className}>
+          <Button variant="outline" size="sm" aria-label="Menü" className={className} data-tour="board-nav-menu">
             <MenuIcon />
           </Button>
         }

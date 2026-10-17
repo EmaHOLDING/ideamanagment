@@ -71,6 +71,7 @@ export function Column({
   return (
     <section
       id={`board-column-${column.id}`}
+      data-tour="board-column"
       aria-label={`${column.title} kolonu, ${ideaCount} fikir`}
       className="flex h-full w-[min(20rem,calc(100vw-1.5rem))] shrink-0 flex-col border-r last:border-r-0 sm:w-72"
     >
@@ -111,6 +112,9 @@ export function Column({
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
                       aria-busy={pendingMoveIdeaId === v.idea_id}
+                      // İzleyici kartı sürükleyemez; sayfa turu ona farklı
+                      // bir metin gösterebilsin diye ayrı etiket.
+                      data-tour={isViewer ? "board-idea-card-readonly" : "board-idea-card"}
                       title={lockedBy ? `${lockedBy.fullName} bu fikri taşıyor` : undefined}
                       className={cn(
                         "rounded-xl transition-[opacity,filter,box-shadow] duration-150",
@@ -174,6 +178,7 @@ export function Column({
                 <Button
                   variant="ghost"
                   size="sm"
+                  data-tour="board-add-idea"
                   className="w-full justify-start text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground active:bg-transparent active:text-foreground dark:hover:bg-transparent"
                 >
                   <PlusIcon /> Fikir Ekle

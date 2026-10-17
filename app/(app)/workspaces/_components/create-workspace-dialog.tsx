@@ -61,7 +61,7 @@ export function CreateWorkspaceDialog({ templates }: { templates: Template[] }) 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button><PlusIcon /> Workspace oluştur</Button>} />
+      <DialogTrigger render={<Button data-tour="ws-create"><PlusIcon /> Workspace oluştur</Button>} />
       <DialogContent>
         <form onSubmit={onSubmit}>
           <DialogHeader>

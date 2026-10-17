@@ -123,7 +123,7 @@ export function WorkspaceExportDialog({ data }: { data: WorkspaceExportData }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        render={<Button id="workspace-export-trigger" variant="outline" size="sm" className="hidden sm:inline-flex" />}
+        render={<Button id="workspace-export-trigger" data-tour="board-export" variant="outline" size="sm" className="hidden sm:inline-flex" />}
         nativeButton
       >
         <ImageIcon /> Dışarı Aktar

@@ -89,45 +89,47 @@ export default async function WorkspaceBoardPage({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            className="hidden sm:inline-flex"
-            render={
-              <Link href={`/workspace/${workspaceId}/overview`}>
-                <ChartNoAxesCombinedIcon /> Genel Bakış
-              </Link>
-            }
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            className="hidden sm:inline-flex"
-            render={
-              <Link href={`/workspace/${workspaceId}/projects`} aria-label="Projeler">
-                <FolderKanbanIcon /> Projeler
-              </Link>
-            }
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            className="hidden sm:inline-flex"
-            render={
-              <Link href={`/workspace/${workspaceId}/archive`} aria-label="Arşiv">
-                <ArchiveIcon /> Arşiv
-              </Link>
-            }
-          />
+          {/* Sayfa turu bu üç butonu tek bir alan olarak aydınlatıyor; bu
+              yüzden ortak bir sarmalayıcıda duruyorlar (mobilde ☰ menüde). */}
+          <div data-tour="board-nav-links" className="hidden items-center gap-2 sm:flex">
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={
+                <Link href={`/workspace/${workspaceId}/overview`}>
+                  <ChartNoAxesCombinedIcon /> Genel Bakış
+                </Link>
+              }
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={
+                <Link href={`/workspace/${workspaceId}/projects`} aria-label="Projeler">
+                  <FolderKanbanIcon /> Projeler
+                </Link>
+              }
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={
+                <Link href={`/workspace/${workspaceId}/archive`} aria-label="Arşiv">
+                  <ArchiveIcon /> Arşiv
+                </Link>
+              }
+            />
+          </div>
           {canManageContent && (
             <Button
               variant="outline"
               size="sm"
               nativeButton={false}
               className="hidden sm:inline-flex"
+              data-tour="board-settings"
               render={
                 <Link href={`/workspace/${workspaceId}/settings`} aria-label="Ayarlar">
                   <SettingsIcon /> Ayarlar

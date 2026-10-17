@@ -64,20 +64,41 @@ export async function setNotificationPreference(eventType: NotificationEventType
 /** Kullanıcının tamamladığı en yüksek uygulama turu sürümü (hiç
  * tamamlamadıysa 0). Layout bunu PRODUCT_TOUR_VERSION ile karşılaştırıp
  * turun kendiliğinden açılıp açılmayacağına karar veriyor. */
-export async function getProductTourStatus(): Promise<{ completedVersion: number }> {
+export async function getProductTourStatus(): Promise<{
+  completedVersion: number;
+  seenPageTourHints: string[];
+}> {
   const { supabase, user } = await requireUser();
 
   const row = await withAuthRetry(async () => {
     const { data, error } = await supabase
       .from("user_onboarding")
-      .select("completed_tour_version")
+      .select("completed_tour_version, seen_page_tour_hints")
       .eq("user_id", user.id)
       .maybeSingle();
     if (error) throw error;
     return data;
   });
 
-  return { completedVersion: row?.completed_tour_version ?? 0 };
+  return {
+    completedVersion: row?.completed_tour_version ?? 0,
+    seenPageTourHints: row?.seen_page_tour_hints ?? [],
+  };
+}
+
+const pageTourIdSchema = z.string().regex(/^[a-z0-9-]{1,40}$/);
+
+/** Bir sayfanın turu için "?" butonunun parlama ipucu gösterildi. Her
+ * sayfada yalnızca ilk ziyarette parlasın diye kaydediliyor. */
+export async function markPageTourHintSeen(pageTourId: string) {
+  const page = pageTourIdSchema.parse(pageTourId);
+  const { supabase, user } = await requireUser();
+  await enforceWriteLimit(supabase, user.id);
+
+  const { error } = await supabase.rpc("mark_page_tour_hint_seen", { _page: page });
+  if (error) throw error;
+
+  return { success: true as const };
 }
 
 const tourVersionSchema = z.number().int().min(1).max(1000);

@@ -50,7 +50,7 @@ export function UserMenu({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon" className="rounded-full ring-1 ring-border hover:ring-primary/30" aria-label="Profil menüsünü aç">
+            <Button variant="ghost" size="icon" className="rounded-full ring-1 ring-border hover:ring-primary/30" aria-label="Profil menüsünü aç" data-tour="account-menu">
               <Avatar className="size-8">
                 <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
               </Avatar>
