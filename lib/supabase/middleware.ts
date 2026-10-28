@@ -5,6 +5,10 @@ import type { Database } from "@/lib/types/database.types";
 const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/join"];
 
 function isPublicPath(pathname: string) {
+  // Kök adres (tanıtım sayfası) herkese açık. PUBLIC_PATHS'e "/" olarak
+  // EKLENMİYOR: aşağıdaki ön ek kuralı yüzünden "/" ile başlayan her yol,
+  // yani bütün uygulama açılmış olurdu. Bu yüzden ayrı ve tam eşleşmeyle.
+  if (pathname === "/") return true;
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
