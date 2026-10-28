@@ -1,11 +1,23 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { LandingPage } from "@/components/landing/landing-page";
 
+export const metadata: Metadata = {
+  title: "Fikir Kuluçkası — Ekibinizin fikirlerini birlikte geliştirin",
+  description:
+    "Fikirleri toplamak, birlikte değerlendirmek ve olgunlaşanları projeye dönüştürmek için ekip çalışma alanı. Her düzenleme versiyon geçmişinde saklanır.",
+};
+
+/** Giriş yapmamış ziyaretçiye tanıtım sayfası; giriş yapmış kullanıcı
+ * eskisi gibi doğrudan workspace'lerine gider. */
 export default async function RootPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  redirect(user ? "/workspaces" : "/login");
+  if (user) redirect("/workspaces");
+
+  return <LandingPage />;
 }

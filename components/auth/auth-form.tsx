@@ -12,9 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
+import { startOAuthSignIn } from "@/lib/auth/oauth";
 
-function GoogleLogo() {
+export function GoogleLogo() {
   return (
     <svg viewBox="0 0 24 24" className="size-[18px] shrink-0">
       <path
@@ -119,17 +119,11 @@ export function AuthForm() {
 
   function onOAuthSignIn(provider: Provider) {
     setPendingProvider(provider);
-    const supabase = createClient();
-    const callbackUrl = new URL("/auth/callback", window.location.origin);
-    callbackUrl.searchParams.set("returnUrl", returnUrl);
-    supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: callbackUrl.toString() },
-    });
+    startOAuthSignIn(provider, returnUrl);
   }
 
   return (
-    <Card className="border-0 bg-card/90 shadow-2xl shadow-primary/10 ring-1 ring-foreground/10 backdrop-blur-md">
+    <Card className="border shadow-sm">
       <CardHeader className="items-center text-center">
         <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
           <LockIcon className="size-4.5" />
