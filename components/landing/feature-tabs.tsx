@@ -32,8 +32,10 @@ const TABS = [
     light: birlikteLight,
     dark: birlikteDark,
     alt: "Fikir detayı: solda @ ile ekip arkadaşının etiketlendiği yorumlar, sağda problem tanımı, hedef kitle ve içerik.",
-    // Pencere görüntüsü dar; tam genişlikte gereğinden uzun kalıyordu.
-    frame: "mx-auto max-w-[860px]",
+    // Pencere görüntüsü dikey; tam genişlikte diğer sekmelerden çok uzun
+    // kalıp onların altında boşluk bırakıyordu. Bu genişlikte Genel bakış
+    // görüntüsüyle aşağı yukarı aynı yükseklikte.
+    frame: "mx-auto max-w-[740px]",
   },
   {
     label: "Genel bakış",
