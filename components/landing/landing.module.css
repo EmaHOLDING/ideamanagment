@@ -54,21 +54,17 @@
   transform: translateY(28px);
 }
 
-/* Açılıştaki pano görüntüsü hafif eğik başlar, sayfa kaydıkça düzleşir.
- * Destekleyen tarayıcılarda; diğerlerinde düz durur. */
+/* Açılıştaki pano görüntüsü hafif eğik gelir ve yerine oturur. Eğiklik
+ * yalnızca giriş animasyonunda: duran görüntüde dönüşüm kalmasın, yoksa
+ * tarayıcı onu yeniden örnekliyor ve arayüz yazıları bulanıklaşıyor. */
 .tilt {
   transform-origin: 50% 0;
-}
-@supports (animation-timeline: scroll()) {
-  .tilt {
-    animation: untilt linear both;
-    animation-timeline: scroll(root);
-    animation-range: 0px 520px;
-  }
+  animation: untilt 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: 700ms;
 }
 @keyframes untilt {
   from {
-    transform: perspective(1800px) rotateX(11deg) scale(0.96);
+    transform: perspective(1800px) rotateX(10deg) scale(0.97);
   }
   to {
     transform: none;

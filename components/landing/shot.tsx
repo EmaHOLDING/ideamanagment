@@ -22,7 +22,11 @@ export function Shot({
   chrome?: boolean;
   className?: string;
 }) {
-  const loading = eager ? "eager" : "lazy";
+  // Görüntüler 2x çekilmiş, yüksek kaliteli webp'ler. Next'in optimizasyonu
+  // bunları %75 kaliteyle yeniden sıkıştırıp arayüz yazılarını
+  // bulanıklaştırıyordu; bu yüzden olduğu gibi (unoptimized) sunuluyor.
+  // İkisi de "lazy": temaya göre gizli olan (display:none) hiç indirilmez,
+  // görünen ise ekrandaysa hemen yüklenir.
   return (
     <div
       className={cn(
@@ -41,7 +45,8 @@ export function Shot({
         src={light}
         alt={alt}
         sizes={sizes}
-        loading={loading}
+        unoptimized
+        loading="lazy"
         fetchPriority={eager ? "high" : undefined}
         className="block h-auto w-full dark:hidden"
       />
@@ -49,7 +54,9 @@ export function Shot({
         src={dark}
         alt={alt}
         sizes={sizes}
-        loading={loading}
+        unoptimized
+        loading="lazy"
+        fetchPriority={eager ? "high" : undefined}
         className="hidden h-auto w-full dark:block"
       />
     </div>
