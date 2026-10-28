@@ -5,12 +5,6 @@ import { LightbulbIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
-const LINKS = [
-  { href: "#nasil-isliyor", label: "Nasıl işliyor" },
-  { href: "#versiyonlar", label: "Versiyonlar" },
-  { href: "#ozellikler", label: "Özellikler" },
-];
-
 /** Sayfanın üstüne yapışan başlık; sayfa kaydırılınca zemin ve çizgi alır. */
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -39,13 +33,6 @@ export function SiteHeader() {
             <span className="block text-[11px] text-muted-foreground">Ema Software</span>
           </span>
         </a>
-        <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-          {LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="transition-colors hover:text-foreground">
-              {link.label}
-            </a>
-          ))}
-        </nav>
         <GoogleSignInButton label="Giriş yap" size="sm" variant="outline" />
       </div>
     </header>
