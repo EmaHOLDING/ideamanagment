@@ -147,6 +147,7 @@ export function LandingPage() {
 
           {/* Ayrıca */}
           <section className="border-t py-16 sm:py-20">
+            <h2 className="sr-only">Diğer özellikler</h2>
             <ul className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
               {EXTRAS.map((item, i) => (
                 <li key={item.title}>
