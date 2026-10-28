@@ -4,9 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { LandingPage } from "@/components/landing/landing-page";
 
 export const metadata: Metadata = {
-  title: "Fikir Kuluçkası — Ekibinizin fikirlerini birlikte geliştirin",
+  title: "Fikir Kuluçkası — Ema Software",
   description:
-    "Fikirleri toplamak, birlikte değerlendirmek ve olgunlaşanları projeye dönüştürmek için ekip çalışma alanı. Her düzenleme versiyon geçmişinde saklanır.",
+    "Ema Software'den Fikir Kuluçkası: fikirleri toplamak, birlikte değerlendirmek ve olgunlaşanları projeye dönüştürmek için ekip çalışma alanı. Her düzenleme versiyon geçmişinde saklanır.",
 };
 
 /** Giriş yapmamış ziyaretçiye tanıtım sayfası; giriş yapmış kullanıcı
