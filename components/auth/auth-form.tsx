@@ -79,7 +79,7 @@ function GitLabLogo() {
 }
 
 // Microsoft/LinkedIn/GitHub/GitLab için OAuth uygulama kaydı henüz
-// tamamlanmadığı için (bkz. OAUTH_KURULUM.md) bu sağlayıcılar şimdilik
+// tamamlanmadığı için bu sağlayıcılar şimdilik
 // gizli — key'ler girilip test edildiğinde `visible: true` yapmak yeterli.
 const OAUTH_PROVIDERS: {
   provider: Provider;
