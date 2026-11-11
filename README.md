@@ -117,53 +117,6 @@ tests/             Vitest birim testleri
 proxy.ts           Oturum kontrolü ve CSP
 ```
 
-## Yerelde çalıştırma
-
-Gerekenler: Node.js 24, Docker (yerel Supabase için).
-
-```bash
-git clone https://github.com/EmaHOLDING/ideamanagment.git
-cd ideamanagment
-npm install
-
-# Yerel Supabase'i başlatır; tüm migration'ları ve seed'i uygular
-npx supabase start
-
-cp .env.example .env.local
-```
-
-`.env.local` içine `npx supabase status` çıktısındaki API adresini ve anahtarları, `NEXT_PUBLIC_APP_URL` olarak da `http://localhost:3000` yazın. Google ile girişi yerelde denemek için `GOOGLE_CLIENT_ID` ve `GOOGLE_CLIENT_SECRET` gerekir (yönlendirme adresi: `http://127.0.0.1:54321/auth/v1/callback`). Tüm değişkenler `.env.example` içinde açıklamalı.
-
-```bash
-npm run dev
-```
-
-Uygulama http://localhost:3000 adresinde açılır.
-
-## Testler ve kontroller
-
-```bash
-npm run typecheck   # TypeScript
-npm run lint        # ESLint
-npm test            # Vitest birim testleri
-npm run test:db     # pgTAP: RLS yetkileri, versiyonlama ve diğer veritabanı testleri
-npm run build       # Production derlemesi
-```
-
-CI, her push ve pull request'te bunları iki ayrı işte çalıştırır: kod kontrolleri ve yerel Supabase üzerinde veritabanı testleri.
-
-## Canlıya alma
-
-1. Supabase'de bir proje açın, ardından migration'ları gönderin:
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref <project-ref>
-   npx supabase db push
-   ```
-   Pano şablonları için `supabase/seed.sql` içeriğini Supabase SQL Editor'de bir kez çalıştırın.
-2. Google Cloud Console'da bir OAuth istemcisi oluşturun. Yönlendirme adresi `https://<project-ref>.supabase.co/auth/v1/callback` olmalı. İstemci bilgilerini Supabase'de **Authentication → Providers → Google** altına girin.
-3. Uygulamayı barındıran platformda `.env.example`'daki değişkenleri tanımlayın. `NEXT_PUBLIC_APP_URL` gerçek alan adınız olmalı; e-posta linkleri, canonical adres, sitemap ve paylaşım görseli buna göre üretilir.
-
 ---
 
 <div align="center">
