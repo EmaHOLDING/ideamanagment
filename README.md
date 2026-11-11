@@ -167,5 +167,5 @@ CI, her push ve pull request'te bunları iki ayrı işte çalıştırır: kod ko
 ---
 
 <div align="center">
-<sub><b>Fikir Kuluçkası</b>, Ema Software tarafından geliştirilmiştir.</sub>
+<sub><b>Fikir Kuluçkası</b>, Ema Software tarafından geliştirilmiştir. © 2026 Ema Software, tüm hakları saklıdır. Ayrıntılar için <a href="LICENSE">LICENSE</a>.</sub>
 </div>
