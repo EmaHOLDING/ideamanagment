@@ -66,7 +66,7 @@ export async function addComment(ideaId: string, content: string, mentionedUserI
 
   if (commentersError) throw commentersError;
 
-  // Bölüm 6.D: fikre daha önce yorum yapmış kullanıcılar + fikri
+  // Fikre daha önce yorum yapmış kullanıcılar + fikri
   // oluşturan kişi, yorumu yapan actor hariç bildirim alır.
   //
   // Aday liste, workspace'ten ÇIKARILMIŞ kişileri de içerebiliyor (eski

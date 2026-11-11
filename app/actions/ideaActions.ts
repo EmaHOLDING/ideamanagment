@@ -156,7 +156,7 @@ export async function moveIdea(
     throw updateError;
   }
 
-  // Bölüm 6.D: sadece fikri oluşturan kullanıcı (taşıyan actor hariç) bildirim alır.
+  // Sadece fikri oluşturan kullanıcı (taşıyan actor hariç) bildirim alır.
   if (idea.created_by && idea.created_by !== user.id) {
     const actorName = getDisplayName(user);
     await notifyEvent({

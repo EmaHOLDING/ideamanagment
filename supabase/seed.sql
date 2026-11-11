@@ -1,4 +1,4 @@
--- Sistem şablonları (Bölüm 6.G, 7.D)
+-- Sistem şablonları
 INSERT INTO board_templates (title, columns_config, is_system) VALUES
 ('Basit Kanban', '[
   {"title": "Taslak", "status_type": "DRAFT"},

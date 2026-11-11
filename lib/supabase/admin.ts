@@ -5,7 +5,7 @@ import type { Database } from "@/lib/types/database.types";
 /**
  * service_role key ile çalışan, RLS'i bypass eden client.
  * Yalnızca server-side (server actions) içinde, sistem işlemleri için
- * kullanılır (örn. bildirim üretimi, Bölüm 6.D/7.B). Asla client
+ * kullanılır (örn. bildirim üretimi). Asla client
  * bundle'ına dahil edilmemeli.
  */
 export function createAdminClient() {
